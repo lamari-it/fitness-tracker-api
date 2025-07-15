@@ -61,6 +61,7 @@ func AutoMigrate() {
 		&models.ExerciseMuscleGroup{},
 		&models.Equipment{},
 		&models.ExerciseEquipment{},
+		&models.UserEquipment{},
 		&models.FitnessLevel{},
 		&models.FitnessGoal{},
 		&models.UserFitnessGoal{},
@@ -90,6 +91,9 @@ func AutoMigrate() {
 	
 	// Add unique constraint for translation combinations
 	DB.Exec("CREATE UNIQUE INDEX IF NOT EXISTS unique_translation_combo ON translations (resource_type, resource_id, field_name, language)")
+	
+	// Add unique constraint for user equipment combinations
+	DB.Exec("CREATE UNIQUE INDEX IF NOT EXISTS unique_user_equipment_combo ON user_equipment (user_id, equipment_id, location_type)")
 	
 	log.Println("Database AutoMigrate completed")
 }

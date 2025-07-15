@@ -19,15 +19,16 @@ func CreateEquipment(c *gin.Context) {
 		return
 	}
 
-	// Check if equipment with same name already exists
+	// Check if equipment with same name or slug already exists
 	var existingEquipment models.Equipment
-	if err := database.DB.Where("name = ?", req.Name).First(&existingEquipment).Error; err == nil {
+	if err := database.DB.Where("name = ? OR slug = ?", req.Name, req.Slug).First(&existingEquipment).Error; err == nil {
 		middleware.TranslateErrorResponse(c, http.StatusConflict, "equipment.already_exists", nil)
 		return
 	}
 
 	equipment := models.Equipment{
 		Name:        req.Name,
+		Slug:        req.Slug,
 		Description: req.Description,
 		Category:    req.Category,
 		ImageURL:    req.ImageURL,
@@ -167,6 +168,15 @@ func UpdateEquipment(c *gin.Context) {
 			return
 		}
 		equipment.Name = req.Name
+	}
+	if req.Slug != "" {
+		// Check for duplicate slug
+		var existingEquipment models.Equipment
+		if err := database.DB.Where("slug = ? AND id != ?", req.Slug, id).First(&existingEquipment).Error; err == nil {
+			middleware.TranslateErrorResponse(c, http.StatusConflict, "equipment.already_exists", nil)
+			return
+		}
+		equipment.Slug = req.Slug
 	}
 	if req.Description != "" {
 		equipment.Description = req.Description

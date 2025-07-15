@@ -125,6 +125,17 @@ func SetupRoutes(r *gin.Engine) {
 				userFitness.PUT("/level", controllers.UpdateUserFitnessLevel)
 			}
 
+			// User Equipment
+			userEquipment := protected.Group("/user/equipment")
+			{
+				userEquipment.GET("/", controllers.GetUserEquipment)
+				userEquipment.POST("/", controllers.AddUserEquipment)
+				userEquipment.POST("/bulk", controllers.BulkAddUserEquipment)
+				userEquipment.PUT("/:id", controllers.UpdateUserEquipment)
+				userEquipment.DELETE("/:id", controllers.RemoveUserEquipment)
+				userEquipment.GET("/location/:location", controllers.GetUserEquipmentByLocation)
+			}
+
 			// Workout Plans
 			workoutPlans := protected.Group("/workout-plans")
 			{

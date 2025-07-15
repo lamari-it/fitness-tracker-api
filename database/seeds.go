@@ -255,9 +255,76 @@ func SeedFitnessGoals() {
 	}
 }
 
+func SeedEquipment() {
+	equipment := []models.Equipment{
+		// Free Weights
+		{Slug: "dumbbells", Name: "Dumbbells", Description: "Adjustable or fixed weight dumbbells", Category: "free_weight"},
+		{Slug: "barbell", Name: "Barbell", Description: "Olympic or standard barbell", Category: "free_weight"},
+		{Slug: "kettlebell", Name: "Kettlebell", Description: "Cast iron or vinyl coated kettlebells", Category: "free_weight"},
+		{Slug: "plates", Name: "Weight Plates", Description: "Standard or Olympic weight plates", Category: "free_weight"},
+		{Slug: "ez_bar", Name: "EZ Curl Bar", Description: "Curved barbell for arm exercises", Category: "free_weight"},
+		
+		// Bodyweight Equipment
+		{Slug: "pull_up_bar", Name: "Pull-up Bar", Description: "Doorway or wall-mounted pull-up bar", Category: "other"},
+		{Slug: "dip_station", Name: "Dip Station", Description: "Parallel bars for dips", Category: "other"},
+		{Slug: "gymnastic_rings", Name: "Gymnastic Rings", Description: "Suspension rings for advanced bodyweight training", Category: "other"},
+		
+		// Resistance Equipment
+		{Slug: "resistance_bands", Name: "Resistance Bands", Description: "Elastic bands of varying resistance", Category: "other"},
+		{Slug: "suspension_trainer", Name: "Suspension Trainer", Description: "TRX or similar suspension system", Category: "other"},
+		
+		// Cardio Equipment
+		{Slug: "treadmill", Name: "Treadmill", Description: "Motorized running machine", Category: "cardio"},
+		{Slug: "stationary_bike", Name: "Stationary Bike", Description: "Indoor cycling bike", Category: "cardio"},
+		{Slug: "rowing_machine", Name: "Rowing Machine", Description: "Indoor rowing ergometer", Category: "cardio"},
+		{Slug: "elliptical", Name: "Elliptical Machine", Description: "Low-impact cardio machine", Category: "cardio"},
+		{Slug: "jump_rope", Name: "Jump Rope", Description: "Speed rope for cardio", Category: "cardio"},
+		
+		// Machines
+		{Slug: "cable_machine", Name: "Cable Machine", Description: "Adjustable cable pulley system", Category: "cable"},
+		{Slug: "smith_machine", Name: "Smith Machine", Description: "Guided barbell rack", Category: "machine"},
+		{Slug: "leg_press", Name: "Leg Press Machine", Description: "Seated or lying leg press", Category: "machine"},
+		{Slug: "lat_pulldown", Name: "Lat Pulldown Machine", Description: "Cable machine for back exercises", Category: "machine"},
+		{Slug: "chest_press", Name: "Chest Press Machine", Description: "Seated or lying chest press", Category: "machine"},
+		{Slug: "leg_curl", Name: "Leg Curl Machine", Description: "Hamstring curl machine", Category: "machine"},
+		{Slug: "leg_extension", Name: "Leg Extension Machine", Description: "Quadriceps extension machine", Category: "machine"},
+		
+		// Benches and Racks
+		{Slug: "flat_bench", Name: "Flat Bench", Description: "Standard flat weight bench", Category: "other"},
+		{Slug: "adjustable_bench", Name: "Adjustable Bench", Description: "Incline/decline adjustable bench", Category: "other"},
+		{Slug: "squat_rack", Name: "Squat Rack", Description: "Power rack or squat stand", Category: "other"},
+		{Slug: "preacher_bench", Name: "Preacher Bench", Description: "Angled bench for bicep curls", Category: "other"},
+		
+		// Other Equipment
+		{Slug: "foam_roller", Name: "Foam Roller", Description: "Myofascial release tool", Category: "other"},
+		{Slug: "exercise_mat", Name: "Exercise Mat", Description: "Yoga or workout mat", Category: "other"},
+		{Slug: "medicine_ball", Name: "Medicine Ball", Description: "Weighted ball for functional training", Category: "other"},
+		{Slug: "ab_wheel", Name: "Ab Wheel", Description: "Core training wheel", Category: "other"},
+		{Slug: "bosu_ball", Name: "BOSU Ball", Description: "Balance trainer dome", Category: "other"},
+		{Slug: "stability_ball", Name: "Stability Ball", Description: "Large inflatable exercise ball", Category: "other"},
+		
+		// Bodyweight/No Equipment
+		{Slug: "bodyweight", Name: "Bodyweight Only", Description: "No equipment required", Category: "other"},
+	}
+
+	for _, equip := range equipment {
+		var existing models.Equipment
+		if err := DB.Where("slug = ?", equip.Slug).First(&existing).Error; err != nil {
+			if err := DB.Create(&equip).Error; err != nil {
+				log.Printf("Failed to create equipment %s: %v", equip.Name, err)
+			} else {
+				log.Printf("Created equipment: %s", equip.Name)
+			}
+		} else {
+			log.Printf("Equipment already exists: %s", equip.Name)
+		}
+	}
+}
+
 func SeedDatabase() {
 	log.Println("Starting database seeding...")
 	SeedMuscleGroups()
+	SeedEquipment()
 	SeedExercises()
 	SeedFitnessLevels()
 	SeedFitnessGoals()
