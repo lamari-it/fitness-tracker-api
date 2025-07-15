@@ -1,0 +1,65 @@
+{
+  "auth": {
+    "login_success": "Connexion réussie",
+    "login_failed": "Identifiants invalides",
+    "register_success": "Inscription réussie",
+    "register_failed": "Échec de l'inscription",
+    "token_invalid": "Token invalide",
+    "token_expired": "Token expiré",
+    "token_missing": "Token manquant",
+    "unauthorized": "Accès non autorisé",
+    "forbidden": "Accès interdit"
+  },
+  "validation": {
+    "required_field": "Ce champ est obligatoire",
+    "invalid_email": "Format d'email invalide",
+    "password_too_short": "Le mot de passe doit contenir au moins 8 caractères",
+    "invalid_format": "Format invalide",
+    "invalid_uuid": "Format UUID invalide"
+  },
+  "user": {
+    "not_found": "Utilisateur non trouvé",
+    "created": "Utilisateur créé avec succès",
+    "updated": "Utilisateur mis à jour avec succès",
+    "deleted": "Utilisateur supprimé avec succès",
+    "profile_updated": "Profil mis à jour avec succès",
+    "email_exists": "L'email existe déjà",
+    "invalid_credentials": "Identifiants invalides"
+  },
+  "exercise": {
+    "not_found": "Exercice non trouvé",
+    "created": "Exercice créé avec succès",
+    "updated": "Exercice mis à jour avec succès",
+    "deleted": "Exercice supprimé avec succès",
+    "list_retrieved": "Exercices récupérés avec succès",
+    "muscle_groups_assigned": "Groupes musculaires assignés avec succès",
+    "muscle_groups_removed": "Groupes musculaires supprimés avec succès"
+  },
+  "muscle_group": {
+    "not_found": "Groupe musculaire non trouvé",
+    "created": "Groupe musculaire créé avec succès",
+    "updated": "Groupe musculaire mis à jour avec succès",
+    "deleted": "Groupe musculaire supprimé avec succès",
+    "list_retrieved": "Groupes musculaires récupérés avec succès",
+    "already_assigned": "Groupe musculaire déjà assigné à l'exercice",
+    "not_assigned": "Groupe musculaire non assigné à l'exercice"
+  },
+  "workout": {
+    "not_found": "Entraînement non trouvé",
+    "created": "Entraînement créé avec succès",
+    "updated": "Entraînement mis à jour avec succès",
+    "deleted": "Entraînement supprimé avec succès",
+    "list_retrieved": "Entraînements récupérés avec succès",
+    "started": "Entraînement démarré avec succès",
+    "completed": "Entraînement terminé avec succès"
+  },
+  "general": {
+    "success": "Opération réussie",
+    "error": "Une erreur s'est produite",
+    "not_found": "Ressource non trouvée",
+    "bad_request": "Requête incorrecte",
+    "internal_error": "Erreur interne du serveur",
+    "permission_denied": "Permission refusée",
+    "admin_required": "Accès administrateur requis"
+  }
+}

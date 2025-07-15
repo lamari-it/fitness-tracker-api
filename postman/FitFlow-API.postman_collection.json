@@ -1,0 +1,1622 @@
+{
+  "info": {
+    "name": "FitFlow API",
+    "description": "Complete API collection for FitFlow - A comprehensive fitness tracking API with authentication, workout planning, exercise management, and social features",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Check if the API is running"
+      },
+      "response": []
+    },
+    {
+      "name": "Muscle Groups",
+      "item": [
+        {
+          "name": "Create Muscle Group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('muscle_group_id', jsonData.id);",
+                  "    pm.test('Muscle group created successfully', function () {",
+                  "        pm.expect(jsonData.name).to.be.a('string');",
+                  "        pm.expect(jsonData.id).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Muscle Group\",\n  \"description\": \"A test muscle group\",\n  \"category\": \"upper\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/muscle-groups",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "muscle-groups"]
+            },
+            "description": "Create a new muscle group"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Muscle Groups",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Muscle groups retrieved successfully', function () {",
+                  "        pm.expect(jsonData).to.be.an('array');",
+                  "        if (jsonData.length > 0) {",
+                  "            pm.expect(jsonData[0]).to.have.property('name');",
+                  "        }",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/muscle-groups?category=upper&search=chest",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "muscle-groups"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "upper",
+                  "description": "Filter by category (upper, lower, core, cardio)"
+                },
+                {
+                  "key": "search",
+                  "value": "chest",
+                  "description": "Search muscle groups by name"
+                }
+              ]
+            },
+            "description": "Get all muscle groups with optional filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Muscle Group by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Muscle group retrieved successfully', function () {",
+                  "        pm.expect(jsonData).to.have.property('name');",
+                  "        pm.expect(jsonData).to.have.property('id');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/muscle-groups/{{muscle_group_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "muscle-groups", "{{muscle_group_id}}"]
+            },
+            "description": "Get a specific muscle group by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Muscle Group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Muscle group updated successfully', function () {",
+                  "        pm.expect(jsonData).to.have.property('name');",
+                  "        pm.expect(jsonData).to.have.property('id');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Muscle Group\",\n  \"description\": \"Updated description\",\n  \"category\": \"lower\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/muscle-groups/{{muscle_group_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "muscle-groups", "{{muscle_group_id}}"]
+            },
+            "description": "Update a muscle group"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Muscle Group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 204) {",
+                  "    pm.test('Muscle group deleted successfully', function () {",
+                  "        pm.expect(pm.response.code).to.equal(204);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/muscle-groups/{{muscle_group_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "muscle-groups", "{{muscle_group_id}}"]
+            },
+            "description": "Delete a muscle group"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('auth_token', jsonData.token);",
+                  "    pm.environment.set('user_id', jsonData.user.id);",
+                  "    pm.environment.set('user_email', jsonData.user.email);",
+                  "    pm.test('Registration successful', function () {",
+                  "        pm.expect(jsonData.token).to.be.a('string');",
+                  "        pm.expect(jsonData.user.email).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"first_name\": \"{{test_first_name}}\",\n  \"last_name\": \"{{test_last_name}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Register a new user account"
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('auth_token', jsonData.token);",
+                  "    pm.environment.set('user_id', jsonData.user.id);",
+                  "    pm.environment.set('user_email', jsonData.user.email);",
+                  "    pm.test('Login successful', function () {",
+                  "        pm.expect(jsonData.token).to.be.a('string');",
+                  "        pm.expect(jsonData.user.email).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Login with email and password"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Profile retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.email).to.be.a('string');",
+                  "    pm.expect(jsonData.first_name).to.be.a('string');",
+                  "    pm.expect(jsonData.last_name).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "profile"]
+            },
+            "description": "Get current user profile (requires authentication)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Standard email/password authentication endpoints"
+    },
+    {
+      "name": "OAuth",
+      "item": [
+        {
+          "name": "Google OAuth Login",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/google",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "google"]
+            },
+            "description": "Initiate Google OAuth login (redirects to Google)"
+          },
+          "response": []
+        },
+        {
+          "name": "Apple Sign-In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('auth_token', jsonData.token);",
+                  "    pm.environment.set('user_id', jsonData.user.id);",
+                  "    pm.environment.set('user_email', jsonData.user.email);",
+                  "    pm.test('Apple Sign-In successful', function () {",
+                  "        pm.expect(jsonData.token).to.be.a('string');",
+                  "        pm.expect(jsonData.user.provider).to.equal('apple');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identity_token\": \"your_apple_identity_token_here\",\n  \"auth_code\": \"your_apple_auth_code_here\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/apple",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "apple"]
+            },
+            "description": "Authenticate with Apple Sign-In identity token"
+          },
+          "response": []
+        }
+      ],
+      "description": "OAuth authentication endpoints for Google and Apple"
+    },
+    {
+      "name": "Muscle Groups",
+      "item": [
+        {
+          "name": "Create Muscle Group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('muscle_group_id', jsonData.id);",
+                  "    pm.test('Muscle group created successfully', function () {",
+                  "        pm.expect(jsonData.id).to.be.a('string');",
+                  "        pm.expect(jsonData.name).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Custom Muscle Group\",\n  \"description\": \"A custom muscle group for testing\",\n  \"category\": \"upper\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/muscle-groups",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "muscle-groups"]
+            },
+            "description": "Create a new muscle group"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Muscle Groups",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Muscle groups retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.muscle_groups).to.be.an('array');",
+                  "    pm.expect(jsonData.total).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/muscle-groups",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "muscle-groups"]
+            },
+            "description": "Get all muscle groups"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Muscle Group by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/muscle-groups/{{muscle_group_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "muscle-groups", "{{muscle_group_id}}"]
+            },
+            "description": "Get a specific muscle group with associated exercises"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Muscle Groups",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/muscle-groups?search=chest&category=upper",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "muscle-groups"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "chest"
+                },
+                {
+                  "key": "category",
+                  "value": "upper"
+                }
+              ]
+            },
+            "description": "Search muscle groups with filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Muscle Group",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Muscle Group\",\n  \"description\": \"An updated muscle group description\",\n  \"category\": \"core\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/muscle-groups/{{muscle_group_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "muscle-groups", "{{muscle_group_id}}"]
+            },
+            "description": "Update an existing muscle group"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Muscle Group",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/muscle-groups/{{muscle_group_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "muscle-groups", "{{muscle_group_id}}"]
+            },
+            "description": "Delete a muscle group"
+          },
+          "response": []
+        }
+      ],
+      "description": "Muscle group management endpoints"
+    },
+    {
+      "name": "Exercises",
+      "item": [
+        {
+          "name": "Create Exercise",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('exercise_id', jsonData.id);",
+                  "    pm.test('Exercise created successfully', function () {",
+                  "        pm.expect(jsonData.id).to.be.a('string');",
+                  "        pm.expect(jsonData.name).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Custom Push-ups\",\n  \"description\": \"A custom bodyweight exercise targeting chest, shoulders, and triceps\",\n  \"equipment\": \"none\",\n  \"is_bodyweight\": true,\n  \"instructions\": \"Start in a plank position, lower your body until your chest nearly touches the floor, then push back up.\",\n  \"muscle_groups\": [\n    {\n      \"muscle_group_id\": \"{{muscle_group_id}}\",\n      \"primary\": true,\n      \"intensity\": \"high\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises"]
+            },
+            "description": "Create a new exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Exercises",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Exercises retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.exercises).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises"]
+            },
+            "description": "Get all exercises with optional filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exercise by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises", "{{exercise_id}}"]
+            },
+            "description": "Get a specific exercise by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Exercises",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises?search=push&muscle_group_id={{muscle_group_id}}&bodyweight=true&primary_only=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "push"
+                },
+                {
+                  "key": "muscle_group_id",
+                  "value": "{{muscle_group_id}}"
+                },
+                {
+                  "key": "bodyweight",
+                  "value": "true"
+                },
+                {
+                  "key": "primary_only",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Search exercises with filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Exercise",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Push-ups\",\n  \"description\": \"An updated bodyweight exercise targeting chest, shoulders, and triceps\",\n  \"equipment\": \"none\",\n  \"is_bodyweight\": true,\n  \"instructions\": \"Modified push-up instructions\",\n  \"video_url\": \"https://example.com/pushup-video\",\n  \"muscle_groups\": [\n    {\n      \"muscle_group_id\": \"{{muscle_group_id}}\",\n      \"primary\": true,\n      \"intensity\": \"high\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises", "{{exercise_id}}"]
+            },
+            "description": "Update an existing exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Exercise",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises", "{{exercise_id}}"]
+            },
+            "description": "Delete an exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Muscle Group to Exercise",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Muscle group assigned successfully', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.muscle_group_id).to.be.a('string');",
+                  "    pm.expect(jsonData.exercise_id).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"muscle_group_id\": \"{{muscle_group_id}}\",\n  \"primary\": true,\n  \"intensity\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}/muscle-groups",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises", "{{exercise_id}}", "muscle-groups"]
+            },
+            "description": "Assign a muscle group to an exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exercise Muscle Groups",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Exercise muscle groups retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.muscle_groups).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}/muscle-groups",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises", "{{exercise_id}}", "muscle-groups"]
+            },
+            "description": "Get all muscle groups assigned to an exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Muscle Group from Exercise",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}/muscle-groups/{{muscle_group_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises", "{{exercise_id}}", "muscle-groups", "{{muscle_group_id}}"]
+            },
+            "description": "Remove a muscle group from an exercise"
+          },
+          "response": []
+        }
+      ],
+      "description": "Exercise management endpoints with muscle group relationships"
+    },
+    {
+      "name": "Workout Plans",
+      "item": [
+        {
+          "name": "Create Workout Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('workout_plan_id', jsonData.id);",
+                  "    pm.test('Workout plan created successfully', function () {",
+                  "        pm.expect(jsonData.id).to.be.a('string');",
+                  "        pm.expect(jsonData.title).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Full Body Workout Plan\",\n  \"description\": \"A comprehensive 4-week full body workout plan for beginners\",\n  \"visibility\": \"private\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "workout-plans"]
+            },
+            "description": "Create a new workout plan"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Workout Plans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Workout plans retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.plans).to.be.an('array');",
+                  "    pm.expect(jsonData.total).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-plans?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "workout-plans"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all workout plans for the authenticated user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workout Plan by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-plans/{{workout_plan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "workout-plans", "{{workout_plan_id}}"]
+            },
+            "description": "Get a specific workout plan with associated workouts"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Workout Plan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Full Body Workout Plan\",\n  \"description\": \"An updated comprehensive 4-week full body workout plan\",\n  \"visibility\": \"public\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-plans/{{workout_plan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "workout-plans", "{{workout_plan_id}}"]
+            },
+            "description": "Update an existing workout plan"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Workout Plan",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-plans/{{workout_plan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "workout-plans", "{{workout_plan_id}}"]
+            },
+            "description": "Delete a workout plan"
+          },
+          "response": []
+        }
+      ],
+      "description": "Workout plan management endpoints"
+    },
+    {
+      "name": "Friends",
+      "item": [
+        {
+          "name": "Send Friend Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('friend_request_id', jsonData.id);",
+                  "    pm.test('Friend request sent successfully', function () {",
+                  "        pm.expect(jsonData.id).to.be.a('string');",
+                  "        pm.expect(jsonData.status).to.equal('pending');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"friend_email\": \"friend@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/friends/request",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "friends", "request"]
+            },
+            "description": "Send a friend request to another user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Friend Requests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Friend requests retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.requests).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/friends/requests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "friends", "requests"]
+            },
+            "description": "Get all pending friend requests"
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Friend Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/friends/requests/{{friend_request_id}}/accept",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "friends", "requests", "{{friend_request_id}}", "accept"]
+            },
+            "description": "Accept a friend request"
+          },
+          "response": []
+        },
+        {
+          "name": "Decline Friend Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/friends/requests/{{friend_request_id}}/decline",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "friends", "requests", "{{friend_request_id}}", "decline"]
+            },
+            "description": "Decline a friend request"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Friends List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Friends list retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.friends).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/friends",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "friends"]
+            },
+            "description": "Get all accepted friends"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Friend",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/friends/{{friend_request_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "friends", "{{friend_request_id}}"]
+            },
+            "description": "Remove a friend"
+          },
+          "response": []
+        }
+      ],
+      "description": "Friend system endpoints"
+    },
+    {
+      "name": "Legacy Routes",
+      "item": [
+        {
+          "name": "Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Dashboard accessible', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('dashboard');",
+                  "    pm.expect(jsonData.user_id).to.be.a('string');",
+                  "    pm.expect(jsonData.email).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "dashboard"]
+            },
+            "description": "Get user dashboard (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workouts (Legacy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Workouts retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('workouts');",
+                  "    pm.expect(jsonData.workouts).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "workouts"]
+            },
+            "description": "Get user workouts (legacy endpoint)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Nutrition",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Nutrition data retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('nutrition');",
+                  "    pm.expect(jsonData.meals).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/nutrition",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "nutrition"]
+            },
+            "description": "Get user nutrition data (requires authentication)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Legacy endpoints for backwards compatibility"
+    },
+    {
+      "name": "Error Scenarios",
+      "item": [
+        {
+          "name": "Login with Invalid Credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invalid credentials rejected', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.include('Invalid credentials');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"wrong@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Test invalid login credentials"
+          },
+          "response": []
+        },
+        {
+          "name": "Access Protected Route Without Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Unauthorized access rejected', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.include('Authorization header is required');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises"]
+            },
+            "description": "Test accessing protected route without token"
+          },
+          "response": []
+        },
+        {
+          "name": "Access Protected Route With Invalid Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invalid token rejected', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.include('Invalid token');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid_token_here"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises"]
+            },
+            "description": "Test accessing protected route with invalid token"
+          },
+          "response": []
+        },
+        {
+          "name": "Register with Existing Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Duplicate email rejected', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.include('User already exists');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"password123\",\n  \"first_name\": \"Jane\",\n  \"last_name\": \"Smith\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Test registering with an email that already exists"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Exercise with Duplicate Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Duplicate exercise name rejected', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.include('already exists');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Push-ups\",\n  \"description\": \"Duplicate exercise\",\n  \"muscle_group\": \"chest\",\n  \"equipment\": \"none\",\n  \"is_bodyweight\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises"]
+            },
+            "description": "Test creating exercise with duplicate name"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Friend Request to Self",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Friend request to self rejected', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.include('Cannot send friend request to yourself');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"friend_email\": \"{{test_email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/friends/request",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "friends", "request"]
+            },
+            "description": "Test sending friend request to yourself"
+          },
+          "response": []
+        }
+      ],
+      "description": "Test error scenarios and validation"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "// Auto-generate unique email for testing if needed",
+          "if (!pm.environment.get('test_email')) {",
+          "    const timestamp = Date.now();",
+          "    pm.environment.set('test_email', `test${timestamp}@example.com`);",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has correct content type', function () {",
+          "    if (pm.response.headers.get('Content-Type')) {",
+          "        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "    }",
+          "});",
+          "",
+          "// Log response for debugging",
+          "if (pm.response.code >= 400) {",
+          "    console.log('Error Response:', pm.response.text());",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "language",
+      "value": "en",
+      "type": "string",
+      "description": "Language preference (en, es, fr)"
+    }
+  ]
+}

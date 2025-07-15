@@ -1,0 +1,65 @@
+{
+  "auth": {
+    "login_success": "Inicio de sesión exitoso",
+    "login_failed": "Credenciales inválidas",
+    "register_success": "Registro exitoso",
+    "register_failed": "Registro fallido",
+    "token_invalid": "Token inválido",
+    "token_expired": "Token expirado",
+    "token_missing": "Token faltante",
+    "unauthorized": "Acceso no autorizado",
+    "forbidden": "Acceso prohibido"
+  },
+  "validation": {
+    "required_field": "Este campo es obligatorio",
+    "invalid_email": "Formato de email inválido",
+    "password_too_short": "La contraseña debe tener al menos 8 caracteres",
+    "invalid_format": "Formato inválido",
+    "invalid_uuid": "Formato UUID inválido"
+  },
+  "user": {
+    "not_found": "Usuario no encontrado",
+    "created": "Usuario creado exitosamente",
+    "updated": "Usuario actualizado exitosamente",
+    "deleted": "Usuario eliminado exitosamente",
+    "profile_updated": "Perfil actualizado exitosamente",
+    "email_exists": "El email ya existe",
+    "invalid_credentials": "Credenciales inválidas"
+  },
+  "exercise": {
+    "not_found": "Ejercicio no encontrado",
+    "created": "Ejercicio creado exitosamente",
+    "updated": "Ejercicio actualizado exitosamente",
+    "deleted": "Ejercicio eliminado exitosamente",
+    "list_retrieved": "Ejercicios obtenidos exitosamente",
+    "muscle_groups_assigned": "Grupos musculares asignados exitosamente",
+    "muscle_groups_removed": "Grupos musculares removidos exitosamente"
+  },
+  "muscle_group": {
+    "not_found": "Grupo muscular no encontrado",
+    "created": "Grupo muscular creado exitosamente",
+    "updated": "Grupo muscular actualizado exitosamente",
+    "deleted": "Grupo muscular eliminado exitosamente",
+    "list_retrieved": "Grupos musculares obtenidos exitosamente",
+    "already_assigned": "Grupo muscular ya asignado al ejercicio",
+    "not_assigned": "Grupo muscular no asignado al ejercicio"
+  },
+  "workout": {
+    "not_found": "Entrenamiento no encontrado",
+    "created": "Entrenamiento creado exitosamente",
+    "updated": "Entrenamiento actualizado exitosamente",
+    "deleted": "Entrenamiento eliminado exitosamente",
+    "list_retrieved": "Entrenamientos obtenidos exitosamente",
+    "started": "Entrenamiento iniciado exitosamente",
+    "completed": "Entrenamiento completado exitosamente"
+  },
+  "general": {
+    "success": "Operación exitosa",
+    "error": "Ocurrió un error",
+    "not_found": "Recurso no encontrado",
+    "bad_request": "Solicitud incorrecta",
+    "internal_error": "Error interno del servidor",
+    "permission_denied": "Permiso denegado",
+    "admin_required": "Acceso de administrador requerido"
+  }
+}

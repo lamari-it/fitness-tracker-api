@@ -1,0 +1,65 @@
+{
+  "auth": {
+    "login_success": "Login successful",
+    "login_failed": "Invalid credentials",
+    "register_success": "Registration successful",
+    "register_failed": "Registration failed",
+    "token_invalid": "Invalid token",
+    "token_expired": "Token expired",
+    "token_missing": "Token missing",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Access forbidden"
+  },
+  "validation": {
+    "required_field": "This field is required",
+    "invalid_email": "Invalid email format",
+    "password_too_short": "Password must be at least 8 characters",
+    "invalid_format": "Invalid format",
+    "invalid_uuid": "Invalid UUID format"
+  },
+  "user": {
+    "not_found": "User not found",
+    "created": "User created successfully",
+    "updated": "User updated successfully",
+    "deleted": "User deleted successfully",
+    "profile_updated": "Profile updated successfully",
+    "email_exists": "Email already exists",
+    "invalid_credentials": "Invalid credentials"
+  },
+  "exercise": {
+    "not_found": "Exercise not found",
+    "created": "Exercise created successfully",
+    "updated": "Exercise updated successfully",
+    "deleted": "Exercise deleted successfully",
+    "list_retrieved": "Exercises retrieved successfully",
+    "muscle_groups_assigned": "Muscle groups assigned successfully",
+    "muscle_groups_removed": "Muscle groups removed successfully"
+  },
+  "muscle_group": {
+    "not_found": "Muscle group not found",
+    "created": "Muscle group created successfully",
+    "updated": "Muscle group updated successfully",
+    "deleted": "Muscle group deleted successfully",
+    "list_retrieved": "Muscle groups retrieved successfully",
+    "already_assigned": "Muscle group already assigned to exercise",
+    "not_assigned": "Muscle group not assigned to exercise"
+  },
+  "workout": {
+    "not_found": "Workout not found",
+    "created": "Workout created successfully",
+    "updated": "Workout updated successfully",
+    "deleted": "Workout deleted successfully",
+    "list_retrieved": "Workouts retrieved successfully",
+    "started": "Workout started successfully",
+    "completed": "Workout completed successfully"
+  },
+  "general": {
+    "success": "Operation successful",
+    "error": "An error occurred",
+    "not_found": "Resource not found",
+    "bad_request": "Bad request",
+    "internal_error": "Internal server error",
+    "permission_denied": "Permission denied",
+    "admin_required": "Admin access required"
+  }
+}
