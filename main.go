@@ -12,7 +12,7 @@ import (
 func main() {
 	config.LoadConfig()
 	database.ConnectDB()
-	database.AutoMigrate()
+	database.InitializeDB()
 	database.SeedDatabase()
 
 	r := gin.Default()

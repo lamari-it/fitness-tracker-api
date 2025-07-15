@@ -108,7 +108,7 @@ func (emg *ExerciseMuscleGroup) Validate() error {
 	if emg.ExerciseID == uuid.Nil || emg.MuscleGroupID == uuid.Nil {
 		return gorm.ErrInvalidValue
 	}
-	
+
 	validIntensities := []string{"high", "moderate", "low"}
 	if emg.Intensity != "" {
 		valid := false
@@ -122,6 +122,6 @@ func (emg *ExerciseMuscleGroup) Validate() error {
 			return gorm.ErrInvalidValue
 		}
 	}
-	
+
 	return nil
 }

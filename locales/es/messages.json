@@ -54,6 +54,23 @@
     "started": "Entrenamiento iniciado exitosamente",
     "completed": "Entrenamiento completado exitosamente"
   },
+  "equipment": {
+    "not_found": "Equipo no encontrado",
+    "created": "Equipo creado exitosamente",
+    "updated": "Equipo actualizado exitosamente",
+    "deleted": "Equipo eliminado exitosamente",
+    "list_retrieved": "Equipos obtenidos exitosamente",
+    "already_exists": "Ya existe un equipo con este nombre",
+    "create_failed": "Error al crear el equipo",
+    "update_failed": "Error al actualizar el equipo",
+    "delete_failed": "Error al eliminar el equipo",
+    "in_use": "El equipo está siendo utilizado por ejercicios y no puede ser eliminado",
+    "assigned": "Equipo asignado al ejercicio exitosamente",
+    "already_assigned": "El equipo ya está asignado a este ejercicio",
+    "not_assigned": "El equipo no está asignado a este ejercicio",
+    "assign_failed": "Error al asignar el equipo al ejercicio",
+    "remove_failed": "Error al remover el equipo del ejercicio"
+  },
   "general": {
     "success": "Operación exitosa",
     "error": "Ocurrió un error",

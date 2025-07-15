@@ -77,9 +77,16 @@ Authorization: Bearer <jwt_token>
 {
   "name": "Push-ups",
   "description": "A bodyweight exercise targeting chest, shoulders, and triceps",
-  "muscle_group": "chest",
-  "equipment": "none",
-  "is_bodyweight": true
+  "is_bodyweight": true,
+  "instructions": "Start in plank position, lower your body until chest nearly touches the floor.",
+  "video_url": "https://example.com/pushup-video",
+  "muscle_groups": [
+    {
+      "muscle_group_id": "uuid",
+      "primary": true,
+      "intensity": "high"
+    }
+  ]
 }
 ```
 
@@ -88,9 +95,9 @@ Authorization: Bearer <jwt_token>
 - **Headers:** Authorization: Bearer <token>
 - **Query Parameters:**
   - `search` - Search by name
-  - `muscle_group` - Filter by muscle group
-  - `equipment` - Filter by equipment
+  - `muscle_group_id` - Filter by muscle group
   - `bodyweight` - Filter by bodyweight (true/false)
+  - `primary_only` - Filter by primary muscle groups only
 
 ### Get Exercise by ID
 - **GET** `/exercises/:id`
@@ -104,6 +111,76 @@ Authorization: Bearer <jwt_token>
 ### Delete Exercise
 - **DELETE** `/exercises/:id`
 - **Headers:** Authorization: Bearer <token>
+
+### Assign Equipment to Exercise
+- **POST** `/exercises/:exercise_id/equipment`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "equipment_id": "uuid",
+  "optional": false,
+  "notes": "Use standard barbell"
+}
+```
+
+### Get Exercise Equipment
+- **GET** `/exercises/:exercise_id/equipment`
+- **Headers:** Authorization: Bearer <token>
+
+### Remove Equipment from Exercise
+- **DELETE** `/exercises/:exercise_id/equipment/:equipment_id`
+- **Headers:** Authorization: Bearer <token>
+
+---
+
+## Equipment Endpoints
+
+### Create Equipment
+- **POST** `/equipment`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "name": "Barbell",
+  "description": "Standard olympic barbell",
+  "category": "free_weight",
+  "image_url": "https://example.com/barbell.jpg"
+}
+```
+- **Categories:** machine, free_weight, cable, cardio, other
+
+### Get All Equipment
+- **GET** `/equipment`
+- **Headers:** Authorization: Bearer <token>
+- **Query Parameters:**
+  - `search` - Search by name
+  - `category` - Filter by category
+  - `page` - Page number (default: 1)
+  - `limit` - Items per page (default: 10, max: 100)
+
+### Get Equipment by ID
+- **GET** `/equipment/:id`
+- **Headers:** Authorization: Bearer <token>
+- **Response:** Equipment details with exercise count
+
+### Update Equipment
+- **PUT** `/equipment/:id`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "name": "Olympic Barbell",
+  "description": "45lb olympic barbell",
+  "category": "free_weight",
+  "image_url": "https://example.com/olympic-barbell.jpg"
+}
+```
+
+### Delete Equipment
+- **DELETE** `/equipment/:id`
+- **Headers:** Authorization: Bearer <token>
+- **Note:** Cannot delete if equipment is assigned to exercises
 
 ---
 
@@ -220,11 +297,38 @@ CREATE TABLE exercises (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
     description TEXT,
-    muscle_group TEXT,
-    equipment TEXT,
     is_bodyweight BOOLEAN DEFAULT false,
+    instructions TEXT,
+    video_url TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Equipment Table
+```sql
+CREATE TABLE equipment (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    category VARCHAR(50),
+    image_url TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Exercise Equipment Table
+```sql
+CREATE TABLE exercise_equipment (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    exercise_id UUID NOT NULL REFERENCES exercises(id) ON DELETE CASCADE,
+    equipment_id UUID NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+    optional BOOLEAN DEFAULT false,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(exercise_id, equipment_id)
 );
 ```
 

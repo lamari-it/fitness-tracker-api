@@ -54,6 +54,23 @@
     "started": "Workout started successfully",
     "completed": "Workout completed successfully"
   },
+  "equipment": {
+    "not_found": "Equipment not found",
+    "created": "Equipment created successfully",
+    "updated": "Equipment updated successfully",
+    "deleted": "Equipment deleted successfully",
+    "list_retrieved": "Equipment retrieved successfully",
+    "already_exists": "Equipment with this name already exists",
+    "create_failed": "Failed to create equipment",
+    "update_failed": "Failed to update equipment",
+    "delete_failed": "Failed to delete equipment",
+    "in_use": "Equipment is being used by exercises and cannot be deleted",
+    "assigned": "Equipment assigned to exercise successfully",
+    "already_assigned": "Equipment already assigned to this exercise",
+    "not_assigned": "Equipment not assigned to this exercise",
+    "assign_failed": "Failed to assign equipment to exercise",
+    "remove_failed": "Failed to remove equipment from exercise"
+  },
   "general": {
     "success": "Operation successful",
     "error": "An error occurred",

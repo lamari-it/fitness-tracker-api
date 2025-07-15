@@ -80,6 +80,21 @@ func SetupRoutes(r *gin.Engine) {
 				exercises.POST("/:id/muscle-groups", controllers.AssignMuscleGroupToExercise)
 				exercises.GET("/:id/muscle-groups", controllers.GetExerciseMuscleGroups)
 				exercises.DELETE("/:id/muscle-groups/:muscle_group_id", controllers.RemoveMuscleGroupFromExercise)
+				
+				// Exercise-Equipment relationships
+				exercises.POST("/:exercise_id/equipment", controllers.AssignEquipmentToExercise)
+				exercises.GET("/:exercise_id/equipment", controllers.GetExerciseEquipment)
+				exercises.DELETE("/:exercise_id/equipment/:equipment_id", controllers.RemoveEquipmentFromExercise)
+			}
+
+			// Equipment
+			equipment := protected.Group("/equipment")
+			{
+				equipment.POST("/", controllers.CreateEquipment)
+				equipment.GET("/", controllers.GetAllEquipment)
+				equipment.GET("/:id", controllers.GetEquipmentByID)
+				equipment.PUT("/:id", controllers.UpdateEquipment)
+				equipment.DELETE("/:id", controllers.DeleteEquipment)
 			}
 
 			// Workout Plans

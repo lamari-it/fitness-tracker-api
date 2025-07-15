@@ -9,9 +9,10 @@ A Go REST API with PostgreSQL, GORM, JWT authentication, and OAuth integration f
 - Google OAuth integration
 - Apple Sign-In integration
 - PostgreSQL database with GORM ORM
-- Automatic database migrations
+- Database migrations with golang-migrate
 - Protected routes with middleware
 - CORS support
+- Multi-language support (i18n)
 
 ## Setup
 
@@ -53,6 +54,54 @@ go run main.go
 ```
 
 The server will start on port 8080.
+
+## Database Migrations
+
+This project supports two database schema management approaches:
+
+### 1. GORM AutoMigrate (Default)
+The default approach uses GORM's AutoMigrate feature for development:
+```bash
+# Uses GORM AutoMigrate (default)
+go run main.go
+```
+
+### 2. golang-migrate (Recommended for Production)
+For production deployments, use proper database migrations:
+
+#### Install migration tool:
+```bash
+make install-migrate
+```
+
+#### Migration commands:
+```bash
+# Run all migrations
+make migrate-up
+
+# Rollback last migration
+make migrate-down-1
+
+# Rollback all migrations (destructive)
+make migrate-down
+
+# Check migration status
+make migrate-version
+
+# Create new migration
+make migrate-create NAME=add_new_table
+
+# Development reset (drop all and recreate)
+make dev-reset
+```
+
+#### Enable migrations in application:
+Set `USE_MIGRATIONS=true` in your `.env` file to use golang-migrate instead of GORM AutoMigrate.
+
+#### Migration files:
+All migration files are located in the `migrations/` directory with the following naming convention:
+- `000001_migration_name.up.sql` - Forward migration
+- `000001_migration_name.down.sql` - Rollback migration
 
 ## API Endpoints
 
@@ -167,6 +216,7 @@ GET /health
 | DB_PASSWORD | Database password | |
 | DB_NAME | Database name | fitflow |
 | DB_SSLMODE | SSL mode | disable |
+| USE_MIGRATIONS | Use golang-migrate instead of GORM AutoMigrate | false |
 | JWT_SECRET | JWT signing secret | |
 | JWT_EXPIRES_IN | JWT expiration time | 24h |
 | GOOGLE_CLIENT_ID | Google OAuth client ID | |
@@ -186,11 +236,15 @@ fit-flow-api/
 ├── controllers/    # HTTP handlers
 ├── database/       # Database connection and migrations
 ├── middleware/     # HTTP middleware
+├── migrations/     # Database migration files
 ├── models/         # Data models
 ├── routes/         # Route definitions
 ├── utils/          # Utility functions
+├── locales/        # Translation files
+├── postman/        # Postman collection
 ├── main.go         # Application entry point
 ├── go.mod          # Go module dependencies
+├── Makefile        # Build and migration commands
 └── README.md       # This file
 ```
 
@@ -223,16 +277,40 @@ fit-flow-api/
 
 ## Development
 
-To run in development mode:
-
+### Quick Start
 ```bash
-go run main.go
+# Install dependencies
+make deps
+
+# Run with GORM AutoMigrate (development)
+make run
+
+# Run with auto-reload
+make dev
 ```
 
-To build for production:
-
+### Production Build
 ```bash
-go build -o fitflow-api main.go
+# Build for production
+make build
+
+# Build for production (optimized)
+make build-prod
+```
+
+### Database Management
+```bash
+# Show all available commands
+make help
+
+# Install migration tool
+make install-migrate
+
+# Run migrations
+make migrate-up
+
+# Reset database (development)
+make dev-reset
 ```
 
 ## License

@@ -54,6 +54,23 @@
     "started": "Entraînement démarré avec succès",
     "completed": "Entraînement terminé avec succès"
   },
+  "equipment": {
+    "not_found": "Équipement non trouvé",
+    "created": "Équipement créé avec succès",
+    "updated": "Équipement mis à jour avec succès",
+    "deleted": "Équipement supprimé avec succès",
+    "list_retrieved": "Équipements récupérés avec succès",
+    "already_exists": "Un équipement avec ce nom existe déjà",
+    "create_failed": "Échec de la création de l'équipement",
+    "update_failed": "Échec de la mise à jour de l'équipement",
+    "delete_failed": "Échec de la suppression de l'équipement",
+    "in_use": "L'équipement est utilisé par des exercices et ne peut pas être supprimé",
+    "assigned": "Équipement assigné à l'exercice avec succès",
+    "already_assigned": "L'équipement est déjà assigné à cet exercice",
+    "not_assigned": "L'équipement n'est pas assigné à cet exercice",
+    "assign_failed": "Échec de l'assignation de l'équipement à l'exercice",
+    "remove_failed": "Échec de la suppression de l'équipement de l'exercice"
+  },
   "general": {
     "success": "Opération réussie",
     "error": "Une erreur s'est produite",

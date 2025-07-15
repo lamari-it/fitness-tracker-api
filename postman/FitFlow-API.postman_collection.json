@@ -642,7 +642,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Custom Push-ups\",\n  \"description\": \"A custom bodyweight exercise targeting chest, shoulders, and triceps\",\n  \"equipment\": \"none\",\n  \"is_bodyweight\": true,\n  \"instructions\": \"Start in a plank position, lower your body until your chest nearly touches the floor, then push back up.\",\n  \"muscle_groups\": [\n    {\n      \"muscle_group_id\": \"{{muscle_group_id}}\",\n      \"primary\": true,\n      \"intensity\": \"high\"\n    }\n  ]\n}"
+              "raw": "{\n  \"name\": \"Custom Push-ups\",\n  \"description\": \"A custom bodyweight exercise targeting chest, shoulders, and triceps\",\n  \"is_bodyweight\": true,\n  \"instructions\": \"Start in a plank position, lower your body until your chest nearly touches the floor, then push back up.\",\n  \"video_url\": \"https://example.com/pushup-video\",\n  \"muscle_groups\": [\n    {\n      \"muscle_group_id\": \"{{muscle_group_id}}\",\n      \"primary\": true,\n      \"intensity\": \"high\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/exercises",
@@ -759,7 +759,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Push-ups\",\n  \"description\": \"An updated bodyweight exercise targeting chest, shoulders, and triceps\",\n  \"equipment\": \"none\",\n  \"is_bodyweight\": true,\n  \"instructions\": \"Modified push-up instructions\",\n  \"video_url\": \"https://example.com/pushup-video\",\n  \"muscle_groups\": [\n    {\n      \"muscle_group_id\": \"{{muscle_group_id}}\",\n      \"primary\": true,\n      \"intensity\": \"high\"\n    }\n  ]\n}"
+              "raw": "{\n  \"name\": \"Updated Push-ups\",\n  \"description\": \"An updated bodyweight exercise targeting chest, shoulders, and triceps\",\n  \"is_bodyweight\": true,\n  \"instructions\": \"Modified push-up instructions\",\n  \"video_url\": \"https://example.com/pushup-video\",\n  \"muscle_groups\": [\n    {\n      \"muscle_group_id\": \"{{muscle_group_id}}\",\n      \"primary\": true,\n      \"intensity\": \"high\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}",
@@ -884,9 +884,268 @@
             "description": "Remove a muscle group from an exercise"
           },
           "response": []
+        },
+        {
+          "name": "Assign Equipment to Exercise",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Equipment assigned successfully', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.equipment_id).to.be.a('string');",
+                  "    pm.expect(jsonData.exercise_id).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"equipment_id\": \"{{equipment_id}}\",\n  \"optional\": false,\n  \"notes\": \"Use standard barbell\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}/equipment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises", "{{exercise_id}}", "equipment"]
+            },
+            "description": "Assign equipment to an exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exercise Equipment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Exercise equipment retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.equipment).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}/equipment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises", "{{exercise_id}}", "equipment"]
+            },
+            "description": "Get all equipment assigned to an exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Equipment from Exercise",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}/equipment/{{equipment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises", "{{exercise_id}}", "equipment", "{{equipment_id}}"]
+            },
+            "description": "Remove equipment from an exercise"
+          },
+          "response": []
         }
       ],
-      "description": "Exercise management endpoints with muscle group relationships"
+      "description": "Exercise management endpoints with muscle group and equipment relationships"
+    },
+    {
+      "name": "Equipment",
+      "item": [
+        {
+          "name": "Create Equipment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('equipment_id', jsonData.id);",
+                  "    pm.test('Equipment created successfully', function () {",
+                  "        pm.expect(jsonData.id).to.be.a('string');",
+                  "        pm.expect(jsonData.name).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Barbell\",\n  \"description\": \"Standard olympic barbell\",\n  \"category\": \"free_weight\",\n  \"image_url\": \"https://example.com/barbell.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/equipment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "equipment"]
+            },
+            "description": "Create a new equipment item"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Equipment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Equipment retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.equipment).to.be.an('array');",
+                  "    pm.expect(jsonData.total).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/equipment?search=barbell&category=free_weight",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "equipment"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "barbell",
+                  "description": "Search equipment by name"
+                },
+                {
+                  "key": "category",
+                  "value": "free_weight",
+                  "description": "Filter by category (machine, free_weight, cable, cardio, other)"
+                }
+              ]
+            },
+            "description": "Get all equipment with optional filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Equipment by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/equipment/{{equipment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "equipment", "{{equipment_id}}"]
+            },
+            "description": "Get a specific equipment with associated exercises"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Equipment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Olympic Barbell\",\n  \"description\": \"45lb olympic barbell\",\n  \"category\": \"free_weight\",\n  \"image_url\": \"https://example.com/olympic-barbell.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/equipment/{{equipment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "equipment", "{{equipment_id}}"]
+            },
+            "description": "Update an existing equipment"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Equipment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/equipment/{{equipment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "equipment", "{{equipment_id}}"]
+            },
+            "description": "Delete equipment (will fail if assigned to exercises)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Equipment management endpoints"
     },
     {
       "name": "Workout Plans",

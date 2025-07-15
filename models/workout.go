@@ -39,7 +39,6 @@ type Exercise struct {
 	ID           uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	Name         string    `gorm:"type:text;not null;unique" json:"name"`
 	Description  string    `gorm:"type:text" json:"description"`
-	Equipment    string    `gorm:"type:text" json:"equipment"`
 	IsBodyweight bool      `gorm:"default:false" json:"is_bodyweight"`
 	Instructions string    `gorm:"type:text" json:"instructions"`
 	VideoURL     string    `gorm:"type:text" json:"video_url"`
@@ -50,6 +49,7 @@ type Exercise struct {
 	WorkoutExercises []WorkoutExercise     `gorm:"foreignKey:ExerciseID" json:"workout_exercises,omitempty"`
 	ExerciseLogs     []ExerciseLog         `gorm:"foreignKey:ExerciseID" json:"exercise_logs,omitempty"`
 	MuscleGroups     []ExerciseMuscleGroup `gorm:"foreignKey:ExerciseID" json:"muscle_groups,omitempty"`
+	Equipment        []ExerciseEquipment   `gorm:"foreignKey:ExerciseID" json:"equipment,omitempty"`
 }
 
 type WorkoutExercise struct {
