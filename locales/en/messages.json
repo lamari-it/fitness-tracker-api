@@ -4,6 +4,7 @@
     "login_failed": "Invalid credentials",
     "register_success": "Registration successful",
     "register_failed": "Registration failed",
+    "password_mismatch": "Passwords do not match",
     "token_invalid": "Invalid token",
     "token_expired": "Token expired",
     "token_missing": "Token missing",

@@ -25,11 +25,13 @@ Authorization: Bearer <jwt_token>
 {
   "email": "user@example.com",
   "password": "password123",
+  "password_confirm": "password123",
   "first_name": "John",
   "last_name": "Doe"
 }
 ```
 - **Response:** User object with JWT token
+- **Validation:** Password and password_confirm must match
 
 ### Login User
 - **POST** `/auth/login`
