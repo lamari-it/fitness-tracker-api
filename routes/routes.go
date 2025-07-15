@@ -82,9 +82,9 @@ func SetupRoutes(r *gin.Engine) {
 				exercises.DELETE("/:id/muscle-groups/:muscle_group_id", controllers.RemoveMuscleGroupFromExercise)
 				
 				// Exercise-Equipment relationships
-				exercises.POST("/:exercise_id/equipment", controllers.AssignEquipmentToExercise)
-				exercises.GET("/:exercise_id/equipment", controllers.GetExerciseEquipment)
-				exercises.DELETE("/:exercise_id/equipment/:equipment_id", controllers.RemoveEquipmentFromExercise)
+				exercises.POST("/:id/equipment", controllers.AssignEquipmentToExercise)
+				exercises.GET("/:id/equipment", controllers.GetExerciseEquipment)
+				exercises.DELETE("/:id/equipment/:equipment_id", controllers.RemoveEquipmentFromExercise)
 			}
 
 			// Equipment
@@ -95,6 +95,34 @@ func SetupRoutes(r *gin.Engine) {
 				equipment.GET("/:id", controllers.GetEquipmentByID)
 				equipment.PUT("/:id", controllers.UpdateEquipment)
 				equipment.DELETE("/:id", controllers.DeleteEquipment)
+			}
+
+			// Fitness Levels
+			fitnessLevels := protected.Group("/fitness-levels")
+			{
+				fitnessLevels.GET("/", controllers.GetAllFitnessLevels)
+				fitnessLevels.GET("/:id", controllers.GetFitnessLevel)
+				fitnessLevels.POST("/", controllers.CreateFitnessLevel)
+				fitnessLevels.PUT("/:id", controllers.UpdateFitnessLevel)
+				fitnessLevels.DELETE("/:id", controllers.DeleteFitnessLevel)
+			}
+
+			// Fitness Goals
+			fitnessGoals := protected.Group("/fitness-goals")
+			{
+				fitnessGoals.GET("/", controllers.GetAllFitnessGoals)
+				fitnessGoals.GET("/:id", controllers.GetFitnessGoal)
+				fitnessGoals.POST("/", controllers.CreateFitnessGoal)
+				fitnessGoals.PUT("/:id", controllers.UpdateFitnessGoal)
+				fitnessGoals.DELETE("/:id", controllers.DeleteFitnessGoal)
+			}
+
+			// User Fitness Settings
+			userFitness := protected.Group("/user/fitness")
+			{
+				userFitness.GET("/goals", controllers.GetUserFitnessGoals)
+				userFitness.PUT("/goals", controllers.SetUserFitnessGoals)
+				userFitness.PUT("/level", controllers.UpdateUserFitnessLevel)
 			}
 
 			// Workout Plans

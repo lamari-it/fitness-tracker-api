@@ -71,6 +71,12 @@
     "assign_failed": "Failed to assign equipment to exercise",
     "remove_failed": "Failed to remove equipment from exercise"
   },
+  "fitness": {
+    "level_not_found": "Fitness level not found",
+    "level_name_exists": "Fitness level with this name already exists",
+    "goal_not_found": "Fitness goal not found",
+    "goal_name_exists": "Fitness goal with this name already exists"
+  },
   "general": {
     "success": "Operation successful",
     "error": "An error occurred",

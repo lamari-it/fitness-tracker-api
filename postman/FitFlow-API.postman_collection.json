@@ -1148,6 +1148,347 @@
       "description": "Equipment management endpoints"
     },
     {
+      "name": "Fitness Levels",
+      "item": [
+        {
+          "name": "Get All Fitness Levels",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fitness-levels",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fitness-levels"]
+            },
+            "description": "Get all fitness levels sorted by sort_order"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Fitness Level by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fitness-levels/{{fitness_level_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fitness-levels", "{{fitness_level_id}}"]
+            },
+            "description": "Get a specific fitness level with user count"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Fitness Level",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('fitness_level_id', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Expert\",\n  \"description\": \"Professional athlete level\",\n  \"sort_order\": 4\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/fitness-levels",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fitness-levels"]
+            },
+            "description": "Create a new fitness level"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Fitness Level",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Expert\",\n  \"description\": \"Elite athlete level\",\n  \"sort_order\": 4\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/fitness-levels/{{fitness_level_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fitness-levels", "{{fitness_level_id}}"]
+            },
+            "description": "Update an existing fitness level"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Fitness Level",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fitness-levels/{{fitness_level_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fitness-levels", "{{fitness_level_id}}"]
+            },
+            "description": "Delete fitness level (will fail if users are assigned)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Fitness level management endpoints"
+    },
+    {
+      "name": "Fitness Goals",
+      "item": [
+        {
+          "name": "Get All Fitness Goals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fitness-goals",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fitness-goals"]
+            },
+            "description": "Get all fitness goals"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Fitness Goal by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fitness-goals/{{fitness_goal_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fitness-goals", "{{fitness_goal_id}}"]
+            },
+            "description": "Get a specific fitness goal with user count"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Fitness Goal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('fitness_goal_id', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cardiovascular Health\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/fitness-goals",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fitness-goals"]
+            },
+            "description": "Create a new fitness goal"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Fitness Goal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Heart Health\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/fitness-goals/{{fitness_goal_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fitness-goals", "{{fitness_goal_id}}"]
+            },
+            "description": "Update an existing fitness goal"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Fitness Goal",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/fitness-goals/{{fitness_goal_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "fitness-goals", "{{fitness_goal_id}}"]
+            },
+            "description": "Delete fitness goal (will fail if users have selected it)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Fitness goal management endpoints"
+    },
+    {
+      "name": "User Fitness Settings",
+      "item": [
+        {
+          "name": "Get User Fitness Goals",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/fitness-goals",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "fitness-goals"]
+            },
+            "description": "Get current user's selected fitness goals"
+          },
+          "response": []
+        },
+        {
+          "name": "Set User Fitness Goals",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"goal_ids\": [\"{{fitness_goal_id}}\", \"{{fitness_goal_id_2}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/fitness-goals",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "fitness-goals"]
+            },
+            "description": "Set user's fitness goals (replaces all existing goals)"
+          },
+          "response": []
+        },
+        {
+          "name": "Set User Fitness Level",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fitness_level_id\": \"{{fitness_level_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/fitness-level",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "fitness-level"]
+            },
+            "description": "Set user's fitness level"
+          },
+          "response": []
+        }
+      ],
+      "description": "User-specific fitness settings endpoints"
+    },
+    {
       "name": "Workout Plans",
       "item": [
         {

@@ -72,7 +72,6 @@ func SeedExercises() {
 			Exercise: models.Exercise{
 				Name:         "Push-ups",
 				Description:  "A bodyweight exercise targeting chest, shoulders, and triceps",
-				Equipment:    "none",
 				IsBodyweight: true,
 				Instructions: "Start in a plank position, lower your body until your chest nearly touches the floor, then push back up.",
 			},
@@ -90,7 +89,6 @@ func SeedExercises() {
 			Exercise: models.Exercise{
 				Name:         "Squats",
 				Description:  "A lower body exercise targeting quadriceps, glutes, and hamstrings",
-				Equipment:    "none",
 				IsBodyweight: true,
 				Instructions: "Stand with feet shoulder-width apart, lower your body as if sitting back into a chair, then stand back up.",
 			},
@@ -108,7 +106,6 @@ func SeedExercises() {
 			Exercise: models.Exercise{
 				Name:         "Deadlifts",
 				Description:  "A compound exercise targeting multiple muscle groups",
-				Equipment:    "barbell",
 				IsBodyweight: false,
 				Instructions: "Stand with feet hip-width apart, bend at hips and knees to lower down, then drive through heels to stand up.",
 			},
@@ -127,7 +124,6 @@ func SeedExercises() {
 			Exercise: models.Exercise{
 				Name:         "Pull-ups",
 				Description:  "A bodyweight exercise targeting back and biceps",
-				Equipment:    "pull-up bar",
 				IsBodyweight: true,
 				Instructions: "Hang from a bar with palms facing away, pull your body up until your chin clears the bar, then lower down.",
 			},
@@ -145,7 +141,6 @@ func SeedExercises() {
 			Exercise: models.Exercise{
 				Name:         "Planks",
 				Description:  "A core stability exercise",
-				Equipment:    "none",
 				IsBodyweight: true,
 				Instructions: "Hold a straight line from head to heels, supporting your body on forearms and toes.",
 			},
@@ -163,7 +158,6 @@ func SeedExercises() {
 			Exercise: models.Exercise{
 				Name:         "Burpees",
 				Description:  "A full-body exercise combining squat, push-up, and jump",
-				Equipment:    "none",
 				IsBodyweight: true,
 				Instructions: "Start standing, drop into a squat, kick back into plank, do a push-up, jump feet back to squat, then jump up.",
 			},
@@ -211,9 +205,61 @@ func SeedExercises() {
 	}
 }
 
+func SeedFitnessLevels() {
+	fitnessLevels := []models.FitnessLevel{
+		{Name: "Beginner", Description: "New to fitness or returning after a long break", SortOrder: 1},
+		{Name: "Intermediate", Description: "Regular exercise experience with good form knowledge", SortOrder: 2},
+		{Name: "Advanced", Description: "Experienced athlete with years of consistent training", SortOrder: 3},
+		{Name: "Elite", Description: "Competitive athlete or professional level fitness", SortOrder: 4},
+	}
+
+	for _, level := range fitnessLevels {
+		var existing models.FitnessLevel
+		if err := DB.Where("name = ?", level.Name).First(&existing).Error; err != nil {
+			if err := DB.Create(&level).Error; err != nil {
+				log.Printf("Failed to create fitness level %s: %v", level.Name, err)
+			} else {
+				log.Printf("Created fitness level: %s", level.Name)
+			}
+		} else {
+			log.Printf("Fitness level already exists: %s", level.Name)
+		}
+	}
+}
+
+func SeedFitnessGoals() {
+	fitnessGoals := []models.FitnessGoal{
+		{Name: "Weight Loss", Description: "Reduce body weight and body fat percentage", Category: "body_composition", IconName: "scale"},
+		{Name: "Muscle Gain", Description: "Build lean muscle mass and increase strength", Category: "body_composition", IconName: "dumbbell"},
+		{Name: "Endurance", Description: "Improve cardiovascular fitness and stamina", Category: "performance", IconName: "running"},
+		{Name: "Strength", Description: "Increase maximum strength and power output", Category: "performance", IconName: "weight"},
+		{Name: "Flexibility", Description: "Improve range of motion and mobility", Category: "wellness", IconName: "stretch"},
+		{Name: "General Fitness", Description: "Overall health and wellness improvement", Category: "wellness", IconName: "heart"},
+		{Name: "Athletic Performance", Description: "Sport-specific performance enhancement", Category: "performance", IconName: "trophy"},
+		{Name: "Rehabilitation", Description: "Recover from injury or medical condition", Category: "wellness", IconName: "medical"},
+		{Name: "Body Recomposition", Description: "Simultaneous fat loss and muscle gain", Category: "body_composition", IconName: "transform"},
+		{Name: "Stress Relief", Description: "Mental health and stress management through exercise", Category: "wellness", IconName: "mindfulness"},
+	}
+
+	for _, goal := range fitnessGoals {
+		var existing models.FitnessGoal
+		if err := DB.Where("name = ?", goal.Name).First(&existing).Error; err != nil {
+			if err := DB.Create(&goal).Error; err != nil {
+				log.Printf("Failed to create fitness goal %s: %v", goal.Name, err)
+			} else {
+				log.Printf("Created fitness goal: %s", goal.Name)
+			}
+		} else {
+			log.Printf("Fitness goal already exists: %s", goal.Name)
+		}
+	}
+}
+
 func SeedDatabase() {
 	log.Println("Starting database seeding...")
 	SeedMuscleGroups()
 	SeedExercises()
+	SeedFitnessLevels()
+	SeedFitnessGoals()
 	log.Println("Database seeding completed!")
 }

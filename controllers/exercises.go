@@ -44,7 +44,6 @@ func CreateExercise(c *gin.Context) {
 	exercise := models.Exercise{
 		Name:         req.Name,
 		Description:  req.Description,
-		Equipment:    req.Equipment,
 		IsBodyweight: req.IsBodyweight,
 		Instructions: req.Instructions,
 		VideoURL:     req.VideoURL,
@@ -202,7 +201,6 @@ func UpdateExercise(c *gin.Context) {
 
 	exercise.Name = req.Name
 	exercise.Description = req.Description
-	exercise.Equipment = req.Equipment
 	exercise.IsBodyweight = req.IsBodyweight
 	exercise.Instructions = req.Instructions
 	exercise.VideoURL = req.VideoURL

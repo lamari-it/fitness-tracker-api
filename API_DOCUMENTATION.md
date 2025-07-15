@@ -184,6 +184,118 @@ Authorization: Bearer <jwt_token>
 
 ---
 
+## Fitness Level Endpoints
+
+### Get All Fitness Levels
+- **GET** `/fitness-levels`
+- **Headers:** Authorization: Bearer <token>
+- **Response:** List of all fitness levels sorted by sort_order
+
+### Get Fitness Level by ID
+- **GET** `/fitness-levels/:id`
+- **Headers:** Authorization: Bearer <token>
+- **Response:** Fitness level details with user count
+
+### Create Fitness Level
+- **POST** `/fitness-levels`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "name": "Expert",
+  "description": "Professional athlete level",
+  "sort_order": 4
+}
+```
+
+### Update Fitness Level
+- **PUT** `/fitness-levels/:id`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "name": "Expert",
+  "description": "Elite athlete level",
+  "sort_order": 4
+}
+```
+
+### Delete Fitness Level
+- **DELETE** `/fitness-levels/:id`
+- **Headers:** Authorization: Bearer <token>
+- **Note:** Cannot delete if users are assigned to this level
+
+---
+
+## Fitness Goal Endpoints
+
+### Get All Fitness Goals
+- **GET** `/fitness-goals`
+- **Headers:** Authorization: Bearer <token>
+- **Response:** List of all fitness goals
+
+### Get Fitness Goal by ID
+- **GET** `/fitness-goals/:id`
+- **Headers:** Authorization: Bearer <token>
+- **Response:** Fitness goal details with user count
+
+### Create Fitness Goal
+- **POST** `/fitness-goals`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "name": "Cardiovascular Health"
+}
+```
+
+### Update Fitness Goal
+- **PUT** `/fitness-goals/:id`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "name": "Heart Health"
+}
+```
+
+### Delete Fitness Goal
+- **DELETE** `/fitness-goals/:id`
+- **Headers:** Authorization: Bearer <token>
+- **Note:** Cannot delete if users have selected this goal
+
+---
+
+## User Fitness Settings Endpoints
+
+### Get User Fitness Goals
+- **GET** `/users/fitness-goals`
+- **Headers:** Authorization: Bearer <token>
+- **Response:** List of user's selected fitness goals
+
+### Set User Fitness Goals
+- **PUT** `/users/fitness-goals`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "goal_ids": ["uuid1", "uuid2", "uuid3"]
+}
+```
+- **Note:** This replaces all existing goals with the provided list
+
+### Set User Fitness Level
+- **PUT** `/users/fitness-level`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "fitness_level_id": "uuid"
+}
+```
+
+---
+
 ## Workout Plan Endpoints
 
 ### Create Workout Plan
@@ -271,6 +383,7 @@ CREATE TABLE users (
     provider VARCHAR DEFAULT 'local',
     google_id VARCHAR UNIQUE,
     apple_id VARCHAR UNIQUE,
+    fitness_level_id UUID REFERENCES fitness_levels(id) ON DELETE SET NULL,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
@@ -329,6 +442,40 @@ CREATE TABLE exercise_equipment (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     UNIQUE(exercise_id, equipment_id)
+);
+```
+
+### Fitness Levels Table
+```sql
+CREATE TABLE fitness_levels (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Fitness Goals Table
+```sql
+CREATE TABLE fitness_goals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### User Fitness Goals Table
+```sql
+CREATE TABLE user_fitness_goals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    fitness_goal_id UUID NOT NULL REFERENCES fitness_goals(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, fitness_goal_id)
 );
 ```
 

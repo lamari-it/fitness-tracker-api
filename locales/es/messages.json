@@ -71,6 +71,12 @@
     "assign_failed": "Error al asignar el equipo al ejercicio",
     "remove_failed": "Error al remover el equipo del ejercicio"
   },
+  "fitness": {
+    "level_not_found": "Nivel de condición física no encontrado",
+    "level_name_exists": "Ya existe un nivel de condición física con este nombre",
+    "goal_not_found": "Objetivo de fitness no encontrado",
+    "goal_name_exists": "Ya existe un objetivo de fitness con este nombre"
+  },
   "general": {
     "success": "Operación exitosa",
     "error": "Ocurrió un error",
