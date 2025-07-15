@@ -143,12 +143,14 @@ Authorization: Bearer <jwt_token>
 ```json
 {
   "name": "Barbell",
+  "slug": "barbell",
   "description": "Standard olympic barbell",
   "category": "free_weight",
   "image_url": "https://example.com/barbell.jpg"
 }
 ```
 - **Categories:** machine, free_weight, cable, cardio, other
+- **Note:** Slug must be unique across all equipment
 
 ### Get All Equipment
 - **GET** `/equipment`
@@ -171,6 +173,7 @@ Authorization: Bearer <jwt_token>
 ```json
 {
   "name": "Olympic Barbell",
+  "slug": "olympic_barbell",
   "description": "45lb olympic barbell",
   "category": "free_weight",
   "image_url": "https://example.com/olympic-barbell.jpg"
@@ -269,28 +272,172 @@ Authorization: Bearer <jwt_token>
 ## User Fitness Settings Endpoints
 
 ### Get User Fitness Goals
-- **GET** `/users/fitness-goals`
+- **GET** `/user/fitness/goals`
 - **Headers:** Authorization: Bearer <token>
-- **Response:** List of user's selected fitness goals
+- **Response:** List of user's selected fitness goals with details
 
 ### Set User Fitness Goals
-- **PUT** `/users/fitness-goals`
+- **PUT** `/user/fitness/goals`
 - **Headers:** Authorization: Bearer <token>
 - **Body:**
 ```json
 {
-  "goal_ids": ["uuid1", "uuid2", "uuid3"]
+  "goals": [
+    {
+      "fitness_goal_id": "uuid1",
+      "priority": 1,
+      "target_date": "2024-12-31T00:00:00Z",
+      "notes": "Lose 20 pounds by end of year"
+    },
+    {
+      "fitness_goal_id": "uuid2",
+      "priority": 2,
+      "target_date": null,
+      "notes": "Build muscle mass"
+    }
+  ]
 }
 ```
 - **Note:** This replaces all existing goals with the provided list
+- **Priority:** 1 = primary, 2 = secondary, etc.
 
-### Set User Fitness Level
-- **PUT** `/users/fitness-level`
+### Update User Fitness Level
+- **PUT** `/user/fitness/level`
 - **Headers:** Authorization: Bearer <token>
 - **Body:**
 ```json
 {
   "fitness_level_id": "uuid"
+}
+```
+
+---
+
+## User Equipment Endpoints
+
+### Get User Equipment
+- **GET** `/user/equipment`
+- **Headers:** Authorization: Bearer <token>
+- **Query Parameters:**
+  - `location_type` - Filter by location (home, gym)
+- **Response:**
+```json
+{
+  "equipment": [
+    {
+      "id": "uuid",
+      "user_id": "uuid",
+      "equipment_id": "uuid",
+      "location_type": "home",
+      "gym_location": null,
+      "notes": "Adjustable 5-50lbs",
+      "equipment": {
+        "id": "uuid",
+        "name": "Dumbbells",
+        "slug": "dumbbells",
+        "description": "Adjustable or fixed weight dumbbells",
+        "category": "free_weight",
+        "image_url": null
+      },
+      "created_at": "2024-01-20T10:00:00Z",
+      "updated_at": "2024-01-20T10:00:00Z"
+    }
+  ],
+  "total": 1
+}
+```
+
+### Add User Equipment
+- **POST** `/user/equipment`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "equipment_id": "uuid",
+  "location_type": "home",
+  "gym_location": null,
+  "notes": "20lb dumbbells"
+}
+```
+- **Location Types:** home, gym
+- **Note:** Cannot add duplicate equipment for the same location
+
+### Bulk Add User Equipment
+- **POST** `/user/equipment/bulk`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "equipment": [
+    {
+      "equipment_id": "uuid1",
+      "location_type": "home",
+      "notes": "Adjustable 5-50lbs"
+    },
+    {
+      "equipment_id": "uuid2",
+      "location_type": "gym",
+      "gym_location": "Downtown Fitness",
+      "notes": null
+    }
+  ]
+}
+```
+- **Response:** List of created equipment entries
+- **Note:** Skips duplicates without error
+
+### Update User Equipment
+- **PUT** `/user/equipment/:id`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "location_type": "gym",
+  "gym_location": "Uptown Gym",
+  "notes": "Recently upgraded to 30lb"
+}
+```
+- **Note:** Can only update your own equipment
+
+### Remove User Equipment
+- **DELETE** `/user/equipment/:id`
+- **Headers:** Authorization: Bearer <token>
+- **Note:** Can only delete your own equipment
+
+### Get User Equipment by Location
+- **GET** `/user/equipment/location/:location`
+- **Headers:** Authorization: Bearer <token>
+- **Parameters:**
+  - `location` - Either "home" or "gym"
+- **Response:**
+```json
+{
+  "location": "home",
+  "equipment_by_category": {
+    "free_weight": [
+      {
+        "id": "uuid",
+        "equipment": {
+          "name": "Dumbbells",
+          "slug": "dumbbells",
+          "category": "free_weight"
+        },
+        "notes": "Adjustable 5-50lbs"
+      }
+    ],
+    "other": [
+      {
+        "id": "uuid",
+        "equipment": {
+          "name": "Resistance Bands",
+          "slug": "resistance_bands",
+          "category": "other"
+        },
+        "notes": "Light, medium, heavy bands"
+      }
+    ]
+  },
+  "total": 2
 }
 ```
 
@@ -423,6 +570,7 @@ CREATE TABLE exercises (
 CREATE TABLE equipment (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL UNIQUE,
+    slug VARCHAR(100) UNIQUE,
     description TEXT,
     category VARCHAR(50),
     image_url TEXT,
@@ -442,6 +590,21 @@ CREATE TABLE exercise_equipment (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     UNIQUE(exercise_id, equipment_id)
+);
+```
+
+### User Equipment Table
+```sql
+CREATE TABLE user_equipment (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    equipment_id UUID NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+    location_type VARCHAR(10) NOT NULL CHECK (location_type IN ('home', 'gym')),
+    gym_location TEXT,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, equipment_id, location_type)
 );
 ```
 

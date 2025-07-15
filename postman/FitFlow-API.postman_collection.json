@@ -1021,7 +1021,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Barbell\",\n  \"description\": \"Standard olympic barbell\",\n  \"category\": \"free_weight\",\n  \"image_url\": \"https://example.com/barbell.jpg\"\n}"
+              "raw": "{\n  \"name\": \"Barbell\",\n  \"slug\": \"barbell\",\n  \"description\": \"Standard olympic barbell\",\n  \"category\": \"free_weight\",\n  \"image_url\": \"https://example.com/barbell.jpg\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/equipment",
@@ -1114,7 +1114,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Olympic Barbell\",\n  \"description\": \"45lb olympic barbell\",\n  \"category\": \"free_weight\",\n  \"image_url\": \"https://example.com/olympic-barbell.jpg\"\n}"
+              "raw": "{\n  \"name\": \"Olympic Barbell\",\n  \"slug\": \"olympic_barbell\",\n  \"description\": \"45lb olympic barbell\",\n  \"category\": \"free_weight\",\n  \"image_url\": \"https://example.com/olympic-barbell.jpg\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/equipment/{{equipment_id}}",
@@ -1423,9 +1423,9 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/users/fitness-goals",
+              "raw": "{{base_url}}/api/v1/user/fitness/goals",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "fitness-goals"]
+              "path": ["api", "v1", "user", "fitness", "goals"]
             },
             "description": "Get current user's selected fitness goals"
           },
@@ -1447,12 +1447,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"goal_ids\": [\"{{fitness_goal_id}}\", \"{{fitness_goal_id_2}}\"]\n}"
+              "raw": "{\n  \"goals\": [\n    {\n      \"fitness_goal_id\": \"{{fitness_goal_id}}\",\n      \"priority\": 1,\n      \"target_date\": \"2024-12-31T00:00:00Z\",\n      \"notes\": \"Primary goal for this year\"\n    },\n    {\n      \"fitness_goal_id\": \"{{fitness_goal_id_2}}\",\n      \"priority\": 2,\n      \"target_date\": null,\n      \"notes\": \"Secondary goal\"\n    }\n  ]\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/users/fitness-goals",
+              "raw": "{{base_url}}/api/v1/user/fitness/goals",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "fitness-goals"]
+              "path": ["api", "v1", "user", "fitness", "goals"]
             },
             "description": "Set user's fitness goals (replaces all existing goals)"
           },
@@ -1477,9 +1477,9 @@
               "raw": "{\n  \"fitness_level_id\": \"{{fitness_level_id}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/users/fitness-level",
+              "raw": "{{base_url}}/api/v1/user/fitness/level",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "fitness-level"]
+              "path": ["api", "v1", "user", "fitness", "level"]
             },
             "description": "Set user's fitness level"
           },
@@ -1487,6 +1487,175 @@
         }
       ],
       "description": "User-specific fitness settings endpoints"
+    },
+    {
+      "name": "User Equipment",
+      "item": [
+        {
+          "name": "Get User Equipment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/equipment?location_type=home",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "user", "equipment"],
+              "query": [
+                {
+                  "key": "location_type",
+                  "value": "home",
+                  "description": "Optional: Filter by location (home, gym)"
+                }
+              ]
+            },
+            "description": "Get all equipment for the authenticated user"
+          },
+          "response": []
+        },
+        {
+          "name": "Add User Equipment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('user_equipment_id', jsonData.id);",
+                  "    pm.test('User equipment added successfully', function () {",
+                  "        pm.expect(jsonData.id).to.be.a('string');",
+                  "        pm.expect(jsonData.location_type).to.be.oneOf(['home', 'gym']);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"equipment_id\": \"{{equipment_id}}\",\n  \"location_type\": \"home\",\n  \"gym_location\": null,\n  \"notes\": \"Adjustable 5-50lbs\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/equipment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "user", "equipment"]
+            },
+            "description": "Add equipment to user's inventory"
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Add User Equipment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"equipment\": [\n    {\n      \"equipment_id\": \"{{equipment_id}}\",\n      \"location_type\": \"home\",\n      \"notes\": \"Adjustable 5-50lbs\"\n    },\n    {\n      \"equipment_id\": \"{{equipment_id_2}}\",\n      \"location_type\": \"gym\",\n      \"gym_location\": \"Downtown Fitness\",\n      \"notes\": null\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/equipment/bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "user", "equipment", "bulk"]
+            },
+            "description": "Add multiple equipment items at once"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Equipment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location_type\": \"gym\",\n  \"gym_location\": \"Uptown Gym\",\n  \"notes\": \"Recently upgraded to 30lb\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/equipment/{{user_equipment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "user", "equipment", "{{user_equipment_id}}"]
+            },
+            "description": "Update user's equipment details"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove User Equipment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/equipment/{{user_equipment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "user", "equipment", "{{user_equipment_id}}"]
+            },
+            "description": "Remove equipment from user's inventory"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Equipment by Location",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/equipment/location/home",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "user", "equipment", "location", "home"]
+            },
+            "description": "Get equipment filtered by location (home or gym)"
+          },
+          "response": []
+        }
+      ],
+      "description": "User equipment management endpoints for tracking home and gym equipment"
     },
     {
       "name": "Workout Plans",
