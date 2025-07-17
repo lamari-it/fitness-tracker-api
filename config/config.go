@@ -24,6 +24,8 @@ type Config struct {
 	AppleKeyID         string
 	ApplePrivateKeyPath string
 	AppleRedirectURL   string
+	UseMigrations bool
+	Environment string
 }
 
 var AppConfig *Config
@@ -51,7 +53,14 @@ func LoadConfig() {
 		AppleKeyID:         getEnv("APPLE_KEY_ID", ""),
 		ApplePrivateKeyPath: getEnv("APPLE_PRIVATE_KEY_PATH", ""),
 		AppleRedirectURL:   getEnv("APPLE_REDIRECT_URL", ""),
+		UseMigrations: getEnv("USE_MIGRATIONS", "false") == "true",
+		Environment:   getEnv("APP_ENV", "development"),
 	}
+}
+
+func Load() (*Config, error) {
+	LoadConfig()
+	return AppConfig, nil
 }
 
 func getEnv(key, defaultValue string) string {
