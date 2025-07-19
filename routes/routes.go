@@ -72,6 +72,7 @@ func SetupRoutes(r *gin.Engine) {
 			{
 				exercises.POST("/", controllers.CreateExercise)
 				exercises.GET("/", controllers.GetExercises)
+				exercises.GET("/by-slug/:slug", controllers.GetExerciseBySlug)
 				exercises.GET("/:id", controllers.GetExercise)
 				exercises.PUT("/:id", controllers.UpdateExercise)
 				exercises.DELETE("/:id", controllers.DeleteExercise)

@@ -3,9 +3,23 @@ package database
 import (
 	"fit-flow-api/models"
 	"log"
+	"strings"
 
 	"github.com/google/uuid"
 )
+
+// generateSlug creates a URL-friendly slug from a name
+func generateSlug(name string) string {
+	// Convert to lowercase
+	slug := strings.ToLower(name)
+	// Replace spaces with hyphens
+	slug = strings.ReplaceAll(slug, " ", "-")
+	// Remove apostrophes
+	slug = strings.ReplaceAll(slug, "'", "")
+	// Replace multiple hyphens with single hyphen
+	slug = strings.ReplaceAll(slug, "--", "-")
+	return slug
+}
 
 func SeedMuscleGroups() {
 	muscleGroups := []models.MuscleGroup{
@@ -1981,6 +1995,11 @@ func SeedExercises() {
 	}
 
 	for _, exerciseData := range exercises {
+		// Generate slug if not provided
+		if exerciseData.Exercise.Slug == "" {
+			exerciseData.Exercise.Slug = generateSlug(exerciseData.Exercise.Name)
+		}
+		
 		var existingExercise models.Exercise
 		if err := DB.Where("name = ?", exerciseData.Exercise.Name).First(&existingExercise).Error; err != nil {
 			// Create the exercise

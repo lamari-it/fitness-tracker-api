@@ -37,6 +37,7 @@ type Workout struct {
 
 type Exercise struct {
 	ID           uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	Slug         string    `gorm:"type:varchar(255);not null;unique" json:"slug"`
 	Name         string    `gorm:"type:text;not null;unique" json:"name"`
 	Description  string    `gorm:"type:text" json:"description"`
 	IsBodyweight bool      `gorm:"default:false" json:"is_bodyweight"`

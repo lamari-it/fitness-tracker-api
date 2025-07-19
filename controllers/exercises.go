@@ -10,6 +10,19 @@ import (
 	"github.com/google/uuid"
 )
 
+// generateSlug creates a URL-friendly slug from a name
+func generateSlug(name string) string {
+	// Convert to lowercase
+	slug := strings.ToLower(name)
+	// Replace spaces with hyphens
+	slug = strings.ReplaceAll(slug, " ", "-")
+	// Remove apostrophes
+	slug = strings.ReplaceAll(slug, "'", "")
+	// Replace multiple hyphens with single hyphen
+	slug = strings.ReplaceAll(slug, "--", "-")
+	return slug
+}
+
 type CreateExerciseRequest struct {
 	Name         string                    `json:"name" binding:"required"`
 	Description  string                    `json:"description"`
@@ -42,6 +55,7 @@ func CreateExercise(c *gin.Context) {
 	}()
 
 	exercise := models.Exercise{
+		Slug:         generateSlug(req.Name),
 		Name:         req.Name,
 		Description:  req.Description,
 		IsBodyweight: req.IsBodyweight,
@@ -180,6 +194,21 @@ func GetExercise(c *gin.Context) {
 	c.JSON(http.StatusOK, exercise)
 }
 
+func GetExerciseBySlug(c *gin.Context) {
+	slug := c.Param("slug")
+	
+	var exercise models.Exercise
+	if err := database.DB.Where("slug = ?", slug).
+		Preload("MuscleGroups.MuscleGroup").
+		Preload("Equipment.Equipment").
+		First(&exercise).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Exercise not found"})
+		return
+	}
+	
+	c.JSON(http.StatusOK, exercise)
+}
+
 func UpdateExercise(c *gin.Context) {
 	exerciseID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -199,6 +228,11 @@ func UpdateExercise(c *gin.Context) {
 		return
 	}
 
+	// Update slug if name has changed
+	if exercise.Name != req.Name {
+		exercise.Slug = generateSlug(req.Name)
+	}
+	
 	exercise.Name = req.Name
 	exercise.Description = req.Description
 	exercise.IsBodyweight = req.IsBodyweight
