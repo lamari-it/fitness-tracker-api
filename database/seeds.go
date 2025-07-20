@@ -13,11 +13,11 @@ func generateSlug(name string) string {
 	// Convert to lowercase
 	slug := strings.ToLower(name)
 	// Replace spaces with hyphens
-	slug = strings.ReplaceAll(slug, " ", "-")
+	slug = strings.ReplaceAll(slug, " ", "_")
 	// Remove apostrophes
 	slug = strings.ReplaceAll(slug, "'", "")
 	// Replace multiple hyphens with single hyphen
-	slug = strings.ReplaceAll(slug, "--", "-")
+	slug = strings.ReplaceAll(slug, "-", "_")
 	return slug
 }
 
@@ -73,6 +73,17 @@ func SeedExercises() {
 	for _, mg := range muscleGroups {
 		muscleGroupMap[mg.Name] = mg.ID
 	}
+
+	// Get equipment IDs
+	equipmentMap := make(map[string]uuid.UUID)
+	var equipment []models.Equipment
+	DB.Find(&equipment)
+	for _, eq := range equipment {
+		equipmentMap[eq.Slug] = eq.ID
+	}
+
+	// Get equipment mappings
+	exerciseEquipmentMappings := GetExerciseEquipmentMappings()
 
 	exercises := []struct {
 		Exercise     models.Exercise
@@ -1999,9 +2010,9 @@ func SeedExercises() {
 		if exerciseData.Exercise.Slug == "" {
 			exerciseData.Exercise.Slug = generateSlug(exerciseData.Exercise.Name)
 		}
-		
+
 		var existingExercise models.Exercise
-		if err := DB.Where("name = ?", exerciseData.Exercise.Name).First(&existingExercise).Error; err != nil {
+		if err := DB.Where("slug = ?", exerciseData.Exercise.Name).First(&existingExercise).Error; err != nil {
 			// Create the exercise
 			if err := DB.Create(&exerciseData.Exercise).Error; err != nil {
 				log.Printf("Failed to create exercise %s: %v", exerciseData.Exercise.Name, err)
@@ -2023,6 +2034,26 @@ func SeedExercises() {
 						log.Printf("Failed to assign muscle group %s to exercise %s: %v", mgData.Name, exerciseData.Exercise.Name, err)
 					} else {
 						log.Printf("Assigned muscle group %s to exercise %s", mgData.Name, exerciseData.Exercise.Name)
+					}
+				}
+			}
+
+			// Assign equipment
+			if equipmentList, exists := exerciseEquipmentMappings[exerciseData.Exercise.Slug]; exists {
+				for _, eqData := range equipmentList {
+					if equipmentID, exists := equipmentMap[eqData.Slug]; exists {
+						assignment := models.ExerciseEquipment{
+							ExerciseID:  exerciseData.Exercise.ID,
+							EquipmentID: equipmentID,
+							Optional:    eqData.Optional,
+							Notes:       eqData.Notes,
+						}
+
+						if err := DB.Create(&assignment).Error; err != nil {
+							log.Printf("Failed to assign equipment %s to exercise %s: %v", eqData.Slug, exerciseData.Exercise.Name, err)
+						} else {
+							log.Printf("Assigned equipment %s to exercise %s", eqData.Slug, exerciseData.Exercise.Name)
+						}
 					}
 				}
 			}

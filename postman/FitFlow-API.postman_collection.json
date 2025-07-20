@@ -707,6 +707,25 @@
           "response": []
         },
         {
+          "name": "Get Exercise by Slug",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/by-slug/push-ups",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercises", "by-slug", "push-ups"]
+            },
+            "description": "Get a specific exercise by slug (URL-friendly name)"
+          },
+          "response": []
+        },
+        {
           "name": "Search Exercises",
           "request": {
             "method": "GET",

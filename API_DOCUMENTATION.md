@@ -89,6 +89,7 @@ Authorization: Bearer <jwt_token>
   ]
 }
 ```
+- **Note:** The `slug` field is automatically generated from the exercise name (e.g., "Push-ups" becomes "push-ups")
 
 ### Get All Exercises
 - **GET** `/exercises`
@@ -102,6 +103,12 @@ Authorization: Bearer <jwt_token>
 ### Get Exercise by ID
 - **GET** `/exercises/:id`
 - **Headers:** Authorization: Bearer <token>
+
+### Get Exercise by Slug
+- **GET** `/exercises/by-slug/:slug`
+- **Headers:** Authorization: Bearer <token>
+- **Response:** Exercise details with muscle groups and equipment
+- **Example:** `/exercises/by-slug/push-ups`
 
 ### Update Exercise
 - **PUT** `/exercises/:id`
@@ -555,6 +562,7 @@ CREATE TABLE trainer_profiles (
 ```sql
 CREATE TABLE exercises (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug VARCHAR(255) NOT NULL UNIQUE,
     name TEXT NOT NULL UNIQUE,
     description TEXT,
     is_bodyweight BOOLEAN DEFAULT false,

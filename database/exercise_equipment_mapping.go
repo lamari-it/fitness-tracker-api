@@ -12,456 +12,456 @@ func GetExerciseEquipmentMappings() map[string][]struct {
 		Notes    string
 	}{
 		// Chest Exercises
-		"Push-ups": {
+		"push_ups": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Bench Press": {
+		"bench_press": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "flat_bench", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "squat_rack", Optional: true, Notes: "Optional for safety when lifting heavy"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading the barbell"},
 		},
-		"Incline Bench Press": {
+		"incline_bench_press": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "incline_bench", Optional: false, Notes: "Or adjustable bench set to incline"},
 			{Slug: "squat_rack", Optional: true, Notes: "Optional for safety when lifting heavy"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading the barbell"},
 		},
-		"Decline Bench Press": {
+		"decline_bench_press": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "decline_bench", Optional: false, Notes: "Or adjustable bench set to decline"},
 			{Slug: "squat_rack", Optional: true, Notes: "Optional for safety when lifting heavy"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading the barbell"},
 		},
-		"Dumbbell Bench Press": {
+		"dumbbell_bench_press": {
 			{Slug: "dumbbells", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "flat_bench", Optional: false, Notes: "Or adjustable bench"},
 		},
-		"Dumbbell Flyes": {
+		"dumbbell_flyes": {
 			{Slug: "dumbbells", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "flat_bench", Optional: false, Notes: "Or adjustable bench"},
 		},
-		"Chest Dips": {
+		"chest_dips": {
 			{Slug: "dip_station", Optional: false, Notes: "Parallel bars required"},
 			{Slug: "dip_belt", Optional: true, Notes: "For adding weight"},
 		},
-		"Cable Chest Flyes": {
+		"cable_chest_flyes": {
 			{Slug: "cable_machine", Optional: false, Notes: "Cable machine with adjustable pulleys"},
 			{Slug: "d_handle", Optional: false, Notes: "Single handles for each side"},
 		},
-		"Pec Deck": {
+		"pec_deck": {
 			{Slug: "pec_deck", Optional: false, Notes: "Pec deck machine required"},
 		},
 
 		// Back Exercises
-		"Pull-ups": {
+		"pull_ups": {
 			{Slug: "pull_up_bar", Optional: false, Notes: "Pull-up bar required"},
 			{Slug: "dip_belt", Optional: true, Notes: "For adding weight"},
 			{Slug: "resistance_bands", Optional: true, Notes: "For assistance"},
 		},
-		"Chin-ups": {
+		"chin_ups": {
 			{Slug: "pull_up_bar", Optional: false, Notes: "Pull-up bar required"},
 			{Slug: "dip_belt", Optional: true, Notes: "For adding weight"},
 			{Slug: "resistance_bands", Optional: true, Notes: "For assistance"},
 		},
-		"Lat Pulldowns": {
+		"lat_pulldowns": {
 			{Slug: "lat_pulldown", Optional: false, Notes: "Lat pulldown machine required"},
 			{Slug: "lat_pulldown_bar", Optional: false, Notes: "Wide grip bar"},
 		},
-		"Barbell Rows": {
+		"barbell_rows": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading"},
 		},
-		"Dumbbell Rows": {
+		"dumbbell_rows": {
 			{Slug: "dumbbells", Optional: false, Notes: "Single dumbbell required"},
 			{Slug: "flat_bench", Optional: true, Notes: "Optional for support"},
 		},
-		"T-Bar Rows": {
+		"t_bar_rows": {
 			{Slug: "t_bar_row", Optional: false, Notes: "T-bar or landmine attachment"},
 			{Slug: "barbell", Optional: false, Notes: "If using landmine"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading"},
 			{Slug: "v_bar", Optional: true, Notes: "Optional handle attachment"},
 		},
-		"Cable Rows": {
+		"cable_rows": {
 			{Slug: "cable_machine", Optional: false, Notes: "Cable machine required"},
 			{Slug: "straight_bar", Optional: false, Notes: "Or V-bar attachment"},
 		},
-		"Inverted Rows": {
+		"inverted_rows": {
 			{Slug: "squat_rack", Optional: false, Notes: "Or smith machine set at appropriate height"},
 			{Slug: "barbell", Optional: false, Notes: "Bar to hold onto"},
 		},
-		"Shrugs": {
+		"shrugs": {
 			{Slug: "dumbbells", Optional: false, Notes: "Or barbell"},
 			{Slug: "barbell", Optional: false, Notes: "Alternative to dumbbells"},
 			{Slug: "plates", Optional: true, Notes: "If using barbell"},
 		},
-		"Face Pulls": {
+		"face_pulls": {
 			{Slug: "cable_machine", Optional: false, Notes: "Cable machine required"},
 			{Slug: "rope_attachment", Optional: false, Notes: "Rope attachment for cables"},
 		},
 
 		// Leg Exercises
-		"Squats": {
+		"squats": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for marking position"},
 		},
-		"Barbell Squats": {
+		"barbell_squats": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "squat_rack", Optional: false, Notes: "Or power rack for safety"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading"},
 		},
-		"Front Squats": {
+		"front_squats": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "squat_rack", Optional: false, Notes: "Or power rack for safety"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading"},
 		},
-		"Goblet Squats": {
+		"goblet_squats": {
 			{Slug: "dumbbells", Optional: false, Notes: "Single dumbbell or kettlebell"},
 			{Slug: "kettlebell", Optional: false, Notes: "Alternative to dumbbell"},
 		},
-		"Lunges": {
+		"lunges": {
 			{Slug: "dumbbells", Optional: true, Notes: "Optional for added resistance"},
 		},
-		"Bulgarian Split Squats": {
+		"bulgarian_split_squats": {
 			{Slug: "flat_bench", Optional: false, Notes: "Or box for rear foot elevation"},
 			{Slug: "dumbbells", Optional: true, Notes: "Optional for added resistance"},
 		},
-		"Leg Press": {
+		"leg_press": {
 			{Slug: "leg_press", Optional: false, Notes: "Leg press machine required"},
 		},
-		"Leg Extensions": {
+		"leg_extensions": {
 			{Slug: "leg_extension", Optional: false, Notes: "Leg extension machine required"},
 		},
-		"Deadlifts": {
+		"deadlifts": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading"},
 		},
-		"Romanian Deadlifts": {
+		"romanian_deadlifts": {
 			{Slug: "barbell", Optional: false, Notes: "Or dumbbells"},
 			{Slug: "dumbbells", Optional: false, Notes: "Alternative to barbell"},
 			{Slug: "plates", Optional: true, Notes: "If using barbell"},
 		},
-		"Sumo Deadlifts": {
+		"sumo_deadlifts": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading"},
 		},
-		"Stiff Leg Deadlifts": {
+		"stiff_leg_deadlifts": {
 			{Slug: "barbell", Optional: false, Notes: "Or dumbbells"},
 			{Slug: "dumbbells", Optional: false, Notes: "Alternative to barbell"},
 			{Slug: "plates", Optional: true, Notes: "If using barbell"},
 		},
-		"Leg Curls": {
+		"leg_curls": {
 			{Slug: "leg_curl", Optional: false, Notes: "Leg curl machine required"},
 		},
-		"Hip Thrusts": {
+		"hip_thrusts": {
 			{Slug: "flat_bench", Optional: false, Notes: "Bench for shoulder support"},
 			{Slug: "barbell", Optional: false, Notes: "Or dumbbell for resistance"},
 			{Slug: "plates", Optional: true, Notes: "If using barbell"},
 			{Slug: "exercise_mat", Optional: true, Notes: "For padding"},
 		},
-		"Glute Bridges": {
+		"glute_bridges": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Calf Raises": {
+		"calf_raises": {
 			{Slug: "step_platform", Optional: true, Notes: "Optional for greater range of motion"},
 			{Slug: "dumbbells", Optional: true, Notes: "Optional for added resistance"},
 		},
-		"Seated Calf Raises": {
+		"seated_calf_raises": {
 			{Slug: "calf_raise", Optional: false, Notes: "Seated calf raise machine"},
 			{Slug: "plates", Optional: true, Notes: "If machine uses plates"},
 		},
 
 		// Shoulder Exercises
-		"Overhead Press": {
+		"overhead_press": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "squat_rack", Optional: true, Notes: "For getting bar into position"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading"},
 		},
-		"Dumbbell Shoulder Press": {
+		"dumbbell_shoulder_press": {
 			{Slug: "dumbbells", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "adjustable_bench", Optional: true, Notes: "Optional for seated variation"},
 		},
-		"Lateral Raises": {
+		"lateral_raises": {
 			{Slug: "dumbbells", Optional: false, Notes: "Required for the exercise"},
 		},
-		"Rear Delt Flyes": {
+		"rear_delt_flyes": {
 			{Slug: "dumbbells", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "flat_bench", Optional: true, Notes: "Optional for chest support"},
 		},
-		"Front Raises": {
+		"front_raises": {
 			{Slug: "dumbbells", Optional: false, Notes: "Or barbell/plate"},
 			{Slug: "barbell", Optional: false, Notes: "Alternative to dumbbells"},
 			{Slug: "plates", Optional: false, Notes: "Can use single plate"},
 		},
-		"Arnold Press": {
+		"arnold_press": {
 			{Slug: "dumbbells", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "adjustable_bench", Optional: true, Notes: "Optional for seated variation"},
 		},
-		"Upright Rows": {
+		"upright_rows": {
 			{Slug: "barbell", Optional: false, Notes: "Or EZ-bar"},
 			{Slug: "ez_bar", Optional: false, Notes: "Alternative to straight bar"},
 			{Slug: "plates", Optional: true, Notes: "If using barbell"},
 		},
-		"Pike Push-ups": {
+		"pike_push_ups": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Handstand Push-ups": {
+		"handstand_push_ups": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 			{Slug: "wall_bars", Optional: true, Notes: "Wall for support"},
 		},
 
 		// Arm Exercises
-		"Bicep Curls": {
+		"bicep_curls": {
 			{Slug: "dumbbells", Optional: false, Notes: "Or barbell"},
 			{Slug: "barbell", Optional: false, Notes: "Alternative to dumbbells"},
 			{Slug: "plates", Optional: true, Notes: "If using barbell"},
 		},
-		"Hammer Curls": {
+		"hammer_curls": {
 			{Slug: "dumbbells", Optional: false, Notes: "Required for the exercise"},
 		},
-		"Preacher Curls": {
+		"preacher_curls": {
 			{Slug: "preacher_bench", Optional: false, Notes: "Or preacher curl machine"},
 			{Slug: "barbell", Optional: false, Notes: "Or EZ-bar or dumbbells"},
 			{Slug: "ez_bar", Optional: false, Notes: "Alternative to straight bar"},
 			{Slug: "plates", Optional: true, Notes: "If using barbell"},
 		},
-		"Concentration Curls": {
+		"concentration_curls": {
 			{Slug: "dumbbells", Optional: false, Notes: "Single dumbbell required"},
 			{Slug: "flat_bench", Optional: true, Notes: "For seated position"},
 		},
-		"Tricep Dips": {
+		"tricep_dips": {
 			{Slug: "dip_station", Optional: false, Notes: "Or bench for bench dips"},
 			{Slug: "flat_bench", Optional: false, Notes: "Alternative for bench dips"},
 			{Slug: "dip_belt", Optional: true, Notes: "For adding weight"},
 		},
-		"Tricep Pushdowns": {
+		"tricep_pushdowns": {
 			{Slug: "cable_machine", Optional: false, Notes: "Cable machine required"},
 			{Slug: "rope_attachment", Optional: false, Notes: "Or straight bar attachment"},
 			{Slug: "straight_bar", Optional: false, Notes: "Alternative to rope"},
 		},
-		"Overhead Tricep Extension": {
+		"overhead_tricep_extension": {
 			{Slug: "dumbbells", Optional: false, Notes: "Single dumbbell or EZ-bar"},
 			{Slug: "ez_bar", Optional: false, Notes: "Alternative to dumbbell"},
 			{Slug: "plates", Optional: true, Notes: "If using barbell"},
 		},
-		"Close-Grip Bench Press": {
+		"close_grip_bench_press": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "flat_bench", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "squat_rack", Optional: true, Notes: "For safety"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading"},
 		},
-		"Diamond Push-ups": {
+		"diamond_push_ups": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Wrist Curls": {
+		"wrist_curls": {
 			{Slug: "barbell", Optional: false, Notes: "Or dumbbells"},
 			{Slug: "dumbbells", Optional: false, Notes: "Alternative to barbell"},
 			{Slug: "flat_bench", Optional: true, Notes: "For forearm support"},
 			{Slug: "plates", Optional: true, Notes: "If using barbell"},
 		},
-		"Reverse Curls": {
+		"reverse_curls": {
 			{Slug: "barbell", Optional: false, Notes: "Or EZ-bar"},
 			{Slug: "ez_bar", Optional: false, Notes: "More comfortable grip"},
 			{Slug: "plates", Optional: true, Notes: "If using barbell"},
 		},
-		"Farmer's Walks": {
+		"farmers_walks": {
 			{Slug: "dumbbells", Optional: false, Notes: "Or farmer's walk handles"},
 			{Slug: "farmers_walk", Optional: false, Notes: "Specialized handles"},
 			{Slug: "kettlebell", Optional: false, Notes: "Alternative option"},
 		},
 
 		// Core Exercises
-		"Planks": {
+		"planks": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Crunches": {
+		"crunches": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Bicycle Crunches": {
+		"bicycle_crunches": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Russian Twists": {
+		"russian_twists": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 			{Slug: "medicine_ball", Optional: true, Notes: "Or dumbbell for added resistance"},
 			{Slug: "dumbbells", Optional: true, Notes: "Alternative to medicine ball"},
 		},
-		"Side Planks": {
+		"side_planks": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Leg Raises": {
+		"leg_raises": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Hanging Leg Raises": {
+		"hanging_leg_raises": {
 			{Slug: "pull_up_bar", Optional: false, Notes: "Pull-up bar required"},
 			{Slug: "ab_straps", Optional: true, Notes: "For easier grip"},
 		},
-		"Mountain Climbers": {
+		"mountain_climbers": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Dead Bug": {
+		"dead_bug": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Hollow Body Hold": {
+		"hollow_body_hold": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Ab Wheel Rollouts": {
+		"ab_wheel_rollouts": {
 			{Slug: "ab_wheel", Optional: false, Notes: "Ab wheel required"},
 			{Slug: "exercise_mat", Optional: true, Notes: "For knee comfort"},
 		},
-		"Superman": {
+		"superman": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Good Mornings": {
+		"good_mornings": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "squat_rack", Optional: true, Notes: "For getting bar into position"},
 			{Slug: "plates", Optional: true, Notes: "For added resistance"},
 		},
-		"Hyperextensions": {
+		"hyperextensions": {
 			{Slug: "hyperextension_bench", Optional: false, Notes: "Or back extension machine"},
 			{Slug: "plates", Optional: true, Notes: "For added resistance"},
 		},
 
 		// Full Body and Cardio
-		"Burpees": {
+		"burpees": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Thrusters": {
+		"thrusters": {
 			{Slug: "dumbbells", Optional: false, Notes: "Or barbell"},
 			{Slug: "barbell", Optional: false, Notes: "Alternative to dumbbells"},
 			{Slug: "plates", Optional: true, Notes: "If using barbell"},
 		},
-		"Man Makers": {
+		"man_makers": {
 			{Slug: "dumbbells", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Turkish Get-ups": {
+		"turkish_get_ups": {
 			{Slug: "dumbbells", Optional: false, Notes: "Or kettlebell"},
 			{Slug: "kettlebell", Optional: false, Notes: "Traditional option"},
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Kettlebell Swings": {
+		"kettlebell_swings": {
 			{Slug: "kettlebell", Optional: false, Notes: "Required for the exercise"},
 		},
-		"Kettlebell Snatches": {
+		"kettlebell_snatches": {
 			{Slug: "kettlebell", Optional: false, Notes: "Required for the exercise"},
 		},
-		"Kettlebell Clean and Press": {
+		"kettlebell_clean_and_press": {
 			{Slug: "kettlebell", Optional: false, Notes: "Required for the exercise"},
 		},
-		"Box Jumps": {
+		"box_jumps": {
 			{Slug: "plyo_box", Optional: false, Notes: "Plyometric box required"},
 		},
-		"Jump Squats": {
+		"jump_squats": {
 			{Slug: "dumbbells", Optional: true, Notes: "Optional for added resistance"},
 		},
-		"High Knees": {},
-		"Jumping Jacks": {},
-		"Bear Crawls": {
+		"high_knees": {},
+		"jumping_jacks": {},
+		"bear_crawls": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Crab Walks": {
+		"crab_walks": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Treadmill Running": {
+		"treadmill_running": {
 			{Slug: "treadmill", Optional: false, Notes: "Treadmill required"},
 		},
-		"Stationary Bike": {
+		"stationary_bike": {
 			{Slug: "stationary_bike", Optional: false, Notes: "Stationary bike required"},
 		},
-		"Rowing Machine": {
+		"rowing_machine": {
 			{Slug: "rowing_machine", Optional: false, Notes: "Rowing machine required"},
 		},
-		"Elliptical Machine": {
+		"elliptical_machine": {
 			{Slug: "elliptical", Optional: false, Notes: "Elliptical machine required"},
 		},
-		"Jump Rope": {
+		"jump_rope": {
 			{Slug: "jump_rope", Optional: false, Notes: "Jump rope required"},
 		},
-		"Stair Climbing": {
+		"stair_climbing": {
 			{Slug: "stair_climber", Optional: false, Notes: "Stair climber machine or actual stairs"},
 		},
 
 		// Olympic Lifts
-		"Clean and Jerk": {
+		"clean_and_jerk": {
 			{Slug: "barbell", Optional: false, Notes: "Olympic barbell recommended"},
 			{Slug: "plates", Optional: false, Notes: "Bumper plates recommended"},
 			{Slug: "lifting_belt", Optional: true, Notes: "For heavy lifts"},
 			{Slug: "chalk", Optional: true, Notes: "For better grip"},
 		},
-		"Snatch": {
+		"snatch": {
 			{Slug: "barbell", Optional: false, Notes: "Olympic barbell recommended"},
 			{Slug: "plates", Optional: false, Notes: "Bumper plates recommended"},
 			{Slug: "lifting_belt", Optional: true, Notes: "For heavy lifts"},
 			{Slug: "chalk", Optional: true, Notes: "For better grip"},
 		},
-		"Power Clean": {
+		"power_clean": {
 			{Slug: "barbell", Optional: false, Notes: "Olympic barbell recommended"},
 			{Slug: "plates", Optional: false, Notes: "Bumper plates recommended"},
 			{Slug: "lifting_belt", Optional: true, Notes: "For heavy lifts"},
 		},
-		"Hang Clean": {
+		"hang_clean": {
 			{Slug: "barbell", Optional: false, Notes: "Olympic barbell recommended"},
 			{Slug: "plates", Optional: false, Notes: "Bumper plates recommended"},
 		},
-		"Push Press": {
+		"push_press": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "squat_rack", Optional: true, Notes: "For getting bar into position"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading"},
 		},
-		"Push Jerk": {
+		"push_jerk": {
 			{Slug: "barbell", Optional: false, Notes: "Required for the exercise"},
 			{Slug: "squat_rack", Optional: true, Notes: "For getting bar into position"},
 			{Slug: "plates", Optional: false, Notes: "Weight plates for loading"},
 		},
 
 		// Isometric and Stability
-		"Wall Sit": {},
-		"Glute Bridge Hold": {
+		"wall_sit": {},
+		"glute_bridge_hold": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Single-Leg Glute Bridge": {
+		"single_leg_glute_bridge": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Single-Leg Deadlift": {
+		"single_leg_deadlift": {
 			{Slug: "dumbbells", Optional: true, Notes: "Optional for added resistance"},
 			{Slug: "kettlebell", Optional: true, Notes: "Alternative to dumbbells"},
 		},
-		"Pistol Squats": {},
-		"Single-Leg Calf Raises": {
+		"pistol_squats": {},
+		"single_leg_calf_raises": {
 			{Slug: "step_platform", Optional: true, Notes: "For greater range of motion"},
 		},
-		"Bird Dog": {
+		"bird_dog": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
 
 		// Stretching and Mobility (most don't need equipment)
-		"Cat-Cow Stretch": {
+		"cat_cow_stretch": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Child's Pose": {
+		"childs_pose": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Downward Dog": {
+		"downward_dog": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Pigeon Pose": {
+		"pigeon_pose": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Cobra Stretch": {
+		"cobra_stretch": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Recommended for comfort"},
 		},
-		"Figure-4 Stretch": {
+		"figure_4_stretch": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 		},
-		"Seated Forward Fold": {
+		"seated_forward_fold": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
 			{Slug: "stretching_strap", Optional: true, Notes: "For assistance"},
 		},
-		"Standing Quad Stretch": {},
-		"Standing Calf Stretch": {},
-		"Shoulder Rolls": {},
-		"Arm Circles": {},
-		"Neck Rolls": {},
-		"Hip Circles": {},
-		"Leg Swings": {},
+		"standing_quad_stretch": {},
+		"standing_calf_stretch": {},
+		"shoulder_rolls": {},
+		"arm_circles": {},
+		"neck_rolls": {},
+		"hip_circles": {},
+		"leg_swings": {},
 	}
 }
