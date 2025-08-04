@@ -487,6 +487,62 @@ Authorization: Bearer <jwt_token>
 
 ---
 
+## Set Group Endpoints
+
+### Create Set Group
+- **POST** `/set-groups`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "workout_id": "uuid",
+  "group_type": "superset",
+  "name": "Chest & Back Superset",
+  "notes": "Perform exercises back-to-back with minimal rest",
+  "order_number": 1,
+  "rest_between_sets": 60,
+  "rounds": 3
+}
+```
+- **Group Types:** `straight`, `superset`, `circuit`, `giant_set`, `drop_set`, `pyramid`, `rest_pause`
+
+### Get Set Groups for Workout
+- **GET** `/workouts/:workout_id/set-groups`
+- **Headers:** Authorization: Bearer <token>
+- **Response:** List of set groups with associated exercises
+
+### Add Exercise to Set Group
+- **POST** `/workout-exercises`
+- **Headers:** Authorization: Bearer <token>
+- **Body:**
+```json
+{
+  "workout_id": "uuid",
+  "set_group_id": "uuid",
+  "exercise_id": "uuid",
+  "order_number": 1,
+  "target_sets": 3,
+  "target_reps": 10,
+  "target_weight": 135.5,
+  "target_rest_sec": 60
+}
+```
+- **Note:** All exercises must belong to a SetGroup. The set_group_id is required.
+
+### Exercise Logging with Set Groups
+When logging exercises during a workout session, the `set_group_id` can be included to track which set group configuration was being performed:
+- The `set_group_id` in `exercise_logs` is nullable to support free-form workouts
+- When present, it links the logged exercise to the specific set group (superset, circuit, etc.) that was being performed
+- This allows tracking whether exercises were performed as supersets, circuits, or other groupings during the actual workout
+
+### Weight Units in Set Logs
+When logging individual sets, the weight unit can be specified:
+- Default weight unit is `kg` (kilograms)
+- Supported units: `kg`, `lbs`, `lb`
+- Each set can have its own weight unit, allowing flexibility for different equipment or user preferences
+
+---
+
 ## Friend System Endpoints
 
 ### Send Friend Request
@@ -676,11 +732,29 @@ CREATE TABLE workouts (
 );
 ```
 
+### Set Groups Table
+```sql
+CREATE TABLE set_groups (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workout_id UUID NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
+    group_type VARCHAR(20) NOT NULL DEFAULT 'straight',
+    name VARCHAR(255),
+    notes TEXT,
+    order_number INTEGER NOT NULL,
+    rest_between_sets INTEGER,
+    rounds INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT check_group_type CHECK (group_type IN ('straight', 'superset', 'circuit', 'giant_set', 'drop_set', 'pyramid', 'rest_pause'))
+);
+```
+
 ### Workout Exercises Table
 ```sql
 CREATE TABLE workout_exercises (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workout_id UUID NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
+    set_group_id UUID NOT NULL REFERENCES set_groups(id) ON DELETE CASCADE,
     exercise_id UUID NOT NULL REFERENCES exercises(id) ON DELETE CASCADE,
     order_number INTEGER NOT NULL,
     target_sets INTEGER,
@@ -723,6 +797,7 @@ CREATE TABLE workout_sessions (
 CREATE TABLE exercise_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     session_id UUID NOT NULL REFERENCES workout_sessions(id) ON DELETE CASCADE,
+    set_group_id UUID REFERENCES set_groups(id) ON DELETE SET NULL,
     exercise_id UUID NOT NULL REFERENCES exercises(id) ON DELETE CASCADE,
     order_number INTEGER NOT NULL,
     notes TEXT,
@@ -740,12 +815,14 @@ CREATE TABLE set_logs (
     exercise_log_id UUID NOT NULL REFERENCES exercise_logs(id) ON DELETE CASCADE,
     set_number INTEGER NOT NULL,
     weight NUMERIC(10,2),
+    weight_unit VARCHAR(5) DEFAULT 'kg',
     reps INTEGER,
     rest_after_sec INTEGER,
     tempo VARCHAR(10),
     rpe NUMERIC(3,1) CHECK (rpe >= 1 AND rpe <= 10),
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT check_weight_unit CHECK (weight_unit IN ('kg', 'lbs', 'lb'))
 );
 ```
 

@@ -1833,9 +1833,223 @@
             "description": "Delete a workout plan"
           },
           "response": []
+        },
+        {
+          "name": "Create Set Group",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workout_id\": \"{{workout_id}}\",\n  \"group_type\": \"superset\",\n  \"name\": \"Chest & Back Superset\",\n  \"notes\": \"Perform exercises back-to-back with minimal rest\",\n  \"order_number\": 1,\n  \"rest_between_sets\": 60,\n  \"rounds\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/set-groups",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "set-groups"]
+            },
+            "description": "Create a new set group for organizing exercises (superset, circuit, etc.)"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Exercise to Set Group",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workout_id\": \"{{workout_id}}\",\n  \"set_group_id\": \"{{set_group_id}}\",\n  \"exercise_id\": \"{{exercise_id}}\",\n  \"order_number\": 1,\n  \"target_sets\": 3,\n  \"target_reps\": 10,\n  \"target_weight\": 135.5,\n  \"target_rest_sec\": 60\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-exercises",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "workout-exercises"]
+            },
+            "description": "Add an exercise to a specific set group within a workout"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Set Groups for Workout",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/set-groups",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "workouts", "{{workout_id}}", "set-groups"]
+            },
+            "description": "Get all set groups for a specific workout with their exercises"
+          },
+          "response": []
         }
       ],
       "description": "Workout plan management endpoints"
+    },
+    {
+      "name": "Workout Logging",
+      "item": [
+        {
+          "name": "Start Workout Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workout_id\": \"{{workout_id}}\",\n  \"started_at\": \"2025-01-15T10:00:00Z\",\n  \"notes\": \"Feeling strong today\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-sessions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "workout-sessions"]
+            },
+            "description": "Start a new workout session"
+          },
+          "response": []
+        },
+        {
+          "name": "Log Exercise",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"{{session_id}}\",\n  \"set_group_id\": \"{{set_group_id}}\",\n  \"exercise_id\": \"{{exercise_id}}\",\n  \"order_number\": 1,\n  \"notes\": \"Good form throughout\",\n  \"difficulty_rating\": 7,\n  \"difficulty_type\": \"moderate\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercise-logs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "exercise-logs"]
+            },
+            "description": "Log an exercise within a workout session"
+          },
+          "response": []
+        },
+        {
+          "name": "Log Set",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercise_log_id\": \"{{exercise_log_id}}\",\n  \"set_number\": 1,\n  \"weight\": 60,\n  \"weight_unit\": \"kg\",\n  \"reps\": 10,\n  \"rest_after_sec\": 90,\n  \"tempo\": \"2-1-2-1\",\n  \"rpe\": 7.5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/set-logs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "set-logs"]
+            },
+            "description": "Log a set within an exercise. Weight unit can be 'kg', 'lbs', or 'lb' (default: 'kg')"
+          },
+          "response": []
+        },
+        {
+          "name": "Log Set (Imperial)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercise_log_id\": \"{{exercise_log_id}}\",\n  \"set_number\": 2,\n  \"weight\": 135,\n  \"weight_unit\": \"lbs\",\n  \"reps\": 8,\n  \"rest_after_sec\": 120,\n  \"rpe\": 8.0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/set-logs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "set-logs"]
+            },
+            "description": "Example of logging a set with pounds (lbs) as weight unit"
+          },
+          "response": []
+        },
+        {
+          "name": "End Workout Session",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ended_at\": \"2025-01-15T11:30:00Z\",\n  \"notes\": \"Great workout! Hit all my targets.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-sessions/{{session_id}}/end",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "workout-sessions", "{{session_id}}", "end"]
+            },
+            "description": "End a workout session"
+          },
+          "response": []
+        }
+      ],
+      "description": "Workout session and exercise logging endpoints"
     },
     {
       "name": "Friends",

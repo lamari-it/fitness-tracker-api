@@ -30,6 +30,7 @@ type Workout struct {
 	UpdatedAt time.Time `json:"updated_at"`
 
 	Plan              WorkoutPlan       `gorm:"foreignKey:PlanID;constraint:OnDelete:CASCADE" json:"plan,omitempty"`
+	SetGroups         []SetGroup        `gorm:"foreignKey:WorkoutID" json:"set_groups,omitempty"`
 	WorkoutExercises  []WorkoutExercise `gorm:"foreignKey:WorkoutID" json:"exercises,omitempty"`
 	WorkoutSessions   []WorkoutSession  `gorm:"foreignKey:WorkoutID" json:"sessions,omitempty"`
 	SharedWorkouts    []SharedWorkout   `gorm:"foreignKey:WorkoutID" json:"shared_workouts,omitempty"`
@@ -56,6 +57,7 @@ type Exercise struct {
 type WorkoutExercise struct {
 	ID             uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	WorkoutID      uuid.UUID `gorm:"type:uuid;not null" json:"workout_id"`
+	SetGroupID     uuid.UUID `gorm:"type:uuid;not null" json:"set_group_id"`
 	ExerciseID     uuid.UUID `gorm:"type:uuid;not null" json:"exercise_id"`
 	OrderNumber    int       `gorm:"not null" json:"order_number"`
 	TargetSets     int       `json:"target_sets"`
@@ -66,6 +68,7 @@ type WorkoutExercise struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 
 	Workout  Workout  `gorm:"foreignKey:WorkoutID;constraint:OnDelete:CASCADE" json:"workout,omitempty"`
+	SetGroup SetGroup `gorm:"foreignKey:SetGroupID;constraint:OnDelete:CASCADE" json:"set_group,omitempty"`
 	Exercise Exercise `gorm:"foreignKey:ExerciseID;constraint:OnDelete:CASCADE" json:"exercise,omitempty"`
 }
 
