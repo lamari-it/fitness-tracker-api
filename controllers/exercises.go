@@ -3,7 +3,7 @@ package controllers
 import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
-	"net/http"
+	"fit-flow-api/utils"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +42,7 @@ type MuscleGroupAssignment struct {
 func CreateExercise(c *gin.Context) {
 	var req CreateExerciseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.HandleBindingError(c, err)
 		return
 	}
 
@@ -66,10 +66,10 @@ func CreateExercise(c *gin.Context) {
 	if err := tx.Create(&exercise).Error; err != nil {
 		tx.Rollback()
 		if strings.Contains(err.Error(), "duplicate key") {
-			c.JSON(http.StatusConflict, gin.H{"error": "Exercise with this name already exists"})
+			utils.ConflictResponse(c, "Exercise with this name already exists.")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create exercise"})
+		utils.InternalServerErrorResponse(c, "Failed to create exercise.")
 		return
 	}
 
@@ -85,7 +85,7 @@ func CreateExercise(c *gin.Context) {
 		// Ensure only one primary muscle group
 		if primaryCount > 1 {
 			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Only one muscle group can be set as primary"})
+			utils.BadRequestResponse(c, "Only one muscle group can be set as primary.", nil)
 			return
 		}
 
@@ -94,7 +94,7 @@ func CreateExercise(c *gin.Context) {
 			var muscleGroup models.MuscleGroup
 			if err := tx.Where("id = ?", mgAssign.MuscleGroupID).First(&muscleGroup).Error; err != nil {
 				tx.Rollback()
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid muscle group ID: " + mgAssign.MuscleGroupID.String()})
+				utils.BadRequestResponse(c, "Invalid muscle group ID: "+mgAssign.MuscleGroupID.String(), nil)
 				return
 			}
 
@@ -111,13 +111,13 @@ func CreateExercise(c *gin.Context) {
 
 			if err := assignment.Validate(); err != nil {
 				tx.Rollback()
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid muscle group assignment"})
+				utils.BadRequestResponse(c, "Invalid muscle group assignment.", err.Error())
 				return
 			}
 
 			if err := tx.Create(&assignment).Error; err != nil {
 				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign muscle groups"})
+				utils.InternalServerErrorResponse(c, "Failed to assign muscle groups.")
 				return
 			}
 		}
@@ -130,7 +130,7 @@ func CreateExercise(c *gin.Context) {
 		Preload("MuscleGroups.MuscleGroup").
 		First(&exercise)
 
-	c.JSON(http.StatusCreated, exercise)
+	utils.CreatedResponse(c, "Exercise created successfully.", exercise)
 }
 
 func GetExercises(c *gin.Context) {
@@ -169,17 +169,17 @@ func GetExercises(c *gin.Context) {
 
 	var exercises []models.Exercise
 	if err := query.Order("name ASC").Find(&exercises).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch exercises"})
+		utils.InternalServerErrorResponse(c, "Failed to fetch exercises.")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"exercises": exercises})
+	utils.SuccessResponse(c, "Exercises retrieved successfully.", gin.H{"exercises": exercises})
 }
 
 func GetExercise(c *gin.Context) {
 	exerciseID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exercise ID"})
+		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
 		return
 	}
 
@@ -187,11 +187,11 @@ func GetExercise(c *gin.Context) {
 	if err := database.DB.Where("id = ?", exerciseID).
 		Preload("MuscleGroups.MuscleGroup").
 		First(&exercise).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Exercise not found"})
+		utils.NotFoundResponse(c, "Exercise not found.")
 		return
 	}
 
-	c.JSON(http.StatusOK, exercise)
+	utils.SuccessResponse(c, "Exercise retrieved successfully.", exercise)
 }
 
 func GetExerciseBySlug(c *gin.Context) {
@@ -202,29 +202,29 @@ func GetExerciseBySlug(c *gin.Context) {
 		Preload("MuscleGroups.MuscleGroup").
 		Preload("Equipment.Equipment").
 		First(&exercise).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Exercise not found"})
+		utils.NotFoundResponse(c, "Exercise not found.")
 		return
 	}
 	
-	c.JSON(http.StatusOK, exercise)
+	utils.SuccessResponse(c, "Exercise retrieved successfully.", exercise)
 }
 
 func UpdateExercise(c *gin.Context) {
 	exerciseID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exercise ID"})
+		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
 		return
 	}
 
 	var req CreateExerciseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	var exercise models.Exercise
 	if err := database.DB.Where("id = ?", exerciseID).First(&exercise).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Exercise not found"})
+		utils.NotFoundResponse(c, "Exercise not found.")
 		return
 	}
 
@@ -241,10 +241,10 @@ func UpdateExercise(c *gin.Context) {
 
 	if err := database.DB.Save(&exercise).Error; err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
-			c.JSON(http.StatusConflict, gin.H{"error": "Exercise with this name already exists"})
+			utils.ConflictResponse(c, "Exercise with this name already exists.")
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update exercise"})
+		utils.InternalServerErrorResponse(c, "Failed to update exercise.")
 		return
 	}
 
@@ -253,26 +253,26 @@ func UpdateExercise(c *gin.Context) {
 		Preload("MuscleGroups.MuscleGroup").
 		First(&exercise)
 
-	c.JSON(http.StatusOK, exercise)
+	utils.SuccessResponse(c, "Exercise updated successfully.", exercise)
 }
 
 func DeleteExercise(c *gin.Context) {
 	exerciseID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exercise ID"})
+		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
 		return
 	}
 
 	result := database.DB.Where("id = ?", exerciseID).Delete(&models.Exercise{})
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete exercise"})
+		utils.InternalServerErrorResponse(c, "Failed to delete exercise.")
 		return
 	}
 
 	if result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Exercise not found"})
+		utils.NotFoundResponse(c, "Exercise not found.")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Exercise deleted successfully"})
+	utils.DeletedResponse(c, "Exercise deleted successfully.")
 }

@@ -3,7 +3,7 @@ package controllers
 import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
-	"net/http"
+	"fit-flow-api/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -16,31 +16,31 @@ type SendFriendRequestRequest struct {
 func SendFriendRequest(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		utils.UnauthorizedResponse(c, "User not authenticated.")
 		return
 	}
 
 	var req SendFriendRequestRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	var friend models.User
 	if err := database.DB.Where("email = ?", req.FriendEmail).First(&friend).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		utils.NotFoundResponse(c, "User not found.")
 		return
 	}
 
 	if friend.ID == userID.(uuid.UUID) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot send friend request to yourself"})
+		utils.BadRequestResponse(c, "Cannot send friend request to yourself.", nil)
 		return
 	}
 
 	var existingFriendship models.Friendship
 	if err := database.DB.Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)", 
 		userID, friend.ID, friend.ID, userID).First(&existingFriendship).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Friend request already exists or you are already friends"})
+		utils.ConflictResponse(c, "Friend request already exists or you are already friends.")
 		return
 	}
 
@@ -51,19 +51,19 @@ func SendFriendRequest(c *gin.Context) {
 	}
 
 	if err := database.DB.Create(&friendship).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send friend request"})
+		utils.InternalServerErrorResponse(c, "Failed to send friend request.")
 		return
 	}
 
 	database.DB.Preload("Friend").First(&friendship, friendship.ID)
 
-	c.JSON(http.StatusCreated, friendship.ToResponse())
+	utils.CreatedResponse(c, "Friend request sent successfully.", friendship.ToResponse())
 }
 
 func GetFriendRequests(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		utils.UnauthorizedResponse(c, "User not authenticated.")
 		return
 	}
 
@@ -71,7 +71,7 @@ func GetFriendRequests(c *gin.Context) {
 	if err := database.DB.Where("friend_id = ? AND status = ?", userID, "pending").
 		Preload("User").
 		Find(&friendships).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch friend requests"})
+		utils.InternalServerErrorResponse(c, "Failed to fetch friend requests.")
 		return
 	}
 
@@ -89,32 +89,32 @@ func GetFriendRequests(c *gin.Context) {
 		responses = append(responses, response)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"requests": responses})
+	utils.SuccessResponse(c, "Friend requests retrieved successfully.", gin.H{"requests": responses})
 }
 
 func RespondToFriendRequest(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		utils.UnauthorizedResponse(c, "User not authenticated.")
 		return
 	}
 
 	requestID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request ID"})
+		utils.BadRequestResponse(c, "Invalid request ID.", nil)
 		return
 	}
 
 	action := c.Param("action")
 	if action != "accept" && action != "decline" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid action. Use 'accept' or 'decline'"})
+		utils.BadRequestResponse(c, "Invalid action. Use 'accept' or 'decline'.", nil)
 		return
 	}
 
 	var friendship models.Friendship
 	if err := database.DB.Where("id = ? AND friend_id = ? AND status = ?", 
 		requestID, userID, "pending").First(&friendship).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Friend request not found"})
+		utils.NotFoundResponse(c, "Friend request not found.")
 		return
 	}
 
@@ -125,19 +125,19 @@ func RespondToFriendRequest(c *gin.Context) {
 	}
 
 	if err := database.DB.Save(&friendship).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update friend request"})
+		utils.InternalServerErrorResponse(c, "Failed to update friend request.")
 		return
 	}
 
 	database.DB.Preload("User").First(&friendship, friendship.ID)
 
-	c.JSON(http.StatusOK, friendship.ToResponse())
+	utils.SuccessResponse(c, "Friend request updated successfully.", friendship.ToResponse())
 }
 
 func GetFriends(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		utils.UnauthorizedResponse(c, "User not authenticated.")
 		return
 	}
 
@@ -147,7 +147,7 @@ func GetFriends(c *gin.Context) {
 		Preload("User").
 		Preload("Friend").
 		Find(&friendships).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch friends"})
+		utils.InternalServerErrorResponse(c, "Failed to fetch friends.")
 		return
 	}
 
@@ -171,19 +171,19 @@ func GetFriends(c *gin.Context) {
 		responses = append(responses, response)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"friends": responses})
+	utils.SuccessResponse(c, "Friends retrieved successfully.", gin.H{"friends": responses})
 }
 
 func RemoveFriend(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		utils.UnauthorizedResponse(c, "User not authenticated.")
 		return
 	}
 
 	friendshipID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid friendship ID"})
+		utils.BadRequestResponse(c, "Invalid friendship ID.", nil)
 		return
 	}
 
@@ -191,14 +191,14 @@ func RemoveFriend(c *gin.Context) {
 		friendshipID, userID, userID).Delete(&models.Friendship{})
 	
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove friend"})
+		utils.InternalServerErrorResponse(c, "Failed to remove friend.")
 		return
 	}
 
 	if result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Friendship not found"})
+		utils.NotFoundResponse(c, "Friendship not found.")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Friend removed successfully"})
+	utils.DeletedResponse(c, "Friend removed successfully.")
 }

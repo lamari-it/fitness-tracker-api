@@ -2,10 +2,8 @@ package controllers
 
 import (
 	"fit-flow-api/database"
-	"fit-flow-api/middleware"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
-	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -33,24 +31,27 @@ type AuthResponse struct {
 func Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	if req.Password != req.PasswordConfirm {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "auth.password_mismatch", nil)
+		validationErrors := utils.ValidationErrors{
+			"password_confirm": []string{"Passwords do not match."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
 		return
 	}
 
 	var existingUser models.User
 	if err := database.DB.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
-		middleware.TranslateErrorResponse(c, http.StatusConflict, "user.email_exists", nil)
+		utils.ConflictResponse(c, "A user with this email already exists.")
 		return
 	}
 
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "general.internal_error", nil)
+		utils.InternalServerErrorResponse(c, "Failed to process password.")
 		return
 	}
 
@@ -60,16 +61,17 @@ func Register(c *gin.Context) {
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		Provider:  "local",
+		IsActive:  true,
 	}
 
 	if err := database.DB.Create(&user).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "auth.register_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to create user.")
 		return
 	}
 
 	token, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "general.internal_error", nil)
+		utils.InternalServerErrorResponse(c, "Failed to generate authentication token.")
 		return
 	}
 
@@ -78,35 +80,35 @@ func Register(c *gin.Context) {
 		Token: token,
 	}
 
-	middleware.TranslateResponse(c, http.StatusCreated, "user.register_success", response)
+	utils.CreatedResponse(c, "User registered successfully.", response)
 }
 
 func Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	var user models.User
 	if err := database.DB.Where("email = ?", strings.ToLower(req.Email)).First(&user).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusUnauthorized, "auth.login_failed", nil)
+		utils.UnauthorizedResponse(c, "Invalid email or password.")
 		return
 	}
 
 	if !utils.CheckPasswordHash(req.Password, user.Password) {
-		middleware.TranslateErrorResponse(c, http.StatusUnauthorized, "auth.login_failed", nil)
+		utils.UnauthorizedResponse(c, "Invalid email or password.")
 		return
 	}
 
 	if !user.IsActive {
-		middleware.TranslateErrorResponse(c, http.StatusUnauthorized, "auth.unauthorized", nil)
+		utils.ForbiddenResponse(c, "Your account has been deactivated.")
 		return
 	}
 
 	token, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "general.internal_error", nil)
+		utils.InternalServerErrorResponse(c, "Failed to generate authentication token.")
 		return
 	}
 
@@ -115,21 +117,21 @@ func Login(c *gin.Context) {
 		Token: token,
 	}
 
-	middleware.TranslateResponse(c, http.StatusOK, "auth.login_success", response)
+	utils.SuccessResponse(c, "Login successful.", response)
 }
 
 func GetProfile(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		utils.UnauthorizedResponse(c, "User not authenticated.")
 		return
 	}
 
 	var user models.User
 	if err := database.DB.Where("id = ?", userID.(uuid.UUID)).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		utils.NotFoundResponse(c, "User not found.")
 		return
 	}
 
-	c.JSON(http.StatusOK, user.ToResponse())
+	utils.SuccessResponse(c, "Profile fetched successfully.", user.ToResponse())
 }

@@ -12,8 +12,8 @@ import (
 func main() {
 	config.LoadConfig()
 	database.ConnectDB()
-	database.InitializeDB()
-	database.SeedDatabase()
+	//database.InitializeDB()
+	//database.SeedDatabase()
 
 	r := gin.Default()
 	routes.SetupRoutes(r)

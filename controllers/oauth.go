@@ -52,7 +52,7 @@ func GoogleCallback(c *gin.Context) {
 	
 	storedState, err := c.Cookie("oauth_state")
 	if err != nil || state != storedState {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid state parameter"})
+		utils.BadRequestResponse(c, "Invalid state parameter.", nil)
 		return
 	}
 	
@@ -61,21 +61,21 @@ func GoogleCallback(c *gin.Context) {
 	oauthConfig := getGoogleOAuthConfig()
 	token, err := oauthConfig.Exchange(context.Background(), code)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to exchange code for token"})
+		utils.InternalServerErrorResponse(c, "Failed to exchange code for token.")
 		return
 	}
 	
 	client := oauthConfig.Client(context.Background(), token)
 	response, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user info"})
+		utils.InternalServerErrorResponse(c, "Failed to get user info.")
 		return
 	}
 	defer response.Body.Close()
 	
 	var googleUser GoogleUser
 	if err := json.NewDecoder(response.Body).Decode(&googleUser); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode user info"})
+		utils.InternalServerErrorResponse(c, "Failed to decode user info.")
 		return
 	}
 	
@@ -93,7 +93,7 @@ func GoogleCallback(c *gin.Context) {
 		}
 		
 		if err := database.DB.Create(&user).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+			utils.InternalServerErrorResponse(c, "Failed to create user.")
 			return
 		}
 	} else {
@@ -104,13 +104,13 @@ func GoogleCallback(c *gin.Context) {
 	}
 	
 	if !user.IsActive {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Account is deactivated"})
+		utils.UnauthorizedResponse(c, "Account is deactivated.")
 		return
 	}
 	
 	jwtToken, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		utils.InternalServerErrorResponse(c, "Failed to generate token.")
 		return
 	}
 	
@@ -119,5 +119,5 @@ func GoogleCallback(c *gin.Context) {
 		Token: jwtToken,
 	}
 	
-	c.JSON(http.StatusOK, response2)
+	utils.SuccessResponse(c, "Google login successful.", response2)
 }

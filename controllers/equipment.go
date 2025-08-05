@@ -2,9 +2,8 @@ package controllers
 
 import (
 	"fit-flow-api/database"
-	"fit-flow-api/middleware"
 	"fit-flow-api/models"
-	"net/http"
+	"fit-flow-api/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -15,14 +14,14 @@ import (
 func CreateEquipment(c *gin.Context) {
 	var req models.CreateEquipmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	// Check if equipment with same name or slug already exists
 	var existingEquipment models.Equipment
 	if err := database.DB.Where("name = ? OR slug = ?", req.Name, req.Slug).First(&existingEquipment).Error; err == nil {
-		middleware.TranslateErrorResponse(c, http.StatusConflict, "equipment.already_exists", nil)
+		utils.ConflictResponse(c, "Equipment with this name or slug already exists")
 		return
 	}
 
@@ -35,16 +34,16 @@ func CreateEquipment(c *gin.Context) {
 	}
 
 	if err := equipment.Validate(); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.BadRequestResponse(c, "Validation failed", err.Error())
 		return
 	}
 
 	if err := database.DB.Create(&equipment).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "equipment.create_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to create equipment")
 		return
 	}
 
-	middleware.TranslateResponse(c, http.StatusCreated, "equipment.created", equipment.ToResponse())
+	utils.CreatedResponse(c, "Equipment created successfully", equipment.ToResponse())
 }
 
 // GetAllEquipment retrieves all equipment with optional filtering
@@ -83,7 +82,7 @@ func GetAllEquipment(c *gin.Context) {
 
 	// Get equipment with pagination
 	if err := query.Offset(offset).Limit(limit).Order("name").Find(&equipment).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "general.internal_error", nil)
+		utils.InternalServerErrorResponse(c, "Failed to retrieve equipment")
 		return
 	}
 
@@ -100,7 +99,7 @@ func GetAllEquipment(c *gin.Context) {
 		"limit":     limit,
 	}
 
-	middleware.TranslateResponse(c, http.StatusOK, "equipment.list_retrieved", result)
+	utils.PaginatedResponse(c, "Equipment list retrieved successfully", result, page, limit, int(total))
 }
 
 // GetEquipmentByID retrieves a specific equipment by ID
@@ -108,13 +107,13 @@ func GetEquipmentByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_uuid", nil)
+		utils.BadRequestResponse(c, "Invalid UUID format", nil)
 		return
 	}
 
 	var equipment models.Equipment
 	if err := database.DB.Preload("ExerciseLinks.Exercise").First(&equipment, "id = ?", id).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusNotFound, "equipment.not_found", nil)
+		utils.NotFoundResponse(c, "Equipment not found")
 		return
 	}
 
@@ -135,7 +134,7 @@ func GetEquipmentByID(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, response)
+	utils.SuccessResponse(c, "Equipment retrieved successfully", response)
 }
 
 // UpdateEquipment updates an existing equipment
@@ -143,19 +142,19 @@ func UpdateEquipment(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_uuid", nil)
+		utils.BadRequestResponse(c, "Invalid UUID format", nil)
 		return
 	}
 
 	var equipment models.Equipment
 	if err := database.DB.First(&equipment, "id = ?", id).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusNotFound, "equipment.not_found", nil)
+		utils.NotFoundResponse(c, "Equipment not found")
 		return
 	}
 
 	var req models.UpdateEquipmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
@@ -164,7 +163,7 @@ func UpdateEquipment(c *gin.Context) {
 		// Check for duplicate name
 		var existingEquipment models.Equipment
 		if err := database.DB.Where("name = ? AND id != ?", req.Name, id).First(&existingEquipment).Error; err == nil {
-			middleware.TranslateErrorResponse(c, http.StatusConflict, "equipment.already_exists", nil)
+			utils.ConflictResponse(c, "Equipment with this name already exists")
 			return
 		}
 		equipment.Name = req.Name
@@ -173,7 +172,7 @@ func UpdateEquipment(c *gin.Context) {
 		// Check for duplicate slug
 		var existingEquipment models.Equipment
 		if err := database.DB.Where("slug = ? AND id != ?", req.Slug, id).First(&existingEquipment).Error; err == nil {
-			middleware.TranslateErrorResponse(c, http.StatusConflict, "equipment.already_exists", nil)
+			utils.ConflictResponse(c, "Equipment with this slug already exists")
 			return
 		}
 		equipment.Slug = req.Slug
@@ -189,16 +188,16 @@ func UpdateEquipment(c *gin.Context) {
 	}
 
 	if err := equipment.Validate(); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.BadRequestResponse(c, "Validation failed", err.Error())
 		return
 	}
 
 	if err := database.DB.Save(&equipment).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "equipment.update_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to update equipment")
 		return
 	}
 
-	middleware.TranslateResponse(c, http.StatusOK, "equipment.updated", equipment.ToResponse())
+	utils.SuccessResponse(c, "Equipment updated successfully", equipment.ToResponse())
 }
 
 // DeleteEquipment deletes an equipment
@@ -206,13 +205,13 @@ func DeleteEquipment(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_uuid", nil)
+		utils.BadRequestResponse(c, "Invalid UUID format", nil)
 		return
 	}
 
 	var equipment models.Equipment
 	if err := database.DB.First(&equipment, "id = ?", id).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusNotFound, "equipment.not_found", nil)
+		utils.NotFoundResponse(c, "Equipment not found")
 		return
 	}
 
@@ -220,16 +219,16 @@ func DeleteEquipment(c *gin.Context) {
 	var count int64
 	database.DB.Model(&models.ExerciseEquipment{}).Where("equipment_id = ?", id).Count(&count)
 	if count > 0 {
-		middleware.TranslateErrorResponse(c, http.StatusConflict, "equipment.in_use", nil)
+		utils.ConflictResponse(c, "Equipment is currently in use and cannot be deleted")
 		return
 	}
 
 	if err := database.DB.Delete(&equipment).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "equipment.delete_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to delete equipment")
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	utils.NoContentResponse(c)
 }
 
 // AssignEquipmentToExercise assigns equipment to an exercise
@@ -237,34 +236,34 @@ func AssignEquipmentToExercise(c *gin.Context) {
 	exerciseIDStr := c.Param("exercise_id")
 	exerciseID, err := uuid.Parse(exerciseIDStr)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_uuid", nil)
+		utils.BadRequestResponse(c, "Invalid exercise UUID format", nil)
 		return
 	}
 
 	var req models.AssignEquipmentToExerciseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	// Check if exercise exists
 	var exercise models.Exercise
 	if err := database.DB.First(&exercise, "id = ?", exerciseID).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusNotFound, "exercise.not_found", nil)
+		utils.NotFoundResponse(c, "Exercise not found")
 		return
 	}
 
 	// Check if equipment exists
 	var equipment models.Equipment
 	if err := database.DB.First(&equipment, "id = ?", req.EquipmentID).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusNotFound, "equipment.not_found", nil)
+		utils.NotFoundResponse(c, "Equipment not found")
 		return
 	}
 
 	// Check if relationship already exists
 	var existing models.ExerciseEquipment
 	if err := database.DB.Where("exercise_id = ? AND equipment_id = ?", exerciseID, req.EquipmentID).First(&existing).Error; err == nil {
-		middleware.TranslateErrorResponse(c, http.StatusConflict, "equipment.already_assigned", nil)
+		utils.ConflictResponse(c, "Equipment is already assigned to this exercise")
 		return
 	}
 
@@ -277,14 +276,14 @@ func AssignEquipmentToExercise(c *gin.Context) {
 	}
 
 	if err := database.DB.Create(&exerciseEquipment).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "equipment.assign_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to assign equipment to exercise")
 		return
 	}
 
 	// Load the equipment for response
 	database.DB.Preload("Equipment").First(&exerciseEquipment, "id = ?", exerciseEquipment.ID)
 
-	middleware.TranslateResponse(c, http.StatusCreated, "equipment.assigned", exerciseEquipment.ToResponse())
+	utils.CreatedResponse(c, "Equipment assigned to exercise successfully", exerciseEquipment.ToResponse())
 }
 
 // RemoveEquipmentFromExercise removes equipment from an exercise
@@ -292,30 +291,30 @@ func RemoveEquipmentFromExercise(c *gin.Context) {
 	exerciseIDStr := c.Param("exercise_id")
 	exerciseID, err := uuid.Parse(exerciseIDStr)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_uuid", nil)
+		utils.BadRequestResponse(c, "Invalid exercise UUID format", nil)
 		return
 	}
 
 	equipmentIDStr := c.Param("equipment_id")
 	equipmentID, err := uuid.Parse(equipmentIDStr)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_uuid", nil)
+		utils.BadRequestResponse(c, "Invalid equipment UUID format", nil)
 		return
 	}
 
 	// Find and delete the relationship
 	result := database.DB.Where("exercise_id = ? AND equipment_id = ?", exerciseID, equipmentID).Delete(&models.ExerciseEquipment{})
 	if result.Error != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "equipment.remove_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to remove equipment from exercise")
 		return
 	}
 
 	if result.RowsAffected == 0 {
-		middleware.TranslateErrorResponse(c, http.StatusNotFound, "equipment.not_assigned", nil)
+		utils.NotFoundResponse(c, "Equipment is not assigned to this exercise")
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	utils.NoContentResponse(c)
 }
 
 // GetExerciseEquipment gets all equipment for an exercise
@@ -323,21 +322,21 @@ func GetExerciseEquipment(c *gin.Context) {
 	exerciseIDStr := c.Param("exercise_id")
 	exerciseID, err := uuid.Parse(exerciseIDStr)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_uuid", nil)
+		utils.BadRequestResponse(c, "Invalid exercise UUID format", nil)
 		return
 	}
 
 	// Check if exercise exists
 	var exercise models.Exercise
 	if err := database.DB.First(&exercise, "id = ?", exerciseID).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusNotFound, "exercise.not_found", nil)
+		utils.NotFoundResponse(c, "Exercise not found")
 		return
 	}
 
 	// Get all equipment for the exercise
 	var exerciseEquipment []models.ExerciseEquipment
 	if err := database.DB.Preload("Equipment").Where("exercise_id = ?", exerciseID).Find(&exerciseEquipment).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "general.internal_error", nil)
+		utils.InternalServerErrorResponse(c, "Failed to retrieve exercise equipment")
 		return
 	}
 
@@ -347,7 +346,7 @@ func GetExerciseEquipment(c *gin.Context) {
 		responses[i] = ee.ToResponse()
 	}
 
-	middleware.TranslateResponse(c, http.StatusOK, "equipment.list_retrieved", gin.H{
+	utils.SuccessResponse(c, "Exercise equipment list retrieved successfully", gin.H{
 		"equipment": responses,
 	})
 }

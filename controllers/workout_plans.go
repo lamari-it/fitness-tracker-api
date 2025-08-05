@@ -3,7 +3,7 @@ package controllers
 import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
-	"net/http"
+	"fit-flow-api/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -25,13 +25,13 @@ type UpdateWorkoutPlanRequest struct {
 func CreateWorkoutPlan(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		utils.UnauthorizedResponse(c, "User not authenticated.")
 		return
 	}
 
 	var req CreateWorkoutPlanRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.HandleBindingError(c, err)
 		return
 	}
 
@@ -47,28 +47,39 @@ func CreateWorkoutPlan(c *gin.Context) {
 	}
 
 	if err := database.DB.Create(&plan).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create workout plan"})
+		utils.InternalServerErrorResponse(c, "Failed to create workout plan.")
 		return
 	}
 
-	c.JSON(http.StatusCreated, plan)
+	utils.CreatedResponse(c, "Workout plan created successfully.", plan)
 }
 
 func GetWorkoutPlans(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		utils.UnauthorizedResponse(c, "User not authenticated.")
 		return
 	}
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 10
+	}
+	
 	offset := (page - 1) * limit
 
 	var plans []models.WorkoutPlan
 	var total int64
 
-	database.DB.Model(&models.WorkoutPlan{}).Where("user_id = ?", userID).Count(&total)
+	if err := database.DB.Model(&models.WorkoutPlan{}).Where("user_id = ?", userID).Count(&total).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to count workout plans.")
+		return
+	}
 	
 	if err := database.DB.Where("user_id = ?", userID).
 		Preload("Workouts").
@@ -76,108 +87,118 @@ func GetWorkoutPlans(c *gin.Context) {
 		Limit(limit).
 		Order("created_at DESC").
 		Find(&plans).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch workout plans"})
+		utils.InternalServerErrorResponse(c, "Failed to fetch workout plans.")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"plans": plans,
-		"total": total,
-		"page":  page,
-		"limit": limit,
-	})
+	utils.PaginatedResponse(c, "Workout plans fetched successfully.", plans, page, limit, int(total))
 }
 
 func GetWorkoutPlan(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		utils.UnauthorizedResponse(c, "User not authenticated.")
 		return
 	}
 
 	planID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plan ID"})
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout plan ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
 		return
 	}
 
 	var plan models.WorkoutPlan
 	if err := database.DB.Where("id = ? AND user_id = ?", planID, userID).
-		Preload("Workouts.WorkoutExercises.Exercise").
+		Preload("Workouts.SetGroups.WorkoutExercises.Exercise").
+		Preload("Workouts.SetGroups.WorkoutExercises.SetGroup").
 		First(&plan).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Workout plan not found"})
+		utils.NotFoundResponse(c, "Workout plan not found.")
 		return
 	}
 
-	c.JSON(http.StatusOK, plan)
+	utils.SuccessResponse(c, "Workout plan fetched successfully.", plan)
 }
 
 func UpdateWorkoutPlan(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		utils.UnauthorizedResponse(c, "User not authenticated.")
 		return
 	}
 
 	planID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plan ID"})
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout plan ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
 		return
 	}
 
 	var req UpdateWorkoutPlanRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	var plan models.WorkoutPlan
 	if err := database.DB.Where("id = ? AND user_id = ?", planID, userID).First(&plan).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Workout plan not found"})
+		utils.NotFoundResponse(c, "Workout plan not found.")
 		return
 	}
 
+	updates := map[string]interface{}{}
 	if req.Title != "" {
-		plan.Title = req.Title
+		updates["title"] = req.Title
 	}
 	if req.Description != "" {
-		plan.Description = req.Description
+		updates["description"] = req.Description
 	}
 	if req.Visibility != "" {
-		plan.Visibility = req.Visibility
+		updates["visibility"] = req.Visibility
 	}
 
-	if err := database.DB.Save(&plan).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update workout plan"})
-		return
+	if len(updates) > 0 {
+		if err := database.DB.Model(&plan).Updates(updates).Error; err != nil {
+			utils.InternalServerErrorResponse(c, "Failed to update workout plan.")
+			return
+		}
 	}
 
-	c.JSON(http.StatusOK, plan)
+	database.DB.Where("id = ?", planID).First(&plan)
+
+	utils.SuccessResponse(c, "Workout plan updated successfully.", plan)
 }
 
 func DeleteWorkoutPlan(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		utils.UnauthorizedResponse(c, "User not authenticated.")
 		return
 	}
 
 	planID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid plan ID"})
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout plan ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
 		return
 	}
 
-	result := database.DB.Where("id = ? AND user_id = ?", planID, userID).Delete(&models.WorkoutPlan{})
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete workout plan"})
+	var plan models.WorkoutPlan
+	if err := database.DB.Where("id = ? AND user_id = ?", planID, userID).First(&plan).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout plan not found.")
 		return
 	}
 
-	if result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Workout plan not found"})
+	if err := database.DB.Delete(&plan).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to delete workout plan.")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Workout plan deleted successfully"})
+	utils.DeletedResponse(c, "Workout plan deleted successfully.")
 }

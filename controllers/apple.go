@@ -5,7 +5,6 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
-	"net/http"
 	"strings"
 
 	"github.com/Timothylock/go-signin-with-apple/apple"
@@ -23,37 +22,37 @@ type AppleLoginRequest struct {
 func AppleLogin(c *gin.Context) {
 	var req AppleLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	claims, err := apple.GetClaims(req.IdentityToken)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Apple identity token"})
+		utils.UnauthorizedResponse(c, "Invalid Apple identity token.")
 		return
 	}
 
 	email, ok := (*claims)["email"].(string)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Email not found in token"})
+		utils.BadRequestResponse(c, "Email not found in token.", nil)
 		return
 	}
 
 	subject, ok := (*claims)["sub"].(string)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Subject not found in token"})
+		utils.BadRequestResponse(c, "Subject not found in token.", nil)
 		return
 	}
 
 	issuer, ok := (*claims)["iss"].(string)
 	if !ok || issuer != "https://appleid.apple.com" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token issuer"})
+		utils.UnauthorizedResponse(c, "Invalid token issuer.")
 		return
 	}
 
 	audience, ok := (*claims)["aud"].(string)
 	if !ok || audience != config.AppConfig.AppleClientID {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token audience"})
+		utils.UnauthorizedResponse(c, "Invalid token audience.")
 		return
 	}
 
@@ -80,7 +79,7 @@ func AppleLogin(c *gin.Context) {
 		}
 		
 		if err := database.DB.Create(&user).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+			utils.InternalServerErrorResponse(c, "Failed to create user.")
 			return
 		}
 	} else {
@@ -91,13 +90,13 @@ func AppleLogin(c *gin.Context) {
 	}
 	
 	if !user.IsActive {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Account is deactivated"})
+		utils.UnauthorizedResponse(c, "Account is deactivated.")
 		return
 	}
 	
 	jwtToken, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		utils.InternalServerErrorResponse(c, "Failed to generate token.")
 		return
 	}
 	
@@ -106,5 +105,5 @@ func AppleLogin(c *gin.Context) {
 		Token: jwtToken,
 	}
 	
-	c.JSON(http.StatusOK, response)
+	utils.SuccessResponse(c, "Apple login successful.", response)
 }

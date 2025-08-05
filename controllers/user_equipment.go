@@ -2,9 +2,8 @@ package controllers
 
 import (
 	"fit-flow-api/database"
-	"fit-flow-api/middleware"
 	"fit-flow-api/models"
-	"net/http"
+	"fit-flow-api/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -14,14 +13,14 @@ import (
 func GetUserEquipment(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
-		middleware.TranslateErrorResponse(c, http.StatusUnauthorized, "auth.token_invalid", nil)
+		utils.UnauthorizedResponse(c, "Authentication required.")
 		return
 	}
 
 	// Get filter parameters
 	var filter models.UserEquipmentFilter
 	if err := c.ShouldBindQuery(&filter); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
@@ -34,7 +33,7 @@ func GetUserEquipment(c *gin.Context) {
 
 	var userEquipment []models.UserEquipment
 	if err := query.Find(&userEquipment).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "user_equipment.fetch_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to retrieve user equipment.")
 		return
 	}
 
@@ -44,7 +43,7 @@ func GetUserEquipment(c *gin.Context) {
 		response[i] = ue.ToResponse()
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	utils.SuccessResponse(c, "User equipment retrieved successfully.", gin.H{
 		"equipment": response,
 		"total":     len(response),
 	})
@@ -54,20 +53,20 @@ func GetUserEquipment(c *gin.Context) {
 func AddUserEquipment(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
-		middleware.TranslateErrorResponse(c, http.StatusUnauthorized, "auth.token_invalid", nil)
+		utils.UnauthorizedResponse(c, "Authentication required.")
 		return
 	}
 
 	var req models.AddUserEquipmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	// Check if equipment exists
 	var equipment models.Equipment
 	if err := database.DB.First(&equipment, "id = ?", req.EquipmentID).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusNotFound, "equipment.not_found", nil)
+		utils.NotFoundResponse(c, "Equipment not found.")
 		return
 	}
 
@@ -77,7 +76,7 @@ func AddUserEquipment(c *gin.Context) {
 		userID, req.EquipmentID, req.LocationType).First(&existingUE).Error
 	
 	if err == nil {
-		middleware.TranslateErrorResponse(c, http.StatusConflict, "user_equipment.already_exists", nil)
+		utils.ConflictResponse(c, "You already have this equipment at this location.")
 		return
 	}
 
@@ -91,46 +90,46 @@ func AddUserEquipment(c *gin.Context) {
 	}
 
 	if err := userEquipment.Validate(); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.BadRequestResponse(c, "Validation failed.", err.Error())
 		return
 	}
 
 	if err := database.DB.Create(&userEquipment).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "user_equipment.create_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to add equipment.")
 		return
 	}
 
 	// Load equipment for response
 	database.DB.Preload("Equipment").First(&userEquipment, userEquipment.ID)
 
-	middleware.TranslateResponse(c, http.StatusCreated, "user_equipment.created", userEquipment.ToResponse())
+	utils.CreatedResponse(c, "Equipment added successfully.", userEquipment.ToResponse())
 }
 
 // UpdateUserEquipment updates user's equipment details
 func UpdateUserEquipment(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
-		middleware.TranslateErrorResponse(c, http.StatusUnauthorized, "auth.token_invalid", nil)
+		utils.UnauthorizedResponse(c, "Authentication required.")
 		return
 	}
 
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_uuid", nil)
+		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
 	}
 
 	// Find user equipment
 	var userEquipment models.UserEquipment
 	if err := database.DB.Where("id = ? AND user_id = ?", id, userID).First(&userEquipment).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusNotFound, "user_equipment.not_found", nil)
+		utils.NotFoundResponse(c, "User equipment not found.")
 		return
 	}
 
 	var req models.UpdateUserEquipmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
@@ -142,7 +141,7 @@ func UpdateUserEquipment(c *gin.Context) {
 			userID, userEquipment.EquipmentID, req.LocationType, id).First(&existingUE).Error
 		
 		if err == nil {
-			middleware.TranslateErrorResponse(c, http.StatusConflict, "user_equipment.already_exists", nil)
+			utils.ConflictResponse(c, "You already have this equipment at this location.")
 			return
 		}
 		userEquipment.LocationType = req.LocationType
@@ -157,69 +156,69 @@ func UpdateUserEquipment(c *gin.Context) {
 	}
 
 	if err := userEquipment.Validate(); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.BadRequestResponse(c, "Validation failed.", err.Error())
 		return
 	}
 
 	if err := database.DB.Save(&userEquipment).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "user_equipment.update_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to update equipment.")
 		return
 	}
 
 	// Load equipment for response
 	database.DB.Preload("Equipment").First(&userEquipment, userEquipment.ID)
 
-	middleware.TranslateResponse(c, http.StatusOK, "user_equipment.updated", userEquipment.ToResponse())
+	utils.SuccessResponse(c, "Equipment updated successfully.", userEquipment.ToResponse())
 }
 
 // RemoveUserEquipment removes equipment from user's inventory
 func RemoveUserEquipment(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
-		middleware.TranslateErrorResponse(c, http.StatusUnauthorized, "auth.token_invalid", nil)
+		utils.UnauthorizedResponse(c, "Authentication required.")
 		return
 	}
 
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_uuid", nil)
+		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
 	}
 
 	// Delete user equipment
 	result := database.DB.Where("id = ? AND user_id = ?", id, userID).Delete(&models.UserEquipment{})
 	if result.Error != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "user_equipment.delete_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to remove equipment.")
 		return
 	}
 
 	if result.RowsAffected == 0 {
-		middleware.TranslateErrorResponse(c, http.StatusNotFound, "user_equipment.not_found", nil)
+		utils.NotFoundResponse(c, "User equipment not found.")
 		return
 	}
 
-	middleware.TranslateResponse(c, http.StatusOK, "user_equipment.deleted", nil)
+	utils.DeletedResponse(c, "Equipment removed successfully.")
 }
 
 // GetUserEquipmentByLocation gets equipment filtered by location
 func GetUserEquipmentByLocation(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
-		middleware.TranslateErrorResponse(c, http.StatusUnauthorized, "auth.token_invalid", nil)
+		utils.UnauthorizedResponse(c, "Authentication required.")
 		return
 	}
 
 	locationType := c.Param("location")
 	if locationType != "home" && locationType != "gym" {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_location", nil)
+		utils.BadRequestResponse(c, "Invalid location type. Must be 'home' or 'gym'.", nil)
 		return
 	}
 
 	var userEquipment []models.UserEquipment
 	if err := database.DB.Where("user_id = ? AND location_type = ?", userID, locationType).
 		Preload("Equipment").Find(&userEquipment).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "user_equipment.fetch_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to retrieve equipment by location.")
 		return
 	}
 
@@ -234,7 +233,7 @@ func GetUserEquipmentByLocation(c *gin.Context) {
 		categoryMap[category] = append(categoryMap[category], response)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	utils.SuccessResponse(c, "Equipment by location retrieved successfully.", gin.H{
 		"location":           locationType,
 		"equipment_by_category": categoryMap,
 		"total":              len(userEquipment),
@@ -245,7 +244,7 @@ func GetUserEquipmentByLocation(c *gin.Context) {
 func BulkAddUserEquipment(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
-		middleware.TranslateErrorResponse(c, http.StatusUnauthorized, "auth.token_invalid", nil)
+		utils.UnauthorizedResponse(c, "Authentication required.")
 		return
 	}
 
@@ -254,7 +253,7 @@ func BulkAddUserEquipment(c *gin.Context) {
 	}
 	
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
@@ -267,7 +266,7 @@ func BulkAddUserEquipment(c *gin.Context) {
 	var count int64
 	database.DB.Model(&models.Equipment{}).Where("id IN ?", equipmentIDs).Count(&count)
 	if int(count) != len(equipmentIDs) {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "equipment.some_not_found", nil)
+		utils.BadRequestResponse(c, "Some equipment items were not found.", nil)
 		return
 	}
 
@@ -300,14 +299,14 @@ func BulkAddUserEquipment(c *gin.Context) {
 
 		if err := tx.Create(&userEquipment).Error; err != nil {
 			tx.Rollback()
-			middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "user_equipment.bulk_create_failed", nil)
+			utils.InternalServerErrorResponse(c, "Failed to add equipment items.")
 			return
 		}
 		created = append(created, userEquipment)
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "user_equipment.bulk_create_failed", nil)
+		utils.InternalServerErrorResponse(c, "Failed to add equipment items.")
 		return
 	}
 
@@ -319,7 +318,7 @@ func BulkAddUserEquipment(c *gin.Context) {
 		response[i] = ue.ToResponse()
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	utils.CreatedResponse(c, "Equipment items added successfully.", gin.H{
 		"created": response,
 		"total":   len(response),
 	})

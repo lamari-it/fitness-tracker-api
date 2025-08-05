@@ -2,9 +2,8 @@ package controllers
 
 import (
 	"fit-flow-api/database"
-	"fit-flow-api/middleware"
 	"fit-flow-api/models"
-	"net/http"
+	"fit-flow-api/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -32,7 +31,7 @@ type AssignMuscleGroupRequest struct {
 func CreateMuscleGroup(c *gin.Context) {
 	var req CreateMuscleGroupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
@@ -43,16 +42,16 @@ func CreateMuscleGroup(c *gin.Context) {
 	}
 
 	if err := muscleGroup.Validate(); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.BadRequestResponse(c, "Validation failed.", err.Error())
 		return
 	}
 
 	if err := database.DB.Create(&muscleGroup).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create muscle group"})
+		utils.InternalServerErrorResponse(c, "Failed to create muscle group.")
 		return
 	}
 
-	c.JSON(http.StatusCreated, muscleGroup.ToResponse())
+	utils.CreatedResponse(c, "Muscle group created successfully.", muscleGroup.ToResponse())
 }
 
 func GetMuscleGroups(c *gin.Context) {
@@ -78,7 +77,7 @@ func GetMuscleGroups(c *gin.Context) {
 	query.Count(&total)
 
 	if err := query.Offset(offset).Limit(limit).Order("name ASC").Find(&muscleGroups).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch muscle groups"})
+		utils.InternalServerErrorResponse(c, "Failed to fetch muscle groups.")
 		return
 	}
 
@@ -87,18 +86,13 @@ func GetMuscleGroups(c *gin.Context) {
 		responses = append(responses, mg.ToResponse())
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"muscle_groups": responses,
-		"total":         total,
-		"page":          page,
-		"limit":         limit,
-	})
+	utils.PaginatedResponse(c, "Muscle groups retrieved successfully.", responses, page, limit, int(total))
 }
 
 func GetMuscleGroup(c *gin.Context) {
 	muscleGroupID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid muscle group ID"})
+		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
 		return
 	}
 
@@ -106,7 +100,7 @@ func GetMuscleGroup(c *gin.Context) {
 	if err := database.DB.Where("id = ?", muscleGroupID).
 		Preload("ExerciseLinks.Exercise").
 		First(&muscleGroup).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Muscle group not found"})
+		utils.NotFoundResponse(c, "Muscle group not found.")
 		return
 	}
 
@@ -127,25 +121,25 @@ func GetMuscleGroup(c *gin.Context) {
 		response.Exercises = append(response.Exercises, exerciseResponse)
 	}
 
-	c.JSON(http.StatusOK, response)
+	utils.SuccessResponse(c, "Muscle group retrieved successfully.", response)
 }
 
 func UpdateMuscleGroup(c *gin.Context) {
 	muscleGroupID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid muscle group ID"})
+		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
 		return
 	}
 
 	var req UpdateMuscleGroupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	var muscleGroup models.MuscleGroup
 	if err := database.DB.Where("id = ?", muscleGroupID).First(&muscleGroup).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Muscle group not found"})
+		utils.NotFoundResponse(c, "Muscle group not found.")
 		return
 	}
 
@@ -160,22 +154,22 @@ func UpdateMuscleGroup(c *gin.Context) {
 	}
 
 	if err := muscleGroup.Validate(); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.BadRequestResponse(c, "Validation failed.", err.Error())
 		return
 	}
 
 	if err := database.DB.Save(&muscleGroup).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update muscle group"})
+		utils.InternalServerErrorResponse(c, "Failed to update muscle group.")
 		return
 	}
 
-	c.JSON(http.StatusOK, muscleGroup.ToResponse())
+	utils.SuccessResponse(c, "Muscle group updated successfully.", muscleGroup.ToResponse())
 }
 
 func DeleteMuscleGroup(c *gin.Context) {
 	muscleGroupID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid muscle group ID"})
+		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
 		return
 	}
 
@@ -183,55 +177,55 @@ func DeleteMuscleGroup(c *gin.Context) {
 	var count int64
 	database.DB.Model(&models.ExerciseMuscleGroup{}).Where("muscle_group_id = ?", muscleGroupID).Count(&count)
 	if count > 0 {
-		c.JSON(http.StatusConflict, gin.H{"error": "Cannot delete muscle group that is assigned to exercises"})
+		utils.ConflictResponse(c, "Cannot delete muscle group that is assigned to exercises.")
 		return
 	}
 
 	result := database.DB.Where("id = ?", muscleGroupID).Delete(&models.MuscleGroup{})
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete muscle group"})
+		utils.InternalServerErrorResponse(c, "Failed to delete muscle group.")
 		return
 	}
 
 	if result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Muscle group not found"})
+		utils.NotFoundResponse(c, "Muscle group not found.")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Muscle group deleted successfully"})
+	utils.DeletedResponse(c, "Muscle group deleted successfully.")
 }
 
 func AssignMuscleGroupToExercise(c *gin.Context) {
 	exerciseID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exercise ID"})
+		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
 		return
 	}
 
 	var req AssignMuscleGroupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "validation.invalid_format", err.Error())
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	// Check if exercise exists
 	var exercise models.Exercise
 	if err := database.DB.Where("id = ?", exerciseID).First(&exercise).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Exercise not found"})
+		utils.NotFoundResponse(c, "Exercise not found.")
 		return
 	}
 
 	// Check if muscle group exists
 	var muscleGroup models.MuscleGroup
 	if err := database.DB.Where("id = ?", req.MuscleGroupID).First(&muscleGroup).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Muscle group not found"})
+		utils.NotFoundResponse(c, "Muscle group not found.")
 		return
 	}
 
 	// Check if assignment already exists
 	var existing models.ExerciseMuscleGroup
 	if err := database.DB.Where("exercise_id = ? AND muscle_group_id = ?", exerciseID, req.MuscleGroupID).First(&existing).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Muscle group already assigned to this exercise"})
+		utils.ConflictResponse(c, "Muscle group already assigned to this exercise.")
 		return
 	}
 
@@ -254,52 +248,52 @@ func AssignMuscleGroupToExercise(c *gin.Context) {
 	}
 
 	if err := assignment.Validate(); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid assignment data"})
+		utils.BadRequestResponse(c, "Invalid assignment data.", err.Error())
 		return
 	}
 
 	if err := database.DB.Create(&assignment).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign muscle group to exercise"})
+		utils.InternalServerErrorResponse(c, "Failed to assign muscle group to exercise.")
 		return
 	}
 
 	// Load the muscle group for response
 	database.DB.Where("id = ?", req.MuscleGroupID).First(&assignment.MuscleGroup)
 
-	c.JSON(http.StatusCreated, assignment.ToResponse())
+	utils.CreatedResponse(c, "Muscle group assigned to exercise successfully.", assignment.ToResponse())
 }
 
 func RemoveMuscleGroupFromExercise(c *gin.Context) {
 	exerciseID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exercise ID"})
+		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
 		return
 	}
 
 	muscleGroupID, err := uuid.Parse(c.Param("muscle_group_id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid muscle group ID"})
+		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
 		return
 	}
 
 	result := database.DB.Where("exercise_id = ? AND muscle_group_id = ?", exerciseID, muscleGroupID).Delete(&models.ExerciseMuscleGroup{})
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove muscle group from exercise"})
+		utils.InternalServerErrorResponse(c, "Failed to remove muscle group from exercise.")
 		return
 	}
 
 	if result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Muscle group assignment not found"})
+		utils.NotFoundResponse(c, "Muscle group assignment not found.")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Muscle group removed from exercise successfully"})
+	utils.DeletedResponse(c, "Muscle group removed from exercise successfully.")
 }
 
 func GetExerciseMuscleGroups(c *gin.Context) {
 	exerciseID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid exercise ID"})
+		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
 		return
 	}
 
@@ -307,7 +301,7 @@ func GetExerciseMuscleGroups(c *gin.Context) {
 	if err := database.DB.Where("exercise_id = ?", exerciseID).
 		Preload("MuscleGroup").
 		Find(&assignments).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch exercise muscle groups"})
+		utils.InternalServerErrorResponse(c, "Failed to fetch exercise muscle groups.")
 		return
 	}
 
@@ -316,5 +310,5 @@ func GetExerciseMuscleGroups(c *gin.Context) {
 		responses = append(responses, assignment.ToResponse())
 	}
 
-	c.JSON(http.StatusOK, gin.H{"muscle_groups": responses})
+	utils.SuccessResponse(c, "Exercise muscle groups retrieved successfully.", responses)
 }

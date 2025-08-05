@@ -2340,6 +2340,181 @@
       "description": "Legacy endpoints for backwards compatibility"
     },
     {
+      "name": "Translations (Admin Only)",
+      "item": [
+        {
+          "name": "Create Translation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resource_type\": \"exercise\",\n  \"resource_id\": \"{{exercise_id}}\",\n  \"language\": \"es\",\n  \"field\": \"name\",\n  \"translation\": \"Flexiones de brazos\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/translations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "translations"]
+            },
+            "description": "Create a new translation (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Translations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/translations?language=es&resource_type=exercise",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "translations"],
+              "query": [
+                {
+                  "key": "language",
+                  "value": "es",
+                  "description": "Filter by language code"
+                },
+                {
+                  "key": "resource_type",
+                  "value": "exercise",
+                  "description": "Filter by resource type"
+                }
+              ]
+            },
+            "description": "Get all translations with optional filters (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Translation by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/translations/{{translation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "translations", "{{translation_id}}"]
+            },
+            "description": "Get a specific translation by ID (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Translation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"translation\": \"Flexiones de pecho\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/translations/{{translation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "translations", "{{translation_id}}"]
+            },
+            "description": "Update an existing translation (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Translation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/translations/{{translation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "translations", "{{translation_id}}"]
+            },
+            "description": "Delete a translation (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Resource Translations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/translations/resource/exercise/{{exercise_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "translations", "resource", "exercise", "{{exercise_id}}"]
+            },
+            "description": "Get all translations for a specific resource (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create or Update Translation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resource_type\": \"muscle_group\",\n  \"resource_id\": \"{{muscle_group_id}}\",\n  \"language\": \"fr\",\n  \"field\": \"description\",\n  \"translation\": \"Muscles de la poitrine\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/translations/upsert",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "translations", "upsert"]
+            },
+            "description": "Create a new translation or update if exists (Admin only)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Translation management endpoints (requires admin privileges)"
+    },
+    {
       "name": "Error Scenarios",
       "item": [
         {

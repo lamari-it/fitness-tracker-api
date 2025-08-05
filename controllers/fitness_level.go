@@ -1,15 +1,13 @@
 package controllers
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"fit-flow-api/database"
-	"fit-flow-api/middleware"
 	"fit-flow-api/models"
+	"fit-flow-api/utils"
 )
 
 // GetAllFitnessLevels retrieves all fitness levels
@@ -17,7 +15,7 @@ func GetAllFitnessLevels(c *gin.Context) {
 	var levels []models.FitnessLevel
 
 	if err := database.DB.Order("sort_order ASC").Find(&levels).Error; err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "common.server_error", err)
+		utils.InternalServerErrorResponse(c, "Failed to retrieve fitness levels.")
 		return
 	}
 
@@ -26,32 +24,28 @@ func GetAllFitnessLevels(c *gin.Context) {
 		response[i] = level.ToResponse()
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": response,
-	})
+	utils.SuccessResponse(c, "Fitness levels retrieved successfully.", response)
 }
 
 // GetFitnessLevel retrieves a single fitness level by ID
 func GetFitnessLevel(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "common.invalid_id", err)
+		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
 	}
 
 	var level models.FitnessLevel
 	if err := database.DB.First(&level, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			middleware.TranslateErrorResponse(c, http.StatusNotFound, "fitness.level_not_found", nil)
+			utils.NotFoundResponse(c, "Fitness level not found.")
 			return
 		}
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "common.server_error", err)
+		utils.InternalServerErrorResponse(c, "Failed to retrieve fitness level.")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": level.ToResponse(),
-	})
+	utils.SuccessResponse(c, "Fitness level retrieved successfully.", level.ToResponse())
 }
 
 // CreateFitnessLevel creates a new fitness level (admin only)
@@ -59,13 +53,13 @@ func CreateFitnessLevel(c *gin.Context) {
 	// Check if user is admin
 	user, exists := c.Get("user")
 	if !exists || !user.(models.User).IsAdmin {
-		middleware.TranslateErrorResponse(c, http.StatusForbidden, "auth.forbidden", nil)
+		utils.ForbiddenResponse(c, "Admin access required.")
 		return
 	}
 
 	var req models.CreateFitnessLevelRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "common.invalid_request", err)
+		utils.HandleBindingError(c, err)
 		return
 	}
 
@@ -78,16 +72,14 @@ func CreateFitnessLevel(c *gin.Context) {
 	if err := database.DB.Create(&level).Error; err != nil {
 		if err.Error() == `ERROR: duplicate key value violates unique constraint "idx_fitness_levels_name" (SQLSTATE 23505)` ||
 			err.Error() == `ERROR: duplicate key value violates unique constraint "fitness_levels_name_key" (SQLSTATE 23505)` {
-			middleware.TranslateErrorResponse(c, http.StatusConflict, "fitness.level_name_exists", nil)
+			utils.ConflictResponse(c, "A fitness level with this name already exists.")
 			return
 		}
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "common.server_error", err)
+		utils.InternalServerErrorResponse(c, "Failed to create fitness level.")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"data": level.ToResponse(),
-	})
+	utils.CreatedResponse(c, "Fitness level created successfully.", level.ToResponse())
 }
 
 // UpdateFitnessLevel updates an existing fitness level (admin only)
@@ -95,29 +87,29 @@ func UpdateFitnessLevel(c *gin.Context) {
 	// Check if user is admin
 	user, exists := c.Get("user")
 	if !exists || !user.(models.User).IsAdmin {
-		middleware.TranslateErrorResponse(c, http.StatusForbidden, "auth.forbidden", nil)
+		utils.ForbiddenResponse(c, "Admin access required.")
 		return
 	}
 
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "common.invalid_id", err)
+		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
 	}
 
 	var req models.UpdateFitnessLevelRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "common.invalid_request", err)
+		utils.HandleBindingError(c, err)
 		return
 	}
 
 	var level models.FitnessLevel
 	if err := database.DB.First(&level, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			middleware.TranslateErrorResponse(c, http.StatusNotFound, "fitness.level_not_found", nil)
+			utils.NotFoundResponse(c, "Fitness level not found.")
 			return
 		}
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "common.server_error", err)
+		utils.InternalServerErrorResponse(c, "Failed to retrieve fitness level.")
 		return
 	}
 
@@ -135,16 +127,14 @@ func UpdateFitnessLevel(c *gin.Context) {
 	if err := database.DB.Save(&level).Error; err != nil {
 		if err.Error() == `ERROR: duplicate key value violates unique constraint "idx_fitness_levels_name" (SQLSTATE 23505)` ||
 			err.Error() == `ERROR: duplicate key value violates unique constraint "fitness_levels_name_key" (SQLSTATE 23505)` {
-			middleware.TranslateErrorResponse(c, http.StatusConflict, "fitness.level_name_exists", nil)
+			utils.ConflictResponse(c, "A fitness level with this name already exists.")
 			return
 		}
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "common.server_error", err)
+		utils.InternalServerErrorResponse(c, "Failed to update fitness level.")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": level.ToResponse(),
-	})
+	utils.SuccessResponse(c, "Fitness level updated successfully.", level.ToResponse())
 }
 
 // DeleteFitnessLevel deletes a fitness level (admin only)
@@ -152,28 +142,26 @@ func DeleteFitnessLevel(c *gin.Context) {
 	// Check if user is admin
 	user, exists := c.Get("user")
 	if !exists || !user.(models.User).IsAdmin {
-		middleware.TranslateErrorResponse(c, http.StatusForbidden, "auth.forbidden", nil)
+		utils.ForbiddenResponse(c, "Admin access required.")
 		return
 	}
 
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		middleware.TranslateErrorResponse(c, http.StatusBadRequest, "common.invalid_id", err)
+		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
 	}
 
 	result := database.DB.Delete(&models.FitnessLevel{}, id)
 	if result.Error != nil {
-		middleware.TranslateErrorResponse(c, http.StatusInternalServerError, "common.server_error", result.Error)
+		utils.InternalServerErrorResponse(c, "Failed to delete fitness level.")
 		return
 	}
 
 	if result.RowsAffected == 0 {
-		middleware.TranslateErrorResponse(c, http.StatusNotFound, "fitness.level_not_found", nil)
+		utils.NotFoundResponse(c, "Fitness level not found.")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Fitness level deleted successfully",
-	})
+	utils.DeletedResponse(c, "Fitness level deleted successfully.")
 }

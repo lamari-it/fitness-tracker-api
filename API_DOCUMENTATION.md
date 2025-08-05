@@ -16,6 +16,73 @@ Authorization: Bearer <jwt_token>
 
 ---
 
+## Standard Response Format
+
+All API responses follow a consistent structure to ensure predictable client-side handling.
+
+### Success Response
+```json
+{
+  "success": true,
+  "message": "Resource fetched successfully.",
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Workout Plan A",
+    "exercises": [ ... ]
+  },
+  "errors": null
+}
+```
+
+### Error Response
+```json
+{
+  "success": false,
+  "message": "Validation failed.",
+  "data": null,
+  "errors": {
+    "name": ["The name field is required."],
+    "email": ["Please provide a valid email address."]
+  }
+}
+```
+
+### Paginated Response
+```json
+{
+  "success": true,
+  "message": "Workouts fetched successfully.",
+  "data": [ ... ],
+  "errors": null,
+  "meta": {
+    "current_page": 1,
+    "per_page": 10,
+    "total_pages": 5,
+    "total_items": 47
+  }
+}
+```
+
+### Response Fields
+- **success** (boolean): Indicates whether the request was successful
+- **message** (string): Human-readable message describing the result
+- **data** (any): The actual response data (null for errors)
+- **errors** (object/null): Field-specific error messages for validation failures
+- **meta** (object): Pagination metadata (only present for paginated responses)
+
+### HTTP Status Codes
+- **200 OK**: Successful GET, PUT requests
+- **201 Created**: Successful POST requests that create resources
+- **204 No Content**: Successful DELETE requests
+- **400 Bad Request**: Validation errors or malformed requests
+- **401 Unauthorized**: Missing or invalid authentication token
+- **403 Forbidden**: Authenticated but lacks permission
+- **404 Not Found**: Resource not found
+- **409 Conflict**: Resource already exists
+- **500 Internal Server Error**: Server-side errors
+
+---
+
 ## Authentication Endpoints
 
 ### Register User
