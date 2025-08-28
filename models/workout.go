@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,11 +30,11 @@ type Workout struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 
-	Plan              WorkoutPlan       `gorm:"foreignKey:PlanID;constraint:OnDelete:CASCADE" json:"plan,omitempty"`
-	SetGroups         []SetGroup        `gorm:"foreignKey:WorkoutID" json:"set_groups,omitempty"`
-	WorkoutExercises  []WorkoutExercise `gorm:"foreignKey:WorkoutID" json:"exercises,omitempty"`
-	WorkoutSessions   []WorkoutSession  `gorm:"foreignKey:WorkoutID" json:"sessions,omitempty"`
-	SharedWorkouts    []SharedWorkout   `gorm:"foreignKey:WorkoutID" json:"shared_workouts,omitempty"`
+	Plan             WorkoutPlan       `gorm:"foreignKey:PlanID;constraint:OnDelete:CASCADE" json:"plan,omitempty"`
+	SetGroups        []SetGroup        `gorm:"foreignKey:WorkoutID" json:"set_groups,omitempty"`
+	WorkoutExercises []WorkoutExercise `gorm:"foreignKey:WorkoutID" json:"exercises,omitempty"`
+	WorkoutSessions  []WorkoutSession  `gorm:"foreignKey:WorkoutID" json:"sessions,omitempty"`
+	SharedWorkouts   []SharedWorkout   `gorm:"foreignKey:WorkoutID" json:"shared_workouts,omitempty"`
 }
 
 type Exercise struct {
@@ -47,7 +48,6 @@ type Exercise struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 
-	// Relationships
 	WorkoutExercises []WorkoutExercise     `gorm:"foreignKey:ExerciseID" json:"workout_exercises,omitempty"`
 	ExerciseLogs     []ExerciseLog         `gorm:"foreignKey:ExerciseID" json:"exercise_logs,omitempty"`
 	MuscleGroups     []ExerciseMuscleGroup `gorm:"foreignKey:ExerciseID" json:"muscle_groups,omitempty"`
@@ -55,17 +55,20 @@ type Exercise struct {
 }
 
 type WorkoutExercise struct {
-	ID             uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	WorkoutID      uuid.UUID `gorm:"type:uuid;not null" json:"workout_id"`
-	SetGroupID     uuid.UUID `gorm:"type:uuid;not null" json:"set_group_id"`
-	ExerciseID     uuid.UUID `gorm:"type:uuid;not null" json:"exercise_id"`
-	OrderNumber    int       `gorm:"not null" json:"order_number"`
-	TargetSets     int       `json:"target_sets"`
-	TargetReps     int       `json:"target_reps"`
-	TargetWeight   float64   `gorm:"type:numeric(10,2)" json:"target_weight"`
-	TargetRestSec  int       `json:"target_rest_sec"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID                uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	WorkoutID         uuid.UUID `gorm:"type:uuid;not null" json:"workout_id"`
+	SetGroupID        uuid.UUID `gorm:"type:uuid;not null" json:"set_group_id"`
+	ExerciseID        uuid.UUID `gorm:"type:uuid;not null" json:"exercise_id"`
+	OrderNumber       int       `gorm:"not null" json:"order_number"`
+	TargetSets        int       `json:"target_sets"`
+	TargetReps        int       `json:"target_reps"`
+	TargetWeight      float64   `gorm:"type:numeric(10,2)" json:"target_weight"`
+	TargetRestSec     int       `json:"target_rest_sec"`
+	Prescription      string    `gorm:"type:varchar(20);not null;default:'reps'" json:"prescription"` // reps | time
+	TargetDurationSec int       `gorm:"default:0" json:"target_duration_sec"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 
 	Workout  Workout  `gorm:"foreignKey:WorkoutID;constraint:OnDelete:CASCADE" json:"workout,omitempty"`
 	SetGroup SetGroup `gorm:"foreignKey:SetGroupID;constraint:OnDelete:CASCADE" json:"set_group,omitempty"`
@@ -98,4 +101,26 @@ func (we *WorkoutExercise) BeforeCreate(tx *gorm.DB) (err error) {
 		we.ID = uuid.New()
 	}
 	return
+}
+
+// Optional but recommended: keep reps vs time mutually exclusive and valid
+func (we *WorkoutExercise) BeforeSave(tx *gorm.DB) (err error) {
+	if we.Prescription == "" {
+		we.Prescription = "reps"
+	}
+	switch we.Prescription {
+	case "reps":
+		if we.TargetReps <= 0 {
+			return errors.New("target_reps must be > 0 when prescription = 'reps'")
+		}
+		we.TargetDurationSec = 0
+	case "time":
+		if we.TargetDurationSec <= 0 {
+			return errors.New("target_duration_sec must be > 0 when prescription = 'time'")
+		}
+		we.TargetReps = 0
+	default:
+		return errors.New("invalid prescription: must be 'reps' or 'time'")
+	}
+	return nil
 }

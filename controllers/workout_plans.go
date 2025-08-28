@@ -63,14 +63,14 @@ func GetWorkoutPlans(c *gin.Context) {
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
+
 	if page < 1 {
 		page = 1
 	}
 	if limit < 1 || limit > 100 {
 		limit = 10
 	}
-	
+
 	offset := (page - 1) * limit
 
 	var plans []models.WorkoutPlan
@@ -80,9 +80,10 @@ func GetWorkoutPlans(c *gin.Context) {
 		utils.InternalServerErrorResponse(c, "Failed to count workout plans.")
 		return
 	}
-	
+
 	if err := database.DB.Where("user_id = ?", userID).
 		Preload("Workouts").
+		Preload("User").
 		Offset(offset).
 		Limit(limit).
 		Order("created_at DESC").

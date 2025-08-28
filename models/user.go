@@ -25,6 +25,7 @@ type User struct {
 	// Relationships
 	FitnessLevel   *FitnessLevel      `gorm:"foreignKey:FitnessLevelID;constraint:OnDelete:SET NULL" json:"fitness_level,omitempty"`
 	FitnessGoals   []UserFitnessGoal  `gorm:"foreignKey:UserID" json:"fitness_goals,omitempty"`
+	Roles          []Role             `gorm:"many2many:user_roles;" json:"roles,omitempty"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
@@ -43,6 +44,7 @@ type UserResponse struct {
 	FitnessLevelID *uuid.UUID                 `json:"fitness_level_id,omitempty"`
 	FitnessLevel   *FitnessLevelResponse      `json:"fitness_level,omitempty"`
 	FitnessGoals   []UserFitnessGoalResponse  `json:"fitness_goals,omitempty"`
+	Roles          []Role                     `json:"roles,omitempty"`
 	IsActive       bool                       `json:"is_active"`
 	IsAdmin        bool                       `json:"is_admin"`
 	CreatedAt      time.Time                  `json:"created_at"`
@@ -73,6 +75,10 @@ func (u *User) ToResponse() UserResponse {
 		for i, goal := range u.FitnessGoals {
 			response.FitnessGoals[i] = goal.ToResponse()
 		}
+	}
+
+	if len(u.Roles) > 0 {
+		response.Roles = u.Roles
 	}
 
 	return response

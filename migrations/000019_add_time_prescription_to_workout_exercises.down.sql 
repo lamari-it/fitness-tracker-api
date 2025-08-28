@@ -1,0 +1,6 @@
+ALTER TABLE workout_exercises
+  DROP CONSTRAINT IF EXISTS chk_we_prescription_valid;
+
+ALTER TABLE workout_exercises
+  DROP COLUMN IF EXISTS target_duration_sec,
+  DROP COLUMN IF EXISTS prescription;

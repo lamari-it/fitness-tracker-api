@@ -52,6 +52,10 @@ func InitializeDB() {
 func AutoMigrate() {
 	err := DB.AutoMigrate(
 		&models.User{},
+		&models.Role{},
+		&models.Permission{},
+		&models.RolePermission{},
+		&models.UserRole{},
 		&models.TrainerProfile{},
 		&models.TrainerReview{},
 		&models.TrainerClientLink{},

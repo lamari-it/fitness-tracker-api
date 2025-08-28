@@ -991,6 +991,73 @@ Real-time features may be added using WebSocket connections for:
 
 ---
 
+## Role-Based Access Control (RBAC)
+
+### Overview
+The API implements a comprehensive RBAC system with roles, permissions, and user-role associations. This replaces the previous `is_admin` flag with a more flexible permission-based system.
+
+### Database Schema
+
+#### Roles Table
+- `id` (SERIAL PRIMARY KEY): Unique identifier
+- `name` (VARCHAR(50) UNIQUE NOT NULL): Role name (e.g., 'admin', 'user', 'trainer')
+- `description` (TEXT): Description of the role
+- `created_at`, `updated_at`, `deleted_at`: Timestamps
+
+#### Permissions Table
+- `id` (SERIAL PRIMARY KEY): Unique identifier
+- `name` (VARCHAR(100) UNIQUE NOT NULL): Permission name (e.g., 'exercises.create')
+- `resource` (VARCHAR(50) NOT NULL): Resource being accessed (e.g., 'exercises')
+- `action` (VARCHAR(50) NOT NULL): Action being performed (e.g., 'create', 'read', 'update', 'delete')
+- `description` (TEXT): Description of the permission
+- `created_at`, `updated_at`, `deleted_at`: Timestamps
+
+#### Role_Permissions Table (Junction)
+- `role_id` (INTEGER): Foreign key to roles table
+- `permission_id` (INTEGER): Foreign key to permissions table
+- `created_at`: Timestamp
+- Primary Key: (role_id, permission_id)
+
+#### User_Roles Table (Junction)
+- `user_id` (UUID): Foreign key to users table
+- `role_id` (INTEGER): Foreign key to roles table
+- `created_at`: Timestamp
+- Primary Key: (user_id, role_id)
+
+### Default Roles
+
+1. **Admin**: Full system access with all permissions
+2. **Trainer**: Can manage workouts, clients, and view most resources
+3. **User**: Basic access to personal data and public resources
+
+### Permission Structure
+
+Permissions follow the format: `resource.action`
+
+Example permissions:
+- `exercises.create`: Create new exercises
+- `exercises.read`: View exercises
+- `exercises.update`: Modify existing exercises
+- `exercises.delete`: Remove exercises
+- `workout_plans.create`: Create workout plans
+- `translations.manage`: Manage translations (admin only)
+
+### Migration Notes
+
+- Existing users with `is_admin = true` are automatically assigned the 'admin' role
+- Existing users with `is_admin = false` are assigned the 'user' role
+- The `is_admin` field is maintained for backward compatibility but should be considered deprecated
+
+### Seeding
+
+Run the database seed to populate:
+1. Default roles (admin, trainer, user)
+2. All permissions based on existing endpoints
+3. Role-permission mappings
+4. User-role assignments for existing users
+
+---
+
 ## Testing
 
 Use the provided Postman collection in the `/postman/` directory for comprehensive API testing.
