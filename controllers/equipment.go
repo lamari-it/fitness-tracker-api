@@ -92,14 +92,7 @@ func GetAllEquipment(c *gin.Context) {
 		responses[i] = eq.ToResponse()
 	}
 
-	result := gin.H{
-		"equipment": responses,
-		"total":     total,
-		"page":      page,
-		"limit":     limit,
-	}
-
-	utils.PaginatedResponse(c, "Equipment list retrieved successfully", result, page, limit, int(total))
+	utils.PaginatedResponse(c, "Equipment list retrieved successfully", responses, page, limit, int(total))
 }
 
 // GetEquipmentByID retrieves a specific equipment by ID
@@ -326,6 +319,19 @@ func GetExerciseEquipment(c *gin.Context) {
 		return
 	}
 
+	// Pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	
+	offset := (page - 1) * limit
+
 	// Check if exercise exists
 	var exercise models.Exercise
 	if err := database.DB.First(&exercise, "id = ?", exerciseID).Error; err != nil {
@@ -333,9 +339,23 @@ func GetExerciseEquipment(c *gin.Context) {
 		return
 	}
 
-	// Get all equipment for the exercise
+	// Get total count
+	var total int64
+	if err := database.DB.Model(&models.ExerciseEquipment{}).
+		Where("exercise_id = ?", exerciseID).
+		Count(&total).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to count exercise equipment")
+		return
+	}
+
+	// Get all equipment for the exercise with pagination
 	var exerciseEquipment []models.ExerciseEquipment
-	if err := database.DB.Preload("Equipment").Where("exercise_id = ?", exerciseID).Find(&exerciseEquipment).Error; err != nil {
+	if err := database.DB.Preload("Equipment").
+		Where("exercise_id = ?", exerciseID).
+		Offset(offset).
+		Limit(limit).
+		Order("created_at DESC").
+		Find(&exerciseEquipment).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve exercise equipment")
 		return
 	}
@@ -346,7 +366,5 @@ func GetExerciseEquipment(c *gin.Context) {
 		responses[i] = ee.ToResponse()
 	}
 
-	utils.SuccessResponse(c, "Exercise equipment list retrieved successfully", gin.H{
-		"equipment": responses,
-	})
+	utils.PaginatedResponse(c, "Exercise equipment list retrieved successfully", responses, page, limit, int(total))
 }

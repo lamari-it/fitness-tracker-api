@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"strconv"
+	
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -12,16 +14,32 @@ import (
 
 // GetAllFitnessGoals retrieves all fitness goals
 func GetAllFitnessGoals(c *gin.Context) {
-	var goals []models.FitnessGoal
+	// Pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	
+	offset := (page - 1) * limit
 
-	query := database.DB.Order("category, name")
+	query := database.DB.Model(&models.FitnessGoal{}).Order("category, name")
 
 	// Optional category filter
 	if category := c.Query("category"); category != "" {
 		query = query.Where("category = ?", category)
 	}
 
-	if err := query.Find(&goals).Error; err != nil {
+	// Get total count
+	var total int64
+	query.Count(&total)
+
+	var goals []models.FitnessGoal
+	if err := query.Offset(offset).Limit(limit).Find(&goals).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve fitness goals.")
 		return
 	}
@@ -31,7 +49,7 @@ func GetAllFitnessGoals(c *gin.Context) {
 		response[i] = goal.ToResponse()
 	}
 
-	utils.SuccessResponse(c, "Fitness goals retrieved successfully.", response)
+	utils.PaginatedResponse(c, "Fitness goals retrieved successfully.", response, page, limit, int(total))
 }
 
 // GetFitnessGoal retrieves a single fitness goal by ID
@@ -187,10 +205,34 @@ func GetUserFitnessGoals(c *gin.Context) {
 
 	currentUser := user.(models.User)
 
+	// Pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	
+	offset := (page - 1) * limit
+
+	// Get total count
+	var total int64
+	if err := database.DB.Model(&models.UserFitnessGoal{}).
+		Where("user_id = ?", currentUser.ID).
+		Count(&total).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to count user fitness goals.")
+		return
+	}
+
 	var userGoals []models.UserFitnessGoal
 	if err := database.DB.Preload("FitnessGoal").
 		Where("user_id = ?", currentUser.ID).
 		Order("priority ASC").
+		Offset(offset).
+		Limit(limit).
 		Find(&userGoals).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve user fitness goals.")
 		return
@@ -201,7 +243,7 @@ func GetUserFitnessGoals(c *gin.Context) {
 		response[i] = userGoal.ToResponse()
 	}
 
-	utils.SuccessResponse(c, "User fitness goals retrieved successfully.", response)
+	utils.PaginatedResponse(c, "User fitness goals retrieved successfully.", response, page, limit, int(total))
 }
 
 // SetUserFitnessGoals sets the authenticated user's fitness goals

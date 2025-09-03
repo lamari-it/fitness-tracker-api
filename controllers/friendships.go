@@ -4,6 +4,7 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -67,9 +68,32 @@ func GetFriendRequests(c *gin.Context) {
 		return
 	}
 
+	// Pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	
+	offset := (page - 1) * limit
+
+	// Get total count
+	var total int64
+	if err := database.DB.Model(&models.Friendship{}).Where("friend_id = ? AND status = ?", userID, "pending").Count(&total).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to count friend requests.")
+		return
+	}
+
 	var friendships []models.Friendship
 	if err := database.DB.Where("friend_id = ? AND status = ?", userID, "pending").
 		Preload("User").
+		Offset(offset).
+		Limit(limit).
+		Order("created_at DESC").
 		Find(&friendships).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to fetch friend requests.")
 		return
@@ -89,7 +113,7 @@ func GetFriendRequests(c *gin.Context) {
 		responses = append(responses, response)
 	}
 
-	utils.SuccessResponse(c, "Friend requests retrieved successfully.", gin.H{"requests": responses})
+	utils.PaginatedResponse(c, "Friend requests retrieved successfully.", responses, page, limit, int(total))
 }
 
 func RespondToFriendRequest(c *gin.Context) {
@@ -141,11 +165,36 @@ func GetFriends(c *gin.Context) {
 		return
 	}
 
+	// Pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	
+	offset := (page - 1) * limit
+
+	// Get total count
+	var total int64
+	if err := database.DB.Model(&models.Friendship{}).
+		Where("(user_id = ? OR friend_id = ?) AND status = ?", userID, userID, "accepted").
+		Count(&total).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to count friends.")
+		return
+	}
+
 	var friendships []models.Friendship
 	if err := database.DB.Where("(user_id = ? OR friend_id = ?) AND status = ?", 
 		userID, userID, "accepted").
 		Preload("User").
 		Preload("Friend").
+		Offset(offset).
+		Limit(limit).
+		Order("created_at DESC").
 		Find(&friendships).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to fetch friends.")
 		return
@@ -171,7 +220,7 @@ func GetFriends(c *gin.Context) {
 		responses = append(responses, response)
 	}
 
-	utils.SuccessResponse(c, "Friends retrieved successfully.", gin.H{"friends": responses})
+	utils.PaginatedResponse(c, "Friends retrieved successfully.", responses, page, limit, int(total))
 }
 
 func RemoveFriend(c *gin.Context) {

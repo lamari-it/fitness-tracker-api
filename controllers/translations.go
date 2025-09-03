@@ -4,6 +4,7 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -44,7 +45,19 @@ func GetTranslations(c *gin.Context) {
 	resourceIDStr := c.Query("resource_id")
 	language := c.Query("language")
 
-	var translations []models.Translation
+	// Pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
+	
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 200 {
+		limit = 50
+	}
+	
+	offset := (page - 1) * limit
+
 	query := database.DB.Model(&models.Translation{})
 
 	if resourceType != "" {
@@ -64,7 +77,12 @@ func GetTranslations(c *gin.Context) {
 		query = query.Where("language = ?", language)
 	}
 
-	if err := query.Find(&translations).Error; err != nil {
+	// Get total count
+	var total int64
+	query.Count(&total)
+
+	var translations []models.Translation
+	if err := query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&translations).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve translations.")
 		return
 	}
@@ -74,7 +92,7 @@ func GetTranslations(c *gin.Context) {
 		responses = append(responses, translation.ToResponse())
 	}
 
-	utils.SuccessResponse(c, "Translations retrieved successfully.", responses)
+	utils.PaginatedResponse(c, "Translations retrieved successfully.", responses, page, limit, int(total))
 }
 
 // GetTranslation retrieves a specific translation

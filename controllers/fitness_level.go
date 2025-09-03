@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"strconv"
+	
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -12,9 +14,31 @@ import (
 
 // GetAllFitnessLevels retrieves all fitness levels
 func GetAllFitnessLevels(c *gin.Context) {
-	var levels []models.FitnessLevel
+	// Pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	
+	offset := (page - 1) * limit
 
-	if err := database.DB.Order("sort_order ASC").Find(&levels).Error; err != nil {
+	// Get total count
+	var total int64
+	if err := database.DB.Model(&models.FitnessLevel{}).Count(&total).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to count fitness levels.")
+		return
+	}
+
+	var levels []models.FitnessLevel
+	if err := database.DB.Order("sort_order ASC").
+		Offset(offset).
+		Limit(limit).
+		Find(&levels).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve fitness levels.")
 		return
 	}
@@ -24,7 +48,7 @@ func GetAllFitnessLevels(c *gin.Context) {
 		response[i] = level.ToResponse()
 	}
 
-	utils.SuccessResponse(c, "Fitness levels retrieved successfully.", response)
+	utils.PaginatedResponse(c, "Fitness levels retrieved successfully.", response, page, limit, int(total))
 }
 
 // GetFitnessLevel retrieves a single fitness level by ID

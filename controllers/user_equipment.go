@@ -4,6 +4,7 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -17,6 +18,19 @@ func GetUserEquipment(c *gin.Context) {
 		return
 	}
 
+	// Pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	
+	offset := (page - 1) * limit
+
 	// Get filter parameters
 	var filter models.UserEquipmentFilter
 	if err := c.ShouldBindQuery(&filter); err != nil {
@@ -24,15 +38,19 @@ func GetUserEquipment(c *gin.Context) {
 		return
 	}
 
-	query := database.DB.Where("user_id = ?", userID).Preload("Equipment")
+	query := database.DB.Model(&models.UserEquipment{}).Where("user_id = ?", userID).Preload("Equipment")
 	
 	// Apply location filter if provided
 	if filter.LocationType != "" {
 		query = query.Where("location_type = ?", filter.LocationType)
 	}
 
+	// Get total count
+	var total int64
+	query.Count(&total)
+
 	var userEquipment []models.UserEquipment
-	if err := query.Find(&userEquipment).Error; err != nil {
+	if err := query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&userEquipment).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve user equipment.")
 		return
 	}
@@ -43,10 +61,7 @@ func GetUserEquipment(c *gin.Context) {
 		response[i] = ue.ToResponse()
 	}
 
-	utils.SuccessResponse(c, "User equipment retrieved successfully.", gin.H{
-		"equipment": response,
-		"total":     len(response),
-	})
+	utils.PaginatedResponse(c, "User equipment retrieved successfully.", response, page, limit, int(total))
 }
 
 // AddUserEquipment adds equipment to user's inventory
@@ -215,29 +230,46 @@ func GetUserEquipmentByLocation(c *gin.Context) {
 		return
 	}
 
+	// Pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	
+	offset := (page - 1) * limit
+
+	// Get total count
+	var total int64
+	if err := database.DB.Model(&models.UserEquipment{}).
+		Where("user_id = ? AND location_type = ?", userID, locationType).
+		Count(&total).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to count equipment.")
+		return
+	}
+
 	var userEquipment []models.UserEquipment
 	if err := database.DB.Where("user_id = ? AND location_type = ?", userID, locationType).
-		Preload("Equipment").Find(&userEquipment).Error; err != nil {
+		Preload("Equipment").
+		Offset(offset).
+		Limit(limit).
+		Order("created_at DESC").
+		Find(&userEquipment).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve equipment by location.")
 		return
 	}
 
-	// Group by category for better organization
-	categoryMap := make(map[string][]models.UserEquipmentResponse)
-	for _, ue := range userEquipment {
-		response := ue.ToResponse()
-		category := response.Equipment.Category
-		if category == "" {
-			category = "other"
-		}
-		categoryMap[category] = append(categoryMap[category], response)
+	// Convert to response format
+	response := make([]models.UserEquipmentResponse, len(userEquipment))
+	for i, ue := range userEquipment {
+		response[i] = ue.ToResponse()
 	}
 
-	utils.SuccessResponse(c, "Equipment by location retrieved successfully.", gin.H{
-		"location":           locationType,
-		"equipment_by_category": categoryMap,
-		"total":              len(userEquipment),
-	})
+	utils.PaginatedResponse(c, "Equipment by location retrieved successfully.", response, page, limit, int(total))
 }
 
 // BulkAddUserEquipment allows adding multiple equipment items at once

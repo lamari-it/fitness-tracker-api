@@ -4,6 +4,7 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -24,13 +25,13 @@ func generateSlug(name string) string {
 }
 
 type CreateExerciseRequest struct {
-	Name         string                    `json:"name" binding:"required"`
-	Description  string                    `json:"description"`
-	Equipment    string                    `json:"equipment"`
-	IsBodyweight bool                      `json:"is_bodyweight"`
-	Instructions string                    `json:"instructions"`
-	VideoURL     string                    `json:"video_url"`
-	MuscleGroups []MuscleGroupAssignment   `json:"muscle_groups,omitempty"`
+	Name         string                  `json:"name" binding:"required"`
+	Description  string                  `json:"description"`
+	Equipment    string                  `json:"equipment"`
+	IsBodyweight bool                    `json:"is_bodyweight"`
+	Instructions string                  `json:"instructions"`
+	VideoURL     string                  `json:"video_url"`
+	MuscleGroups []MuscleGroupAssignment `json:"muscle_groups,omitempty"`
 }
 
 type MuscleGroupAssignment struct {
@@ -139,6 +140,19 @@ func GetExercises(c *gin.Context) {
 	equipment := c.Query("equipment")
 	bodyweight := c.Query("bodyweight")
 	primaryOnly := c.Query("primary_only")
+	
+	// Pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	
+	offset := (page - 1) * limit
 
 	query := database.DB.Model(&models.Exercise{}).
 		Preload("MuscleGroups.MuscleGroup")
@@ -167,13 +181,17 @@ func GetExercises(c *gin.Context) {
 		query = query.Where("is_bodyweight = ?", isBodyweight)
 	}
 
+	// Get total count
+	var total int64
+	query.Count(&total)
+
 	var exercises []models.Exercise
-	if err := query.Order("name ASC").Find(&exercises).Error; err != nil {
+	if err := query.Offset(offset).Limit(limit).Order("name ASC").Find(&exercises).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to fetch exercises.")
 		return
 	}
 
-	utils.SuccessResponse(c, "Exercises retrieved successfully.", gin.H{"exercises": exercises})
+	utils.PaginatedResponse(c, "Exercises retrieved successfully.", exercises, page, limit, int(total))
 }
 
 func GetExercise(c *gin.Context) {
@@ -196,7 +214,7 @@ func GetExercise(c *gin.Context) {
 
 func GetExerciseBySlug(c *gin.Context) {
 	slug := c.Param("slug")
-	
+
 	var exercise models.Exercise
 	if err := database.DB.Where("slug = ?", slug).
 		Preload("MuscleGroups.MuscleGroup").
@@ -205,7 +223,7 @@ func GetExerciseBySlug(c *gin.Context) {
 		utils.NotFoundResponse(c, "Exercise not found.")
 		return
 	}
-	
+
 	utils.SuccessResponse(c, "Exercise retrieved successfully.", exercise)
 }
 
@@ -232,7 +250,7 @@ func UpdateExercise(c *gin.Context) {
 	if exercise.Name != req.Name {
 		exercise.Slug = generateSlug(req.Name)
 	}
-	
+
 	exercise.Name = req.Name
 	exercise.Description = req.Description
 	exercise.IsBodyweight = req.IsBodyweight
