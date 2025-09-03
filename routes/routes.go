@@ -13,15 +13,15 @@ func SetupRoutes(r *gin.Engine) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Language")
-		
+
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusOK)
 			return
 		}
-		
+
 		c.Next()
 	})
-	
+
 	// Add i18n middleware
 	r.Use(middleware.I18nMiddleware())
 
@@ -38,7 +38,7 @@ func SetupRoutes(r *gin.Engine) {
 			auth.GET("/google", controllers.GoogleLogin)
 			auth.GET("/google/callback", controllers.GoogleCallback)
 			auth.POST("/apple", controllers.AppleLogin)
-			
+
 			auth.Use(middleware.AuthMiddleware())
 			auth.GET("/profile", controllers.GetProfile)
 		}
@@ -49,14 +49,14 @@ func SetupRoutes(r *gin.Engine) {
 			protected.GET("/dashboard", func(c *gin.Context) {
 				userID := c.GetString("user_id")
 				email := c.GetString("email")
-				
+
 				c.JSON(http.StatusOK, gin.H{
 					"message": "Welcome to your dashboard",
 					"user_id": userID,
 					"email":   email,
 				})
 			})
-			
+
 			// Muscle Groups
 			muscleGroups := protected.Group("/muscle-groups")
 			{
@@ -76,12 +76,12 @@ func SetupRoutes(r *gin.Engine) {
 				exercises.GET("/:id", controllers.GetExercise)
 				exercises.PUT("/:id", controllers.UpdateExercise)
 				exercises.DELETE("/:id", controllers.DeleteExercise)
-				
+
 				// Exercise-MuscleGroup relationships
 				exercises.POST("/:id/muscle-groups", controllers.AssignMuscleGroupToExercise)
 				exercises.GET("/:id/muscle-groups", controllers.GetExerciseMuscleGroups)
 				exercises.DELETE("/:id/muscle-groups/:muscle_group_id", controllers.RemoveMuscleGroupFromExercise)
-				
+
 				// Exercise-Equipment relationships
 				exercises.POST("/:id/equipment", controllers.AssignEquipmentToExercise)
 				exercises.GET("/:id/equipment", controllers.GetExerciseEquipment)
@@ -145,6 +145,38 @@ func SetupRoutes(r *gin.Engine) {
 				workoutPlans.GET("/:id", controllers.GetWorkoutPlan)
 				workoutPlans.PUT("/:id", controllers.UpdateWorkoutPlan)
 				workoutPlans.DELETE("/:id", controllers.DeleteWorkoutPlan)
+
+				// Workout Plan Items
+				workoutPlans.POST("/:id/workouts", controllers.AddWorkoutToPlan)
+				workoutPlans.GET("/:id/workouts", controllers.GetPlanWorkouts)
+				workoutPlans.DELETE("/:id/workouts/:item_id", controllers.RemoveWorkoutFromPlan)
+				workoutPlans.PUT("/:id/workouts/:item_id", controllers.UpdatePlanItem)
+			}
+
+			// Workouts
+			workouts := protected.Group("/workouts")
+			{
+				workouts.POST("/", controllers.CreateWorkout)
+				workouts.GET("/", controllers.GetUserWorkouts)
+				workouts.GET("/:id", controllers.GetWorkout)
+				workouts.PUT("/:id", controllers.UpdateWorkout)
+				workouts.DELETE("/:id", controllers.DeleteWorkout)
+				workouts.POST("/:id/duplicate", controllers.DuplicateWorkout)
+
+				// Workout Exercises
+				workouts.POST("/:id/exercises", controllers.AddExerciseToWorkout)
+				workouts.GET("/:id/exercises", controllers.GetWorkoutExercises)
+				workouts.DELETE("/:id/exercises/:exercise_id", controllers.RemoveExerciseFromWorkout)
+			}
+
+			// Plan Enrollments
+			enrollments := protected.Group("/enrollments")
+			{
+				enrollments.POST("/", controllers.EnrollInPlan)
+				enrollments.GET("/", controllers.GetUserEnrollments)
+				enrollments.GET("/:id", controllers.GetEnrollment)
+				enrollments.PUT("/:id", controllers.UpdateEnrollment)
+				enrollments.DELETE("/:id", controllers.CancelEnrollment)
 			}
 
 			// Friends
@@ -156,7 +188,7 @@ func SetupRoutes(r *gin.Engine) {
 				friends.GET("/", controllers.GetFriends)
 				friends.DELETE("/:id", controllers.RemoveFriend)
 			}
-			
+
 			// Translations (Admin only)
 			translations := protected.Group("/translations")
 			translations.Use(middleware.AdminMiddleware())
@@ -169,19 +201,11 @@ func SetupRoutes(r *gin.Engine) {
 				translations.GET("/resource/:resource_type/:resource_id", controllers.GetResourceTranslations)
 				translations.POST("/upsert", controllers.CreateOrUpdateTranslation)
 			}
-
-			// Legacy endpoints for backwards compatibility
-			protected.GET("/workouts", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{
-					"message": "Your workouts",
-					"workouts": []string{"Morning Run", "Evening Yoga", "Strength Training"},
-				})
-			})
 			
 			protected.GET("/nutrition", func(c *gin.Context) {
 				c.JSON(http.StatusOK, gin.H{
 					"message": "Your nutrition data",
-					"meals": []string{"Breakfast", "Lunch", "Dinner"},
+					"meals":   []string{"Breakfast", "Lunch", "Dinner"},
 				})
 			})
 		}

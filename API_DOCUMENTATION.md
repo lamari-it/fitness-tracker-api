@@ -1064,4 +1064,489 @@ Use the provided Postman collection in the `/postman/` directory for comprehensi
 
 ## Support
 
-For API issues or questions, please refer to the main README.md file or create an issue in the project repository.
+For API issues or questions, please refer to the main README.md file or create an issue in the project repository.# New API Endpoints Documentation
+
+## Workouts
+
+### Create Workout
+Creates a new standalone workout for the authenticated user.
+
+**Endpoint:** `POST /api/v1/workouts`
+
+**Request Body:**
+```json
+{
+  "title": "Morning Workout",
+  "description": "Quick morning routine",
+  "visibility": "private"  // Options: "private", "public", "friends"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "message": "Workout created successfully.",
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_id": "456e7890-e89b-12d3-a456-426614174000",
+    "title": "Morning Workout",
+    "description": "Quick morning routine",
+    "visibility": "private",
+    "created_at": "2024-01-01T08:00:00Z",
+    "updated_at": "2024-01-01T08:00:00Z"
+  }
+}
+```
+
+### Get User Workouts
+Retrieves all workouts for the authenticated user with pagination.
+
+**Endpoint:** `GET /api/v1/workouts`
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10, max: 100)
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Workouts fetched successfully.",
+  "data": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "title": "Morning Workout",
+      "description": "Quick morning routine",
+      "visibility": "private",
+      "set_groups": [],
+      "exercises": []
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 25,
+    "total_pages": 3
+  }
+}
+```
+
+### Get Workout by ID
+Retrieves a specific workout with all its exercises and set groups.
+
+**Endpoint:** `GET /api/v1/workouts/{workout_id}`
+
+**Response:** `200 OK`
+
+### Update Workout
+Updates an existing workout's details.
+
+**Endpoint:** `PUT /api/v1/workouts/{workout_id}`
+
+**Request Body:**
+```json
+{
+  "title": "Updated Morning Workout",
+  "description": "Enhanced morning routine",
+  "visibility": "friends"
+}
+```
+
+**Response:** `200 OK`
+
+### Delete Workout
+Deletes a workout and all associated data.
+
+**Endpoint:** `DELETE /api/v1/workouts/{workout_id}`
+
+**Response:** `200 OK`
+
+### Duplicate Workout
+Creates a copy of an existing workout with all its exercises and set groups.
+
+**Endpoint:** `POST /api/v1/workouts/{workout_id}/duplicate`
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "message": "Workout duplicated successfully.",
+  "data": {
+    "id": "789e4567-e89b-12d3-a456-426614174000",
+    "title": "Morning Workout (Copy)",
+    "description": "Quick morning routine",
+    "visibility": "private"
+  }
+}
+```
+
+### Add Exercise to Workout
+Adds an exercise to a workout with prescription details.
+
+**Endpoint:** `POST /api/v1/workouts/{workout_id}/exercises`
+
+**Request Body:**
+```json
+{
+  "exercise_id": "123e4567-e89b-12d3-a456-426614174000",
+  "set_group_id": "456e7890-e89b-12d3-a456-426614174000",
+  "order_number": 1,
+  "target_sets": 3,
+  "target_reps": 12,
+  "target_weight": 50,
+  "target_rest_sec": 60,
+  "prescription": "reps",  // Options: "reps", "time"
+  "target_duration_sec": 0  // Used when prescription is "time"
+}
+```
+
+**Response:** `201 Created`
+
+### Get Workout Exercises
+Retrieves all exercises in a workout, ordered by their position.
+
+**Endpoint:** `GET /api/v1/workouts/{workout_id}/exercises`
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Workout exercises fetched successfully.",
+  "data": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "workout_id": "456e7890-e89b-12d3-a456-426614174000",
+      "exercise_id": "789e4567-e89b-12d3-a456-426614174000",
+      "set_group_id": "abc1234-e89b-12d3-a456-426614174000",
+      "order_number": 1,
+      "target_sets": 3,
+      "target_reps": 12,
+      "target_weight": 50,
+      "target_rest_sec": 60,
+      "prescription": "reps",
+      "exercise": {
+        "id": "789e4567-e89b-12d3-a456-426614174000",
+        "name": "Bench Press",
+        "slug": "bench-press"
+      },
+      "set_group": {
+        "id": "abc1234-e89b-12d3-a456-426614174000",
+        "group_type": "straight",
+        "name": "Main Set"
+      }
+    }
+  ]
+}
+```
+
+### Remove Exercise from Workout
+Removes an exercise from a workout.
+
+**Endpoint:** `DELETE /api/v1/workouts/{workout_id}/exercises/{exercise_id}`
+
+**Response:** `200 OK`
+
+---
+
+## Workout Plan Items
+
+### Add Workout to Plan
+Adds an existing workout to a workout plan.
+
+**Endpoint:** `POST /api/v1/workout-plans/{plan_id}/workouts`
+
+**Request Body:**
+```json
+{
+  "workout_id": "123e4567-e89b-12d3-a456-426614174000",
+  "week_index": 0  // For multi-week plans (0-based)
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "message": "Workout added to plan successfully.",
+  "data": {
+    "id": "999e4567-e89b-12d3-a456-426614174000",
+    "plan_id": "111e4567-e89b-12d3-a456-426614174000",
+    "workout_id": "123e4567-e89b-12d3-a456-426614174000",
+    "week_index": 0,
+    "workout": {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "title": "Leg Day"
+    }
+  }
+}
+```
+
+### Get Plan Workouts
+Retrieves all workouts in a workout plan, ordered by week and creation date.
+
+**Endpoint:** `GET /api/v1/workout-plans/{plan_id}/workouts`
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Plan workouts fetched successfully.",
+  "data": [
+    {
+      "id": "999e4567-e89b-12d3-a456-426614174000",
+      "plan_id": "111e4567-e89b-12d3-a456-426614174000",
+      "workout_id": "123e4567-e89b-12d3-a456-426614174000",
+      "week_index": 0,
+      "workout": {
+        "id": "123e4567-e89b-12d3-a456-426614174000",
+        "title": "Leg Day",
+        "exercises": []
+      }
+    }
+  ]
+}
+```
+
+### Update Plan Item
+Updates a workout's position in the plan (e.g., move to different week).
+
+**Endpoint:** `PUT /api/v1/workout-plans/{plan_id}/workouts/{item_id}`
+
+**Request Body:**
+```json
+{
+  "week_index": 1
+}
+```
+
+**Response:** `200 OK`
+
+### Remove Workout from Plan
+Removes a workout from a workout plan.
+
+**Endpoint:** `DELETE /api/v1/workout-plans/{plan_id}/workouts/{item_id}`
+
+**Response:** `200 OK`
+
+---
+
+## Plan Enrollments
+
+### Enroll in Plan
+Enrolls the authenticated user in a workout plan with scheduling preferences.
+
+**Endpoint:** `POST /api/v1/enrollments`
+
+**Request Body:**
+```json
+{
+  "plan_id": "123e4567-e89b-12d3-a456-426614174000",
+  "start_date": "2024-01-01",
+  "days_per_week": 3,
+  "schedule_mode": "rolling",  // Options: "rolling", "calendar"
+  "preferred_weekdays": [1, 3, 5]  // Only for calendar mode (0=Mon, 6=Sun)
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "message": "Successfully enrolled in workout plan.",
+  "data": {
+    "id": "555e4567-e89b-12d3-a456-426614174000",
+    "plan_id": "123e4567-e89b-12d3-a456-426614174000",
+    "user_id": "789e4567-e89b-12d3-a456-426614174000",
+    "start_date": "2024-01-01T00:00:00Z",
+    "days_per_week": 3,
+    "current_index": 0,
+    "schedule_mode": "rolling",
+    "preferred_weekdays": [],
+    "status": "active",
+    "created_at": "2024-01-01T08:00:00Z"
+  }
+}
+```
+
+### Get User Enrollments
+Retrieves all enrollments for the authenticated user with optional filtering.
+
+**Endpoint:** `GET /api/v1/enrollments`
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+- `status` (optional): Filter by status ("active", "paused", "completed", "cancelled")
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Enrollments fetched successfully.",
+  "data": [
+    {
+      "id": "555e4567-e89b-12d3-a456-426614174000",
+      "plan_id": "123e4567-e89b-12d3-a456-426614174000",
+      "start_date": "2024-01-01T00:00:00Z",
+      "days_per_week": 3,
+      "status": "active"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 5,
+    "total_pages": 1
+  }
+}
+```
+
+### Get Enrollment by ID
+Retrieves details of a specific enrollment.
+
+**Endpoint:** `GET /api/v1/enrollments/{enrollment_id}`
+
+**Response:** `200 OK`
+
+### Update Enrollment
+Updates enrollment settings such as days per week, schedule mode, or status.
+
+**Endpoint:** `PUT /api/v1/enrollments/{enrollment_id}`
+
+**Request Body:**
+```json
+{
+  "days_per_week": 4,
+  "schedule_mode": "calendar",
+  "preferred_weekdays": [1, 2, 4, 5],
+  "status": "paused"  // Options: "active", "paused", "completed"
+}
+```
+
+**Response:** `200 OK`
+
+### Cancel Enrollment
+Cancels an active enrollment. This is a soft delete that changes status to "cancelled".
+
+**Endpoint:** `DELETE /api/v1/enrollments/{enrollment_id}`
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Enrollment cancelled successfully.",
+  "data": {
+    "id": "555e4567-e89b-12d3-a456-426614174000",
+    "status": "cancelled"
+  }
+}
+```
+
+---
+
+## Database Schema Updates
+
+### Workouts Table
+```sql
+CREATE TABLE workouts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  title TEXT NOT NULL,
+  description TEXT,
+  visibility VARCHAR(20) DEFAULT 'private',
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+```
+
+### Workout Plan Items Table
+```sql
+CREATE TABLE workout_plan_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  plan_id UUID NOT NULL REFERENCES workout_plans(id),
+  workout_id UUID NOT NULL REFERENCES workouts(id),
+  week_index INT DEFAULT 0,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+```
+
+### Plan Enrollments Table
+```sql
+CREATE TABLE plan_enrollments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  plan_id UUID NOT NULL REFERENCES workout_plans(id),
+  user_id UUID NOT NULL REFERENCES users(id),
+  start_date TIMESTAMP NOT NULL,
+  days_per_week INT NOT NULL CHECK (days_per_week >= 1 AND days_per_week <= 7),
+  current_index INT DEFAULT 0,
+  schedule_mode VARCHAR(20) DEFAULT 'rolling',
+  preferred_weekdays INT[] DEFAULT '{}',
+  status VARCHAR(20) DEFAULT 'active',
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+```
+
+### Workout Exercises Table (Updated)
+```sql
+CREATE TABLE workout_exercises (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workout_id UUID NOT NULL REFERENCES workouts(id),
+  set_group_id UUID NOT NULL REFERENCES set_groups(id),
+  exercise_id UUID NOT NULL REFERENCES exercises(id),
+  order_number INT NOT NULL,
+  target_sets INT,
+  target_reps INT,
+  target_weight NUMERIC(10,2),
+  target_rest_sec INT,
+  prescription VARCHAR(20) DEFAULT 'reps',
+  target_duration_sec INT DEFAULT 0,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+```
+
+---
+
+## Error Responses
+
+### 400 Bad Request
+Returned when trying to enroll in a plan you're already enrolled in, or when validation fails.
+
+```json
+{
+  "success": false,
+  "message": "You are already enrolled in this plan.",
+  "data": null,
+  "errors": null
+}
+```
+
+### 404 Not Found
+Returned when a requested resource doesn't exist or doesn't belong to the user.
+
+```json
+{
+  "success": false,
+  "message": "Workout not found.",
+  "data": null,
+  "errors": null
+}
+```
+
+### 422 Unprocessable Entity
+Returned for validation errors.
+
+```json
+{
+  "success": false,
+  "message": "Validation failed.",
+  "data": null,
+  "errors": {
+    "days_per_week": ["Days per week must be between 1 and 7"],
+    "schedule_mode": ["Schedule mode must be 'rolling' or 'calendar'"]
+  }
+}
+```

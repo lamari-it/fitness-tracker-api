@@ -203,3 +203,213 @@ func DeleteWorkoutPlan(c *gin.Context) {
 
 	utils.DeletedResponse(c, "Workout plan deleted successfully.")
 }
+
+type AddWorkoutToPlanRequest struct {
+	WorkoutID uuid.UUID `json:"workout_id" binding:"required"`
+	WeekIndex int       `json:"week_index"`
+}
+
+func AddWorkoutToPlan(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	planID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout plan ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	var req AddWorkoutToPlanRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	// Check if plan exists and belongs to user
+	var plan models.WorkoutPlan
+	if err := database.DB.Where("id = ? AND user_id = ?", planID, userID).First(&plan).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout plan not found.")
+		return
+	}
+
+	// Check if workout exists and belongs to user
+	var workout models.Workout
+	if err := database.DB.Where("id = ? AND user_id = ?", req.WorkoutID, userID).First(&workout).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout not found.")
+		return
+	}
+
+	// Check if this workout is already in the plan
+	var existingItem models.WorkoutPlanItem
+	if err := database.DB.Where("plan_id = ? AND workout_id = ?", planID, req.WorkoutID).First(&existingItem).Error; err == nil {
+		utils.BadRequestResponse(c, "This workout is already in the plan.", nil)
+		return
+	}
+
+	// Create the workout plan item
+	planItem := models.WorkoutPlanItem{
+		PlanID:    planID,
+		WorkoutID: req.WorkoutID,
+		WeekIndex: req.WeekIndex,
+	}
+
+	if err := database.DB.Create(&planItem).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to add workout to plan.")
+		return
+	}
+
+	// Load the workout details
+	database.DB.Preload("Workout").First(&planItem, planItem.ID)
+
+	utils.CreatedResponse(c, "Workout added to plan successfully.", planItem)
+}
+
+func RemoveWorkoutFromPlan(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	planID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout plan ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	itemID, err := uuid.Parse(c.Param("item_id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"item_id": []string{"Invalid plan item ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	// Check if plan exists and belongs to user
+	var plan models.WorkoutPlan
+	if err := database.DB.Where("id = ? AND user_id = ?", planID, userID).First(&plan).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout plan not found.")
+		return
+	}
+
+	// Delete the workout plan item
+	result := database.DB.Where("id = ? AND plan_id = ?", itemID, planID).Delete(&models.WorkoutPlanItem{})
+	if result.Error != nil {
+		utils.InternalServerErrorResponse(c, "Failed to remove workout from plan.")
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		utils.NotFoundResponse(c, "Workout item not found in this plan.")
+		return
+	}
+
+	utils.DeletedResponse(c, "Workout removed from plan successfully.")
+}
+
+func GetPlanWorkouts(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	planID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout plan ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	// Check if plan exists and belongs to user
+	var plan models.WorkoutPlan
+	if err := database.DB.Where("id = ? AND user_id = ?", planID, userID).First(&plan).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout plan not found.")
+		return
+	}
+
+	var planItems []models.WorkoutPlanItem
+	if err := database.DB.Where("plan_id = ?", planID).
+		Preload("Workout.SetGroups").
+		Preload("Workout.WorkoutExercises.Exercise").
+		Order("week_index, created_at").
+		Find(&planItems).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to fetch plan workouts.")
+		return
+	}
+
+	utils.SuccessResponse(c, "Plan workouts fetched successfully.", planItems)
+}
+
+type UpdatePlanItemRequest struct {
+	WeekIndex int `json:"week_index"`
+}
+
+func UpdatePlanItem(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	planID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout plan ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	itemID, err := uuid.Parse(c.Param("item_id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"item_id": []string{"Invalid plan item ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	var req UpdatePlanItemRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	// Check if plan exists and belongs to user
+	var plan models.WorkoutPlan
+	if err := database.DB.Where("id = ? AND user_id = ?", planID, userID).First(&plan).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout plan not found.")
+		return
+	}
+
+	// Find and update the plan item
+	var planItem models.WorkoutPlanItem
+	if err := database.DB.Where("id = ? AND plan_id = ?", itemID, planID).First(&planItem).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout item not found in this plan.")
+		return
+	}
+
+	planItem.WeekIndex = req.WeekIndex
+	if err := database.DB.Save(&planItem).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to update plan item.")
+		return
+	}
+
+	// Load the workout details
+	database.DB.Preload("Workout").First(&planItem, planItem.ID)
+
+	utils.SuccessResponse(c, "Plan item updated successfully.", planItem)
+}

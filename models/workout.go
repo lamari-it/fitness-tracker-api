@@ -5,36 +5,71 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
 type WorkoutPlan struct {
-	ID          uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID      uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
-	Title       string    `gorm:"type:text;not null" json:"title"`
-	Description string    `gorm:"type:text" json:"description"`
-	Visibility  string    `gorm:"type:varchar(20);default:'private'" json:"visibility"` // private, public, friends
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	UserID        uuid.UUID `gorm:"type:uuid;not null"`
+	Title         string    `gorm:"type:text;not null"`
+	Description   string    `gorm:"type:text"`
+	Visibility    string    `gorm:"type:varchar(20);default:'private'"` // private, public, friends
+	TemplateWeeks int       `gorm:"not null;default:1"`                 // allows multi-week blocks
 
-	User     User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
-	Workouts []Workout `gorm:"foreignKey:PlanID" json:"workouts,omitempty"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+
+	Items []WorkoutPlanItem `gorm:"foreignKey:PlanID;constraint:OnDelete:CASCADE"`
 }
 
 type Workout struct {
-	ID        uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	PlanID    uuid.UUID `gorm:"type:uuid;not null" json:"plan_id"`
-	Title     string    `gorm:"type:text;not null" json:"title"`
-	DayNumber int       `gorm:"not null" json:"day_number"`
-	Notes     string    `gorm:"type:text" json:"notes"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	UserID      uuid.UUID `gorm:"type:uuid;not null"`
+	Title       string    `gorm:"type:text;not null"`
+	Description string    `gorm:"type:text"`
+	Visibility  string    `gorm:"type:varchar(20);default:'private'"`
 
-	Plan             WorkoutPlan       `gorm:"foreignKey:PlanID;constraint:OnDelete:CASCADE" json:"plan,omitempty"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+
+	// Exercises inside workout define their own order (not handled by plan)
+	// Exercises []Exercise ...
 	SetGroups        []SetGroup        `gorm:"foreignKey:WorkoutID" json:"set_groups,omitempty"`
 	WorkoutExercises []WorkoutExercise `gorm:"foreignKey:WorkoutID" json:"exercises,omitempty"`
 	WorkoutSessions  []WorkoutSession  `gorm:"foreignKey:WorkoutID" json:"sessions,omitempty"`
 	SharedWorkouts   []SharedWorkout   `gorm:"foreignKey:WorkoutID" json:"shared_workouts,omitempty"`
+}
+
+type WorkoutPlanItem struct {
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	PlanID    uuid.UUID `gorm:"type:uuid;not null;index"`
+	WorkoutID uuid.UUID `gorm:"type:uuid;not null;index"`
+
+	WeekIndex int `gorm:"not null;default:0"` // optional, for multi-week blocks
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
+
+	Workout Workout `gorm:"constraint:OnDelete:CASCADE"`
+}
+
+type PlanEnrollment struct {
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	PlanID      uuid.UUID `gorm:"type:uuid;not null;index"`
+	UserID      uuid.UUID `gorm:"type:uuid;not null;index"`
+
+	StartDate   time.Time `gorm:"not null"`
+	DaysPerWeek int       `gorm:"not null;check:days_per_week_check,days_per_week >= 1 AND days_per_week <= 7"`
+
+	CurrentIndex int `gorm:"not null;default:0"` // index in rolling mode
+
+	ScheduleMode      string         `gorm:"type:varchar(20);default:'rolling'"` // rolling | calendar
+	PreferredWeekdays pq.Int32Array  `gorm:"type:int[];default:'{}'"`       // only used in calendar mode (0=Mon..6=Sun)
+
+	Status    string    `gorm:"type:varchar(20);default:'active'"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type Exercise struct {
