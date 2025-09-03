@@ -70,7 +70,7 @@ func GetAllEquipment(c *gin.Context) {
 		}
 	}
 	if l := c.Query("limit"); l != "" {
-		if limitNum, err := strconv.Atoi(l); err == nil && limitNum > 0 && limitNum <= 100 {
+		if limitNum, err := strconv.Atoi(l); err == nil && limitNum > 0 && limitNum <= 50 {
 			limit = limitNum
 		}
 	}
@@ -321,13 +321,13 @@ func GetExerciseEquipment(c *gin.Context) {
 
 	// Pagination parameters
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	
 	if page < 1 {
 		page = 1
 	}
-	if limit < 1 || limit > 100 {
-		limit = 20
+	if limit < 1 || limit > 50 {
+		limit = 10
 	}
 	
 	offset := (page - 1) * limit
