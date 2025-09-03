@@ -9,6 +9,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
@@ -19,8 +20,17 @@ func ConnectDB() {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
 		cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort, cfg.DBSSLMode)
 
+	var logMode logger.Interface
+	if cfg.Environment == "dev" {
+		logMode = logger.Default.LogMode(logger.Info)
+	} else {
+		logMode = logger.Default.LogMode(logger.Silent)
+	}
+
 	var err error
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logMode,
+	})
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
