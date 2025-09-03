@@ -82,8 +82,8 @@ func GetWorkoutPlans(c *gin.Context) {
 	}
 
 	if err := database.DB.Where("user_id = ?", userID).
-		Preload("Workouts").
-		Preload("User").
+		Preload("Items").
+		Preload("Items.Workout").
 		Offset(offset).
 		Limit(limit).
 		Order("created_at DESC").
@@ -113,8 +113,11 @@ func GetWorkoutPlan(c *gin.Context) {
 
 	var plan models.WorkoutPlan
 	if err := database.DB.Where("id = ? AND user_id = ?", planID, userID).
-		Preload("Workouts.SetGroups.WorkoutExercises.Exercise").
-		Preload("Workouts.SetGroups.WorkoutExercises.SetGroup").
+		Preload("Items").
+		Preload("Items.Workout").
+		Preload("Items.Workout.SetGroups").
+		Preload("Items.Workout.WorkoutExercises").
+		Preload("Items.Workout.WorkoutExercises.Exercise").
 		First(&plan).Error; err != nil {
 		utils.NotFoundResponse(c, "Workout plan not found.")
 		return

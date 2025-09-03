@@ -10,28 +10,28 @@ import (
 )
 
 type WorkoutPlan struct {
-	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	UserID        uuid.UUID `gorm:"type:uuid;not null"`
-	Title         string    `gorm:"type:text;not null"`
-	Description   string    `gorm:"type:text"`
-	Visibility    string    `gorm:"type:varchar(20);default:'private'"` // private, public, friends
-	TemplateWeeks int       `gorm:"not null;default:1"`                 // allows multi-week blocks
+	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	UserID        uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
+	Title         string    `gorm:"type:text;not null" json:"title"`
+	Description   string    `gorm:"type:text" json:"description"`
+	Visibility    string    `gorm:"type:varchar(20);default:'private'" json:"visibility"` // private, public, friends
+	TemplateWeeks int       `gorm:"not null;default:1" json:"template_weeks"`                 // allows multi-week blocks
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 
-	Items []WorkoutPlanItem `gorm:"foreignKey:PlanID;constraint:OnDelete:CASCADE"`
+	Items []WorkoutPlanItem `gorm:"foreignKey:PlanID;constraint:OnDelete:CASCADE" json:"items,omitempty"`
 }
 
 type Workout struct {
-	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	UserID      uuid.UUID `gorm:"type:uuid;not null"`
-	Title       string    `gorm:"type:text;not null"`
-	Description string    `gorm:"type:text"`
-	Visibility  string    `gorm:"type:varchar(20);default:'private'"`
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	UserID      uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
+	Title       string    `gorm:"type:text;not null" json:"title"`
+	Description string    `gorm:"type:text" json:"description"`
+	Visibility  string    `gorm:"type:varchar(20);default:'private'" json:"visibility"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 
 	// Exercises inside workout define their own order (not handled by plan)
 	// Exercises []Exercise ...
@@ -42,34 +42,34 @@ type Workout struct {
 }
 
 type WorkoutPlanItem struct {
-	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	PlanID    uuid.UUID `gorm:"type:uuid;not null;index"`
-	WorkoutID uuid.UUID `gorm:"type:uuid;not null;index"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	PlanID    uuid.UUID `gorm:"type:uuid;not null;index" json:"plan_id"`
+	WorkoutID uuid.UUID `gorm:"type:uuid;not null;index" json:"workout_id"`
 
-	WeekIndex int `gorm:"not null;default:0"` // optional, for multi-week blocks
+	WeekIndex int `gorm:"not null;default:0" json:"week_index"` // optional, for multi-week blocks
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 
-	Workout Workout `gorm:"constraint:OnDelete:CASCADE"`
+	Workout Workout `gorm:"constraint:OnDelete:CASCADE" json:"workout,omitempty"`
 }
 
 type PlanEnrollment struct {
-	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	PlanID      uuid.UUID `gorm:"type:uuid;not null;index"`
-	UserID      uuid.UUID `gorm:"type:uuid;not null;index"`
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	PlanID      uuid.UUID `gorm:"type:uuid;not null;index" json:"plan_id"`
+	UserID      uuid.UUID `gorm:"type:uuid;not null;index" json:"user_id"`
 
-	StartDate   time.Time `gorm:"not null"`
-	DaysPerWeek int       `gorm:"not null;check:days_per_week_check,days_per_week >= 1 AND days_per_week <= 7"`
+	StartDate   time.Time `gorm:"not null" json:"start_date"`
+	DaysPerWeek int       `gorm:"not null;check:days_per_week_check,days_per_week >= 1 AND days_per_week <= 7" json:"days_per_week"`
 
-	CurrentIndex int `gorm:"not null;default:0"` // index in rolling mode
+	CurrentIndex int `gorm:"not null;default:0" json:"current_index"` // index in rolling mode
 
-	ScheduleMode      string         `gorm:"type:varchar(20);default:'rolling'"` // rolling | calendar
-	PreferredWeekdays pq.Int32Array  `gorm:"type:int[];default:'{}'"`       // only used in calendar mode (0=Mon..6=Sun)
+	ScheduleMode      string         `gorm:"type:varchar(20);default:'rolling'" json:"schedule_mode"` // rolling | calendar
+	PreferredWeekdays pq.Int32Array  `gorm:"type:int[];default:'{}'" json:"preferred_weekdays"`       // only used in calendar mode (0=Mon..6=Sun)
 
-	Status    string    `gorm:"type:varchar(20);default:'active'"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Status    string    `gorm:"type:varchar(20);default:'active'" json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Exercise struct {
