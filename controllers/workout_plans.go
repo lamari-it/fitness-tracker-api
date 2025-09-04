@@ -4,22 +4,21 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type CreateWorkoutPlanRequest struct {
-	Title       string `json:"title" binding:"required"`
-	Description string `json:"description"`
-	Visibility  string `json:"visibility"`
+	Title       string `json:"title" binding:"required,min=1,max=200"`
+	Description string `json:"description" binding:"omitempty,max=1000"`
+	Visibility  string `json:"visibility" binding:"omitempty,oneof=private public"`
 }
 
 type UpdateWorkoutPlanRequest struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Visibility  string `json:"visibility"`
+	Title       string `json:"title" binding:"omitempty,min=1,max=200"`
+	Description string `json:"description" binding:"omitempty,max=1000"`
+	Visibility  string `json:"visibility" binding:"omitempty,oneof=private public"`
 }
 
 func CreateWorkoutPlan(c *gin.Context) {
@@ -61,17 +60,16 @@ func GetWorkoutPlans(c *gin.Context) {
 		return
 	}
 
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-
-	if page < 1 {
-		page = 1
-	}
-	if limit < 1 || limit > 50 {
-		limit = 10
+	var queryParams PaginationQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		utils.HandleBindingError(c, err)
+		return
 	}
 
-	offset := (page - 1) * limit
+	// Set default pagination values
+	SetDefaultPagination(&queryParams)
+
+	offset := (queryParams.Page - 1) * queryParams.Limit
 
 	var plans []models.WorkoutPlan
 	var total int64
@@ -85,14 +83,14 @@ func GetWorkoutPlans(c *gin.Context) {
 		Preload("Items").
 		Preload("Items.Workout").
 		Offset(offset).
-		Limit(limit).
+		Limit(queryParams.Limit).
 		Order("created_at DESC").
 		Find(&plans).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to fetch workout plans.")
 		return
 	}
 
-	utils.PaginatedResponse(c, "Workout plans fetched successfully.", plans, page, limit, int(total))
+	utils.PaginatedResponse(c, "Workout plans fetched successfully.", plans, queryParams.Page, queryParams.Limit, int(total))
 }
 
 func GetWorkoutPlan(c *gin.Context) {
@@ -102,12 +100,15 @@ func GetWorkoutPlan(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	planID, err := uuid.Parse(params.ID)
 	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout plan ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
 		return
 	}
 
@@ -133,12 +134,15 @@ func UpdateWorkoutPlan(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	planID, err := uuid.Parse(params.ID)
 	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout plan ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
 		return
 	}
 
@@ -184,12 +188,15 @@ func DeleteWorkoutPlan(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	planID, err := uuid.Parse(params.ID)
 	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout plan ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
 		return
 	}
 
@@ -208,8 +215,8 @@ func DeleteWorkoutPlan(c *gin.Context) {
 }
 
 type AddWorkoutToPlanRequest struct {
-	WorkoutID uuid.UUID `json:"workout_id" binding:"required"`
-	WeekIndex int       `json:"week_index"`
+	WorkoutID uuid.UUID `json:"workout_id" binding:"required,uuid"`
+	WeekIndex int       `json:"week_index" binding:"omitempty,min=0,max=52"`
 }
 
 func AddWorkoutToPlan(c *gin.Context) {
@@ -219,12 +226,15 @@ func AddWorkoutToPlan(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	planID, err := uuid.Parse(params.ID)
 	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout plan ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
 		return
 	}
 
@@ -280,21 +290,24 @@ func RemoveWorkoutFromPlan(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout plan ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	var params struct {
+		ID     string `uri:"id" binding:"required,uuid"`
+		ItemID string `uri:"item_id" binding:"required,uuid"`
+	}
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
 		return
 	}
 
-	itemID, err := uuid.Parse(c.Param("item_id"))
+	planID, err := uuid.Parse(params.ID)
 	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"item_id": []string{"Invalid plan item ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
+		return
+	}
+
+	itemID, err := uuid.Parse(params.ItemID)
+	if err != nil {
+		utils.BadRequestResponse(c, "Invalid plan item ID format.", nil)
 		return
 	}
 
@@ -327,12 +340,15 @@ func GetPlanWorkouts(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	planID, err := uuid.Parse(params.ID)
 	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout plan ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
 		return
 	}
 
@@ -357,7 +373,7 @@ func GetPlanWorkouts(c *gin.Context) {
 }
 
 type UpdatePlanItemRequest struct {
-	WeekIndex int `json:"week_index"`
+	WeekIndex int `json:"week_index" binding:"min=0,max=52"`
 }
 
 func UpdatePlanItem(c *gin.Context) {
@@ -367,21 +383,24 @@ func UpdatePlanItem(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout plan ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	var params struct {
+		ID     string `uri:"id" binding:"required,uuid"`
+		ItemID string `uri:"item_id" binding:"required,uuid"`
+	}
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
 		return
 	}
 
-	itemID, err := uuid.Parse(c.Param("item_id"))
+	planID, err := uuid.Parse(params.ID)
 	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"item_id": []string{"Invalid plan item ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
+		return
+	}
+
+	itemID, err := uuid.Parse(params.ItemID)
+	if err != nil {
+		utils.BadRequestResponse(c, "Invalid plan item ID format.", nil)
 		return
 	}
 

@@ -12,27 +12,27 @@ import (
 )
 
 type CreateWorkoutRequest struct {
-	Title       string `json:"title" binding:"required"`
-	Description string `json:"description"`
-	Visibility  string `json:"visibility"`
+	Title       string `json:"title" binding:"required,min=1,max=200"`
+	Description string `json:"description" binding:"omitempty,max=1000"`
+	Visibility  string `json:"visibility" binding:"omitempty,oneof=public private friends"`
 }
 
 type UpdateWorkoutRequest struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Visibility  string `json:"visibility"`
+	Title       string `json:"title" binding:"omitempty,min=1,max=200"`
+	Description string `json:"description" binding:"omitempty,max=1000"`
+	Visibility  string `json:"visibility" binding:"omitempty,oneof=public private friends"`
 }
 
 type AddWorkoutExerciseRequest struct {
 	ExerciseID        uuid.UUID `json:"exercise_id" binding:"required"`
 	SetGroupID        uuid.UUID `json:"set_group_id" binding:"required"`
-	OrderNumber       int       `json:"order_number" binding:"required"`
-	TargetSets        int       `json:"target_sets"`
-	TargetReps        int       `json:"target_reps"`
-	TargetWeight      float64   `json:"target_weight"`
-	TargetRestSec     int       `json:"target_rest_sec"`
-	Prescription      string    `json:"prescription"` // reps or time
-	TargetDurationSec int       `json:"target_duration_sec"`
+	OrderNumber       int       `json:"order_number" binding:"required,min=1"`
+	TargetSets        int       `json:"target_sets" binding:"omitempty,min=1,max=20"`
+	TargetReps        int       `json:"target_reps" binding:"omitempty,min=1,max=100"`
+	TargetWeight      float64   `json:"target_weight" binding:"omitempty,min=0,max=1000"`
+	TargetRestSec     int       `json:"target_rest_sec" binding:"omitempty,min=0,max=600"`
+	Prescription      string    `json:"prescription" binding:"omitempty,oneof=reps time"` // reps or time
+	TargetDurationSec int       `json:"target_duration_sec" binding:"omitempty,min=0,max=3600"`
 }
 
 func CreateWorkout(c *gin.Context) {

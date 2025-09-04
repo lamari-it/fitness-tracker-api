@@ -4,7 +4,6 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -18,31 +17,22 @@ func GetUserEquipment(c *gin.Context) {
 		return
 	}
 
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
-	if page < 1 {
-		page = 1
-	}
-	if limit < 1 || limit > 50 {
-		limit = 10
-	}
-	
-	offset := (page - 1) * limit
-
-	// Get filter parameters
-	var filter models.UserEquipmentFilter
-	if err := c.ShouldBindQuery(&filter); err != nil {
+	var queryParams UserEquipmentQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
 		utils.HandleBindingError(c, err)
 		return
 	}
 
+	// Set default pagination values
+	SetDefaultPagination(&queryParams.PaginationQuery)
+
+	offset := (queryParams.Page - 1) * queryParams.Limit
+
 	query := database.DB.Model(&models.UserEquipment{}).Where("user_id = ?", userID).Preload("Equipment")
 	
 	// Apply location filter if provided
-	if filter.LocationType != "" {
-		query = query.Where("location_type = ?", filter.LocationType)
+	if queryParams.LocationType != "" {
+		query = query.Where("location_type = ?", queryParams.LocationType)
 	}
 
 	// Get total count
@@ -50,7 +40,7 @@ func GetUserEquipment(c *gin.Context) {
 	query.Count(&total)
 
 	var userEquipment []models.UserEquipment
-	if err := query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&userEquipment).Error; err != nil {
+	if err := query.Offset(offset).Limit(queryParams.Limit).Order("created_at DESC").Find(&userEquipment).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve user equipment.")
 		return
 	}
@@ -61,7 +51,7 @@ func GetUserEquipment(c *gin.Context) {
 		response[i] = ue.ToResponse()
 	}
 
-	utils.PaginatedResponse(c, "User equipment retrieved successfully.", response, page, limit, int(total))
+	utils.PaginatedResponse(c, "User equipment retrieved successfully.", response, queryParams.Page, queryParams.Limit, int(total))
 }
 
 // AddUserEquipment adds equipment to user's inventory
@@ -128,8 +118,13 @@ func UpdateUserEquipment(c *gin.Context) {
 		return
 	}
 
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
@@ -194,8 +189,13 @@ func RemoveUserEquipment(c *gin.Context) {
 		return
 	}
 
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
@@ -224,39 +224,39 @@ func GetUserEquipmentByLocation(c *gin.Context) {
 		return
 	}
 
-	locationType := c.Param("location")
-	if locationType != "home" && locationType != "gym" {
-		utils.BadRequestResponse(c, "Invalid location type. Must be 'home' or 'gym'.", nil)
+	var params struct {
+		Location string `uri:"location" binding:"required,oneof=home gym"`
+	}
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
 		return
 	}
 
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
-	if page < 1 {
-		page = 1
+	var queryParams PaginationQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		utils.HandleBindingError(c, err)
+		return
 	}
-	if limit < 1 || limit > 50 {
-		limit = 10
-	}
-	
-	offset := (page - 1) * limit
+
+	// Set default pagination values
+	SetDefaultPagination(&queryParams)
+
+	offset := (queryParams.Page - 1) * queryParams.Limit
 
 	// Get total count
 	var total int64
 	if err := database.DB.Model(&models.UserEquipment{}).
-		Where("user_id = ? AND location_type = ?", userID, locationType).
+		Where("user_id = ? AND location_type = ?", userID, params.Location).
 		Count(&total).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to count equipment.")
 		return
 	}
 
 	var userEquipment []models.UserEquipment
-	if err := database.DB.Where("user_id = ? AND location_type = ?", userID, locationType).
+	if err := database.DB.Where("user_id = ? AND location_type = ?", userID, params.Location).
 		Preload("Equipment").
 		Offset(offset).
-		Limit(limit).
+		Limit(queryParams.Limit).
 		Order("created_at DESC").
 		Find(&userEquipment).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve equipment by location.")
@@ -269,7 +269,7 @@ func GetUserEquipmentByLocation(c *gin.Context) {
 		response[i] = ue.ToResponse()
 	}
 
-	utils.PaginatedResponse(c, "Equipment by location retrieved successfully.", response, page, limit, int(total))
+	utils.PaginatedResponse(c, "Equipment by location retrieved successfully.", response, queryParams.Page, queryParams.Limit, int(total))
 }
 
 // BulkAddUserEquipment allows adding multiple equipment items at once

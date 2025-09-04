@@ -4,7 +4,6 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -135,49 +134,41 @@ func CreateExercise(c *gin.Context) {
 }
 
 func GetExercises(c *gin.Context) {
-	search := c.Query("search")
-	muscleGroupID := c.Query("muscle_group_id")
-	equipment := c.Query("equipment")
-	bodyweight := c.Query("bodyweight")
-	primaryOnly := c.Query("primary_only")
-	
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
-	if page < 1 {
-		page = 1
-	}
-	if limit < 1 || limit > 50 {
-		limit = 10
+	var params ExerciseQuery
+	if err := c.ShouldBindQuery(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
 	}
 	
-	offset := (page - 1) * limit
+	// Set default pagination values
+	SetDefaultPagination(&params.PaginationQuery)
+	
+	offset := (params.Page - 1) * params.Limit
 
 	query := database.DB.Model(&models.Exercise{}).
 		Preload("MuscleGroups.MuscleGroup")
 
-	if search != "" {
-		query = query.Where("name ILIKE ?", "%"+search+"%")
+	if params.Search != "" {
+		query = query.Where("name ILIKE ?", "%"+params.Search+"%")
 	}
 
-	if muscleGroupID != "" {
+	if params.MuscleGroupID != "" {
 		// Filter by muscle group through the many-to-many relationship
-		if primaryOnly == "true" {
+		if params.PrimaryOnly == "true" {
 			query = query.Joins("JOIN exercise_muscle_groups emg ON exercises.id = emg.exercise_id").
-				Where("emg.muscle_group_id = ? AND emg.primary = true", muscleGroupID)
+				Where("emg.muscle_group_id = ? AND emg.primary = true", params.MuscleGroupID)
 		} else {
 			query = query.Joins("JOIN exercise_muscle_groups emg ON exercises.id = emg.exercise_id").
-				Where("emg.muscle_group_id = ?", muscleGroupID)
+				Where("emg.muscle_group_id = ?", params.MuscleGroupID)
 		}
 	}
 
-	if equipment != "" {
-		query = query.Where("equipment = ?", equipment)
+	if params.Equipment != "" {
+		query = query.Where("equipment = ?", params.Equipment)
 	}
 
-	if bodyweight != "" {
-		isBodyweight := bodyweight == "true"
+	if params.Bodyweight != "" {
+		isBodyweight := params.Bodyweight == "true"
 		query = query.Where("is_bodyweight = ?", isBodyweight)
 	}
 
@@ -186,20 +177,22 @@ func GetExercises(c *gin.Context) {
 	query.Count(&total)
 
 	var exercises []models.Exercise
-	if err := query.Offset(offset).Limit(limit).Order("name ASC").Find(&exercises).Error; err != nil {
+	if err := query.Offset(offset).Limit(params.Limit).Order("name ASC").Find(&exercises).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to fetch exercises.")
 		return
 	}
 
-	utils.PaginatedResponse(c, "Exercises retrieved successfully.", exercises, page, limit, int(total))
+	utils.PaginatedResponse(c, "Exercises retrieved successfully.", exercises, params.Page, params.Limit, int(total))
 }
 
 func GetExercise(c *gin.Context) {
-	exerciseID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
 		return
 	}
+	
+	exerciseID, _ := uuid.Parse(params.ID)
 
 	var exercise models.Exercise
 	if err := database.DB.Where("id = ?", exerciseID).
@@ -214,6 +207,11 @@ func GetExercise(c *gin.Context) {
 
 func GetExerciseBySlug(c *gin.Context) {
 	slug := c.Param("slug")
+	// Validate slug format (alphanumeric with underscores/hyphens)
+	if slug == "" {
+		utils.BadRequestResponse(c, "Slug is required.", nil)
+		return
+	}
 
 	var exercise models.Exercise
 	if err := database.DB.Where("slug = ?", slug).

@@ -4,7 +4,6 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -48,40 +47,36 @@ func CreateEquipment(c *gin.Context) {
 
 // GetAllEquipment retrieves all equipment with optional filtering
 func GetAllEquipment(c *gin.Context) {
+	var queryParams EquipmentQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	// Set default pagination values
+	SetDefaultPagination(&queryParams.PaginationQuery)
+
 	var equipment []models.Equipment
 	query := database.DB.Model(&models.Equipment{})
 
 	// Search by name
-	if search := c.Query("search"); search != "" {
-		query = query.Where("name ILIKE ?", "%"+search+"%")
+	if queryParams.Search != "" {
+		query = query.Where("name ILIKE ?", "%"+queryParams.Search+"%")
 	}
 
 	// Filter by category
-	if category := c.Query("category"); category != "" {
-		query = query.Where("category = ?", category)
+	if queryParams.Category != "" {
+		query = query.Where("category = ?", queryParams.Category)
 	}
 
-	// Pagination
-	page := 1
-	limit := 10
-	if p := c.Query("page"); p != "" {
-		if pageNum, err := strconv.Atoi(p); err == nil && pageNum > 0 {
-			page = pageNum
-		}
-	}
-	if l := c.Query("limit"); l != "" {
-		if limitNum, err := strconv.Atoi(l); err == nil && limitNum > 0 && limitNum <= 50 {
-			limit = limitNum
-		}
-	}
-	offset := (page - 1) * limit
+	offset := (queryParams.Page - 1) * queryParams.Limit
 
 	// Get total count
 	var total int64
 	query.Count(&total)
 
 	// Get equipment with pagination
-	if err := query.Offset(offset).Limit(limit).Order("name").Find(&equipment).Error; err != nil {
+	if err := query.Offset(offset).Limit(queryParams.Limit).Order("name").Find(&equipment).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve equipment")
 		return
 	}
@@ -92,13 +87,18 @@ func GetAllEquipment(c *gin.Context) {
 		responses[i] = eq.ToResponse()
 	}
 
-	utils.PaginatedResponse(c, "Equipment list retrieved successfully", responses, page, limit, int(total))
+	utils.PaginatedResponse(c, "Equipment list retrieved successfully", responses, queryParams.Page, queryParams.Limit, int(total))
 }
 
 // GetEquipmentByID retrieves a specific equipment by ID
 func GetEquipmentByID(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid UUID format", nil)
 		return
@@ -132,8 +132,13 @@ func GetEquipmentByID(c *gin.Context) {
 
 // UpdateEquipment updates an existing equipment
 func UpdateEquipment(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid UUID format", nil)
 		return
@@ -195,8 +200,13 @@ func UpdateEquipment(c *gin.Context) {
 
 // DeleteEquipment deletes an equipment
 func DeleteEquipment(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid UUID format", nil)
 		return
@@ -312,25 +322,30 @@ func RemoveEquipmentFromExercise(c *gin.Context) {
 
 // GetExerciseEquipment gets all equipment for an exercise
 func GetExerciseEquipment(c *gin.Context) {
-	exerciseIDStr := c.Param("exercise_id")
-	exerciseID, err := uuid.Parse(exerciseIDStr)
+	var params struct {
+		ExerciseID string `uri:"exercise_id" binding:"required,uuid"`
+	}
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	var queryParams PaginationQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	// Set default pagination values
+	SetDefaultPagination(&queryParams)
+
+	exerciseID, err := uuid.Parse(params.ExerciseID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid exercise UUID format", nil)
 		return
 	}
 
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
-	if page < 1 {
-		page = 1
-	}
-	if limit < 1 || limit > 50 {
-		limit = 10
-	}
-	
-	offset := (page - 1) * limit
+	offset := (queryParams.Page - 1) * queryParams.Limit
 
 	// Check if exercise exists
 	var exercise models.Exercise
@@ -353,7 +368,7 @@ func GetExerciseEquipment(c *gin.Context) {
 	if err := database.DB.Preload("Equipment").
 		Where("exercise_id = ?", exerciseID).
 		Offset(offset).
-		Limit(limit).
+		Limit(queryParams.Limit).
 		Order("created_at DESC").
 		Find(&exerciseEquipment).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve exercise equipment")
@@ -366,5 +381,5 @@ func GetExerciseEquipment(c *gin.Context) {
 		responses[i] = ee.ToResponse()
 	}
 
-	utils.PaginatedResponse(c, "Exercise equipment list retrieved successfully", responses, page, limit, int(total))
+	utils.PaginatedResponse(c, "Exercise equipment list retrieved successfully", responses, queryParams.Page, queryParams.Limit, int(total))
 }

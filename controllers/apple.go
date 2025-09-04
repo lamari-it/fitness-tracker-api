@@ -13,10 +13,10 @@ import (
 )
 
 type AppleLoginRequest struct {
-	IdentityToken string `json:"identity_token" binding:"required"`
-	AuthCode      string `json:"auth_code,omitempty"`
-	FirstName     string `json:"first_name,omitempty"`
-	LastName      string `json:"last_name,omitempty"`
+	IdentityToken string `json:"identity_token" binding:"required,min=1"`
+	AuthCode      string `json:"auth_code" binding:"omitempty,min=1"`
+	FirstName     string `json:"first_name" binding:"omitempty,min=1,max=100"`
+	LastName      string `json:"last_name" binding:"omitempty,min=1,max=100"`
 }
 
 func AppleLogin(c *gin.Context) {

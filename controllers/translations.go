@@ -4,7 +4,6 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -41,31 +40,25 @@ func CreateTranslation(c *gin.Context) {
 
 // GetTranslations retrieves translations for a specific resource
 func GetTranslations(c *gin.Context) {
-	resourceType := c.Query("resource_type")
-	resourceIDStr := c.Query("resource_id")
-	language := c.Query("language")
+	var queryParams TranslationQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
 
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
-	if page < 1 {
-		page = 1
-	}
-	if limit < 1 || limit > 50 {
-		limit = 10
-	}
-	
-	offset := (page - 1) * limit
+	// Set default pagination values
+	SetDefaultPagination(&queryParams.PaginationQuery)
+
+	offset := (queryParams.Page - 1) * queryParams.Limit
 
 	query := database.DB.Model(&models.Translation{})
 
-	if resourceType != "" {
-		query = query.Where("resource_type = ?", resourceType)
+	if queryParams.ResourceType != "" {
+		query = query.Where("resource_type = ?", queryParams.ResourceType)
 	}
 
-	if resourceIDStr != "" {
-		resourceID, err := uuid.Parse(resourceIDStr)
+	if queryParams.ResourceID != "" {
+		resourceID, err := uuid.Parse(queryParams.ResourceID)
 		if err != nil {
 			utils.BadRequestResponse(c, "Invalid resource ID format.", nil)
 			return
@@ -73,8 +66,8 @@ func GetTranslations(c *gin.Context) {
 		query = query.Where("resource_id = ?", resourceID)
 	}
 
-	if language != "" {
-		query = query.Where("language = ?", language)
+	if queryParams.Language != "" {
+		query = query.Where("language = ?", queryParams.Language)
 	}
 
 	// Get total count
@@ -82,7 +75,7 @@ func GetTranslations(c *gin.Context) {
 	query.Count(&total)
 
 	var translations []models.Translation
-	if err := query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&translations).Error; err != nil {
+	if err := query.Offset(offset).Limit(queryParams.Limit).Order("created_at DESC").Find(&translations).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve translations.")
 		return
 	}
@@ -92,13 +85,18 @@ func GetTranslations(c *gin.Context) {
 		responses = append(responses, translation.ToResponse())
 	}
 
-	utils.PaginatedResponse(c, "Translations retrieved successfully.", responses, page, limit, int(total))
+	utils.PaginatedResponse(c, "Translations retrieved successfully.", responses, queryParams.Page, queryParams.Limit, int(total))
 }
 
 // GetTranslation retrieves a specific translation
 func GetTranslation(c *gin.Context) {
-	id := c.Param("id")
-	translationID, err := uuid.Parse(id)
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	translationID, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
@@ -115,8 +113,13 @@ func GetTranslation(c *gin.Context) {
 
 // UpdateTranslation updates an existing translation
 func UpdateTranslation(c *gin.Context) {
-	id := c.Param("id")
-	translationID, err := uuid.Parse(id)
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	translationID, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
@@ -151,8 +154,13 @@ func UpdateTranslation(c *gin.Context) {
 
 // DeleteTranslation deletes a translation
 func DeleteTranslation(c *gin.Context) {
-	id := c.Param("id")
-	translationID, err := uuid.Parse(id)
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	translationID, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
@@ -174,17 +182,23 @@ func DeleteTranslation(c *gin.Context) {
 
 // GetResourceTranslations retrieves all translations for a specific resource
 func GetResourceTranslations(c *gin.Context) {
-	resourceType := c.Param("resource_type")
-	resourceIDStr := c.Param("resource_id")
+	var params struct {
+		ResourceType string `uri:"resource_type" binding:"required,max=50"`
+		ResourceID   string `uri:"resource_id" binding:"required,uuid"`
+	}
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
 
-	resourceID, err := uuid.Parse(resourceIDStr)
+	resourceID, err := uuid.Parse(params.ResourceID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid resource ID format.", nil)
 		return
 	}
 
 	var translations []models.Translation
-	if err := database.DB.Where("resource_type = ? AND resource_id = ?", resourceType, resourceID).Find(&translations).Error; err != nil {
+	if err := database.DB.Where("resource_type = ? AND resource_id = ?", params.ResourceType, resourceID).Find(&translations).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve resource translations.")
 		return
 	}

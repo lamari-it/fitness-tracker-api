@@ -4,28 +4,27 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type CreateMuscleGroupRequest struct {
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description"`
-	Category    string `json:"category"`
+	Name        string `json:"name" binding:"required,min=1,max=100"`
+	Description string `json:"description" binding:"omitempty,max=500"`
+	Category    string `json:"category" binding:"omitempty,max=50"`
 }
 
 type UpdateMuscleGroupRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Category    string `json:"category"`
+	Name        string `json:"name" binding:"omitempty,min=1,max=100"`
+	Description string `json:"description" binding:"omitempty,max=500"`
+	Category    string `json:"category" binding:"omitempty,max=50"`
 }
 
 type AssignMuscleGroupRequest struct {
-	MuscleGroupID uuid.UUID `json:"muscle_group_id" binding:"required"`
+	MuscleGroupID uuid.UUID `json:"muscle_group_id" binding:"required,uuid"`
 	Primary       bool      `json:"primary"`
-	Intensity     string    `json:"intensity"`
+	Intensity     string    `json:"intensity" binding:"omitempty,oneof=low moderate high"`
 }
 
 func CreateMuscleGroup(c *gin.Context) {
@@ -55,28 +54,25 @@ func CreateMuscleGroup(c *gin.Context) {
 }
 
 func GetMuscleGroups(c *gin.Context) {
-	search := c.Query("search")
-	category := c.Query("category")
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
-	if page < 1 {
-		page = 1
+	var queryParams MuscleGroupQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		utils.HandleBindingError(c, err)
+		return
 	}
-	if limit < 1 || limit > 50 {
-		limit = 10
-	}
-	
-	offset := (page - 1) * limit
+
+	// Set default pagination values
+	SetDefaultPagination(&queryParams.PaginationQuery)
+
+	offset := (queryParams.Page - 1) * queryParams.Limit
 
 	query := database.DB.Model(&models.MuscleGroup{})
 
-	if search != "" {
-		query = query.Where("name ILIKE ?", "%"+search+"%")
+	if queryParams.Search != "" {
+		query = query.Where("name ILIKE ?", "%"+queryParams.Search+"%")
 	}
 
-	if category != "" {
-		query = query.Where("category = ?", category)
+	if queryParams.Category != "" {
+		query = query.Where("category = ?", queryParams.Category)
 	}
 
 	var muscleGroups []models.MuscleGroup
@@ -84,7 +80,7 @@ func GetMuscleGroups(c *gin.Context) {
 
 	query.Count(&total)
 
-	if err := query.Offset(offset).Limit(limit).Order("name ASC").Find(&muscleGroups).Error; err != nil {
+	if err := query.Offset(offset).Limit(queryParams.Limit).Order("name ASC").Find(&muscleGroups).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to fetch muscle groups.")
 		return
 	}
@@ -94,11 +90,17 @@ func GetMuscleGroups(c *gin.Context) {
 		responses = append(responses, mg.ToResponse())
 	}
 
-	utils.PaginatedResponse(c, "Muscle groups retrieved successfully.", responses, page, limit, int(total))
+	utils.PaginatedResponse(c, "Muscle groups retrieved successfully.", responses, queryParams.Page, queryParams.Limit, int(total))
 }
 
 func GetMuscleGroup(c *gin.Context) {
-	muscleGroupID, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	muscleGroupID, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
 		return
@@ -133,7 +135,13 @@ func GetMuscleGroup(c *gin.Context) {
 }
 
 func UpdateMuscleGroup(c *gin.Context) {
-	muscleGroupID, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	muscleGroupID, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
 		return
@@ -175,7 +183,13 @@ func UpdateMuscleGroup(c *gin.Context) {
 }
 
 func DeleteMuscleGroup(c *gin.Context) {
-	muscleGroupID, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	muscleGroupID, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
 		return
@@ -204,7 +218,13 @@ func DeleteMuscleGroup(c *gin.Context) {
 }
 
 func AssignMuscleGroupToExercise(c *gin.Context) {
-	exerciseID, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	exerciseID, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
 		return
@@ -272,13 +292,22 @@ func AssignMuscleGroupToExercise(c *gin.Context) {
 }
 
 func RemoveMuscleGroupFromExercise(c *gin.Context) {
-	exerciseID, err := uuid.Parse(c.Param("id"))
+	var params struct {
+		ID            string `uri:"id" binding:"required,uuid"`
+		MuscleGroupID string `uri:"muscle_group_id" binding:"required,uuid"`
+	}
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	exerciseID, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
 		return
 	}
 
-	muscleGroupID, err := uuid.Parse(c.Param("muscle_group_id"))
+	muscleGroupID, err := uuid.Parse(params.MuscleGroupID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
 		return
@@ -299,7 +328,13 @@ func RemoveMuscleGroupFromExercise(c *gin.Context) {
 }
 
 func GetExerciseMuscleGroups(c *gin.Context) {
-	exerciseID, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	exerciseID, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
 		return

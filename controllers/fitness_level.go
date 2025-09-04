@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"strconv"
-	
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -14,18 +12,16 @@ import (
 
 // GetAllFitnessLevels retrieves all fitness levels
 func GetAllFitnessLevels(c *gin.Context) {
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
-	if page < 1 {
-		page = 1
+	var queryParams PaginationQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		utils.HandleBindingError(c, err)
+		return
 	}
-	if limit < 1 || limit > 50 {
-		limit = 10
-	}
-	
-	offset := (page - 1) * limit
+
+	// Set default pagination values
+	SetDefaultPagination(&queryParams)
+
+	offset := (queryParams.Page - 1) * queryParams.Limit
 
 	// Get total count
 	var total int64
@@ -37,7 +33,7 @@ func GetAllFitnessLevels(c *gin.Context) {
 	var levels []models.FitnessLevel
 	if err := database.DB.Order("sort_order ASC").
 		Offset(offset).
-		Limit(limit).
+		Limit(queryParams.Limit).
 		Find(&levels).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve fitness levels.")
 		return
@@ -48,12 +44,18 @@ func GetAllFitnessLevels(c *gin.Context) {
 		response[i] = level.ToResponse()
 	}
 
-	utils.PaginatedResponse(c, "Fitness levels retrieved successfully.", response, page, limit, int(total))
+	utils.PaginatedResponse(c, "Fitness levels retrieved successfully.", response, queryParams.Page, queryParams.Limit, int(total))
 }
 
 // GetFitnessLevel retrieves a single fitness level by ID
 func GetFitnessLevel(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
@@ -115,7 +117,13 @@ func UpdateFitnessLevel(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
@@ -170,7 +178,13 @@ func DeleteFitnessLevel(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return

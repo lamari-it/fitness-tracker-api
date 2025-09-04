@@ -16,15 +16,15 @@ type EnrollInPlanRequest struct {
 	PlanID            uuid.UUID `json:"plan_id" binding:"required"`
 	StartDate         string    `json:"start_date" binding:"required"`
 	DaysPerWeek       int       `json:"days_per_week" binding:"required,min=1,max=7"`
-	ScheduleMode      string    `json:"schedule_mode"` // rolling or calendar
-	PreferredWeekdays []int32   `json:"preferred_weekdays"` // Only for calendar mode
+	ScheduleMode      string    `json:"schedule_mode" binding:"omitempty,oneof=rolling calendar"` // rolling or calendar
+	PreferredWeekdays []int32   `json:"preferred_weekdays" binding:"omitempty,dive,min=0,max=6"` // Only for calendar mode
 }
 
 type UpdateEnrollmentRequest struct {
-	DaysPerWeek       int       `json:"days_per_week"`
-	ScheduleMode      string    `json:"schedule_mode"`
-	PreferredWeekdays []int32   `json:"preferred_weekdays"`
-	Status            string    `json:"status"`
+	DaysPerWeek       int       `json:"days_per_week" binding:"omitempty,min=1,max=7"`
+	ScheduleMode      string    `json:"schedule_mode" binding:"omitempty,oneof=rolling calendar"`
+	PreferredWeekdays []int32   `json:"preferred_weekdays" binding:"omitempty,dive,min=0,max=6"`
+	Status            string    `json:"status" binding:"omitempty,oneof=active paused completed cancelled"`
 }
 
 func EnrollInPlan(c *gin.Context) {

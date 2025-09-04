@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"strconv"
-	
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -14,24 +12,22 @@ import (
 
 // GetAllFitnessGoals retrieves all fitness goals
 func GetAllFitnessGoals(c *gin.Context) {
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
-	if page < 1 {
-		page = 1
+	var queryParams FitnessGoalQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		utils.HandleBindingError(c, err)
+		return
 	}
-	if limit < 1 || limit > 50 {
-		limit = 10
-	}
-	
-	offset := (page - 1) * limit
+
+	// Set default pagination values
+	SetDefaultPagination(&queryParams.PaginationQuery)
+
+	offset := (queryParams.Page - 1) * queryParams.Limit
 
 	query := database.DB.Model(&models.FitnessGoal{}).Order("category, name")
 
 	// Optional category filter
-	if category := c.Query("category"); category != "" {
-		query = query.Where("category = ?", category)
+	if queryParams.Category != "" {
+		query = query.Where("category = ?", queryParams.Category)
 	}
 
 	// Get total count
@@ -39,7 +35,7 @@ func GetAllFitnessGoals(c *gin.Context) {
 	query.Count(&total)
 
 	var goals []models.FitnessGoal
-	if err := query.Offset(offset).Limit(limit).Find(&goals).Error; err != nil {
+	if err := query.Offset(offset).Limit(queryParams.Limit).Find(&goals).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve fitness goals.")
 		return
 	}
@@ -49,12 +45,18 @@ func GetAllFitnessGoals(c *gin.Context) {
 		response[i] = goal.ToResponse()
 	}
 
-	utils.PaginatedResponse(c, "Fitness goals retrieved successfully.", response, page, limit, int(total))
+	utils.PaginatedResponse(c, "Fitness goals retrieved successfully.", response, queryParams.Page, queryParams.Limit, int(total))
 }
 
 // GetFitnessGoal retrieves a single fitness goal by ID
 func GetFitnessGoal(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
@@ -117,7 +119,13 @@ func UpdateFitnessGoal(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
@@ -175,7 +183,13 @@ func DeleteFitnessGoal(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(c.Param("id"))
+	var params IDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	id, err := uuid.Parse(params.ID)
 	if err != nil {
 		utils.BadRequestResponse(c, "Invalid ID format.", nil)
 		return
@@ -205,18 +219,16 @@ func GetUserFitnessGoals(c *gin.Context) {
 
 	currentUser := user.(models.User)
 
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
-	if page < 1 {
-		page = 1
+	var queryParams PaginationQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		utils.HandleBindingError(c, err)
+		return
 	}
-	if limit < 1 || limit > 50 {
-		limit = 10
-	}
-	
-	offset := (page - 1) * limit
+
+	// Set default pagination values
+	SetDefaultPagination(&queryParams)
+
+	offset := (queryParams.Page - 1) * queryParams.Limit
 
 	// Get total count
 	var total int64
@@ -232,7 +244,7 @@ func GetUserFitnessGoals(c *gin.Context) {
 		Where("user_id = ?", currentUser.ID).
 		Order("priority ASC").
 		Offset(offset).
-		Limit(limit).
+		Limit(queryParams.Limit).
 		Find(&userGoals).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve user fitness goals.")
 		return
@@ -243,7 +255,7 @@ func GetUserFitnessGoals(c *gin.Context) {
 		response[i] = userGoal.ToResponse()
 	}
 
-	utils.PaginatedResponse(c, "User fitness goals retrieved successfully.", response, page, limit, int(total))
+	utils.PaginatedResponse(c, "User fitness goals retrieved successfully.", response, queryParams.Page, queryParams.Limit, int(total))
 }
 
 // SetUserFitnessGoals sets the authenticated user's fitness goals

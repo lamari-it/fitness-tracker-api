@@ -4,14 +4,13 @@ import (
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type SendFriendRequestRequest struct {
-	FriendEmail string `json:"friend_email" binding:"required,email"`
+	FriendEmail string `json:"friend_email" binding:"required,email,max=255"`
 }
 
 func SendFriendRequest(c *gin.Context) {
@@ -68,18 +67,14 @@ func GetFriendRequests(c *gin.Context) {
 		return
 	}
 
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
-	if page < 1 {
-		page = 1
-	}
-	if limit < 1 || limit > 50 {
-		limit = 10
+	var query PaginationQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		utils.HandleBindingError(c, err)
+		return
 	}
 	
-	offset := (page - 1) * limit
+	SetDefaultPagination(&query)
+	offset := (query.Page - 1) * query.Limit
 
 	// Get total count
 	var total int64
@@ -92,7 +87,7 @@ func GetFriendRequests(c *gin.Context) {
 	if err := database.DB.Where("friend_id = ? AND status = ?", userID, "pending").
 		Preload("User").
 		Offset(offset).
-		Limit(limit).
+		Limit(query.Limit).
 		Order("created_at DESC").
 		Find(&friendships).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to fetch friend requests.")
@@ -113,7 +108,7 @@ func GetFriendRequests(c *gin.Context) {
 		responses = append(responses, response)
 	}
 
-	utils.PaginatedResponse(c, "Friend requests retrieved successfully.", responses, page, limit, int(total))
+	utils.PaginatedResponse(c, "Friend requests retrieved successfully.", responses, query.Page, query.Limit, int(total))
 }
 
 func RespondToFriendRequest(c *gin.Context) {
@@ -165,18 +160,14 @@ func GetFriends(c *gin.Context) {
 		return
 	}
 
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	
-	if page < 1 {
-		page = 1
-	}
-	if limit < 1 || limit > 50 {
-		limit = 10
+	var query PaginationQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		utils.HandleBindingError(c, err)
+		return
 	}
 	
-	offset := (page - 1) * limit
+	SetDefaultPagination(&query)
+	offset := (query.Page - 1) * query.Limit
 
 	// Get total count
 	var total int64
@@ -193,7 +184,7 @@ func GetFriends(c *gin.Context) {
 		Preload("User").
 		Preload("Friend").
 		Offset(offset).
-		Limit(limit).
+		Limit(query.Limit).
 		Order("created_at DESC").
 		Find(&friendships).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to fetch friends.")
@@ -220,7 +211,7 @@ func GetFriends(c *gin.Context) {
 		responses = append(responses, response)
 	}
 
-	utils.PaginatedResponse(c, "Friends retrieved successfully.", responses, page, limit, int(total))
+	utils.PaginatedResponse(c, "Friends retrieved successfully.", responses, query.Page, query.Limit, int(total))
 }
 
 func RemoveFriend(c *gin.Context) {
