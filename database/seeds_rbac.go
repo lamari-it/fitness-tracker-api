@@ -1,4 +1,4 @@
-package seeds
+package database
 
 import (
 	"fit-flow-api/models"

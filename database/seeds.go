@@ -2,7 +2,6 @@ package database
 
 import (
 	"fit-flow-api/models"
-	"fit-flow-api/seeds"
 	"log"
 	"strings"
 
@@ -2296,17 +2295,17 @@ func SeedDatabase() {
 	SeedFitnessLevels()
 	SeedFitnessGoals()
 
-	if err := seeds.SeedRoles(DB); err != nil {
+	if err := SeedRoles(DB); err != nil {
 		log.Printf("Failed to seed Role data: %v", err)
 	}
 
 	// Seed RBAC data
-	if err := seeds.SeedRBACData(DB); err != nil {
+	if err := SeedRBACData(DB); err != nil {
 		log.Printf("Failed to seed RBAC data: %v", err)
 	}
 
 	// Migrate existing users to roles
-	if err := seeds.MigrateExistingUsersToRoles(DB); err != nil {
+	if err := MigrateExistingUsersToRoles(DB); err != nil {
 		log.Printf("Failed to migrate users to roles: %v", err)
 	}
 
