@@ -21,8 +21,8 @@ type MuscleGroup struct {
 
 type ExerciseMuscleGroup struct {
 	ID            uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	ExerciseID    uuid.UUID `gorm:"type:uuid;not null;index" json:"exercise_id"`
-	MuscleGroupID uuid.UUID `gorm:"type:uuid;not null;index" json:"muscle_group_id"`
+	ExerciseID    uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_muscle_combo" json:"exercise_id"`
+	MuscleGroupID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_muscle_combo" json:"muscle_group_id"`
 	Primary       bool      `gorm:"default:false" json:"primary"`
 	Intensity     string    `gorm:"type:varchar(20);default:'moderate'" json:"intensity"` // high, moderate, low
 	CreatedAt     time.Time `json:"created_at"`

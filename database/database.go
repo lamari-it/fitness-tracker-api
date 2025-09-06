@@ -95,22 +95,6 @@ func AutoMigrate() {
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
-
-	// Add unique constraint for exercise-muscle group combination
-	DB.Exec("CREATE UNIQUE INDEX IF NOT EXISTS unique_exercise_muscle_combo ON exercise_muscle_groups (exercise_id, muscle_group_id)")
-
-	// Add unique constraint for exercise-equipment combination
-	DB.Exec("CREATE UNIQUE INDEX IF NOT EXISTS unique_exercise_equipment_combo ON exercise_equipment (exercise_id, equipment_id)")
-
-	// Add unique constraint for user-fitness goal combination
-	DB.Exec("CREATE UNIQUE INDEX IF NOT EXISTS unique_user_fitness_goal_combo ON user_fitness_goals (user_id, fitness_goal_id)")
-
-	// Add unique constraint for translation combinations
-	DB.Exec("CREATE UNIQUE INDEX IF NOT EXISTS unique_translation_combo ON translations (resource_type, resource_id, field_name, language)")
-
-	// Add unique constraint for user equipment combinations
-	DB.Exec("CREATE UNIQUE INDEX IF NOT EXISTS unique_user_equipment_combo ON user_equipment (user_id, equipment_id, location_type)")
-
 	log.Println("Database AutoMigrate completed")
 }
 

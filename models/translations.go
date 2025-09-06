@@ -10,14 +10,14 @@ import (
 // Translation represents a translatable content entry
 type Translation struct {
 	ID           uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`
-	ResourceType string         `gorm:"size:50;not null" json:"resource_type"` // e.g., "exercise", "muscle_group", "workout_plan"
-	ResourceID   uuid.UUID      `gorm:"type:uuid;not null" json:"resource_id"`
-	FieldName    string         `gorm:"size:50;not null" json:"field_name"`    // e.g., "name", "description"
-	Language     string         `gorm:"size:5;not null" json:"language"`       // e.g., "en", "es", "fr"
+	ResourceType string         `gorm:"size:50;not null;uniqueIndex:unique_translation_combo" json:"resource_type"` // e.g., "exercise", "muscle_group", "workout_plan"
+	ResourceID   uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:unique_translation_combo" json:"resource_id"`
+	FieldName    string         `gorm:"size:50;not null;uniqueIndex:unique_translation_combo" json:"field_name"`    // e.g., "name", "description"
+	Language     string         `gorm:"size:5;not null;uniqueIndex:unique_translation_combo" json:"language"`       // e.g., "en", "es", "fr"
 	Content      string         `gorm:"type:text;not null" json:"content"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
-	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	DeletedAt    gorm.DeletedAt `gorm:"index;uniqueIndex:unique_translation_combo,where:deleted_at IS NULL" json:"deleted_at,omitempty"`
 }
 
 // BeforeCreate sets the UUID before creating the translation

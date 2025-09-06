@@ -26,9 +26,9 @@ type Equipment struct {
 // UserEquipment represents what equipment a user has access to at different locations
 type UserEquipment struct {
 	ID           uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID       uuid.UUID `gorm:"type:uuid;not null;index" json:"user_id"`
-	EquipmentID  uuid.UUID `gorm:"type:uuid;not null;index" json:"equipment_id"`
-	LocationType string    `gorm:"type:varchar(10);not null" json:"location_type"` // 'home' or 'gym'
+	UserID       uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_user_equipment_combo" json:"user_id"`
+	EquipmentID  uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_user_equipment_combo" json:"equipment_id"`
+	LocationType string    `gorm:"type:varchar(10);not null;uniqueIndex:unique_user_equipment_combo" json:"location_type"` // 'home' or 'gym'
 	GymLocation  string    `gorm:"type:text" json:"gym_location,omitempty"`        // Optional: specific gym location
 	Notes        string    `gorm:"type:text" json:"notes,omitempty"`               // Optional: notes (e.g., "20lb dumbbells")
 	CreatedAt    time.Time `json:"created_at"`
@@ -42,8 +42,8 @@ type UserEquipment struct {
 // ExerciseEquipment represents the many-to-many relationship between exercises and equipment
 type ExerciseEquipment struct {
 	ID          uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	ExerciseID  uuid.UUID `gorm:"type:uuid;not null;index" json:"exercise_id"`
-	EquipmentID uuid.UUID `gorm:"type:uuid;not null;index" json:"equipment_id"`
+	ExerciseID  uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_equipment_combo" json:"exercise_id"`
+	EquipmentID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_equipment_combo" json:"equipment_id"`
 	Optional    bool      `gorm:"default:false" json:"optional"` // Whether this equipment is optional for the exercise
 	Notes       string    `gorm:"type:text" json:"notes"`        // Additional notes about using this equipment
 	CreatedAt   time.Time `json:"created_at"`

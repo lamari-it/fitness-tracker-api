@@ -37,8 +37,8 @@ type FitnessGoal struct {
 // UserFitnessGoal represents the many-to-many relationship between users and fitness goals
 type UserFitnessGoal struct {
 	ID            uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID        uuid.UUID  `gorm:"type:uuid;not null;index" json:"user_id"`
-	FitnessGoalID uuid.UUID  `gorm:"type:uuid;not null;index" json:"fitness_goal_id"`
+	UserID        uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:unique_user_fitness_goal_combo" json:"user_id"`
+	FitnessGoalID uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:unique_user_fitness_goal_combo" json:"fitness_goal_id"`
 	Priority      int        `gorm:"default:0" json:"priority"` // 1=primary, 2=secondary, etc.
 	TargetDate    *time.Time `json:"target_date,omitempty"`     // Optional target completion date
 	Notes         string     `gorm:"type:text" json:"notes"`
