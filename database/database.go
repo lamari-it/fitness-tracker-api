@@ -82,6 +82,7 @@ func AutoMigrate() {
 		&models.WorkoutPlan{},
 		&models.WorkoutPlanItem{},
 		&models.Workout{},
+		&models.SetGroup{},
 		&models.WorkoutExercise{},
 		&models.PlanEnrollment{},
 		&models.WorkoutSession{},

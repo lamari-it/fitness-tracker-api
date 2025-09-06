@@ -11,9 +11,10 @@ type MuscleGroup struct {
 	ID          uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	Name        string    `gorm:"type:varchar(100);not null;unique" json:"name"`
 	Description string    `gorm:"type:text" json:"description"`
-	Category    string    `gorm:"type:varchar(50)" json:"category"` // upper, lower, core, cardio
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Category    string         `gorm:"type:varchar(50)" json:"category"` // upper, lower, core, cardio
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
 	ExerciseLinks []ExerciseMuscleGroup `gorm:"foreignKey:MuscleGroupID" json:"exercise_links,omitempty"`
@@ -24,9 +25,10 @@ type ExerciseMuscleGroup struct {
 	ExerciseID    uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_muscle_combo" json:"exercise_id"`
 	MuscleGroupID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_muscle_combo" json:"muscle_group_id"`
 	Primary       bool      `gorm:"default:false" json:"primary"`
-	Intensity     string    `gorm:"type:varchar(20);default:'moderate'" json:"intensity"` // high, moderate, low
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	Intensity     string         `gorm:"type:varchar(20);default:'moderate'" json:"intensity"` // high, moderate, low
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
 	Exercise    Exercise    `gorm:"foreignKey:ExerciseID;constraint:OnDelete:CASCADE" json:"exercise,omitempty"`

@@ -12,9 +12,10 @@ type FitnessLevel struct {
 	ID          uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	Name        string    `gorm:"type:varchar(50);not null;unique" json:"name"`
 	Description string    `gorm:"type:text" json:"description"`
-	SortOrder   int       `gorm:"default:0" json:"sort_order"` // For ordering levels (beginner->advanced)
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	SortOrder   int            `gorm:"default:0" json:"sort_order"` // For ordering levels (beginner->advanced)
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
 	Users []User `gorm:"foreignKey:FitnessLevelID" json:"users,omitempty"`
@@ -26,9 +27,10 @@ type FitnessGoal struct {
 	Name        string    `gorm:"type:varchar(100);not null;unique" json:"name"`
 	Description string    `gorm:"type:text" json:"description"`
 	Category    string    `gorm:"type:varchar(50)" json:"category"` // strength, cardio, flexibility, etc.
-	IconName    string    `gorm:"type:varchar(50)" json:"icon_name"` // For UI icon display
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	IconName    string         `gorm:"type:varchar(50)" json:"icon_name"` // For UI icon display
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
 	UserGoals []UserFitnessGoal `gorm:"foreignKey:FitnessGoalID" json:"user_goals,omitempty"`
@@ -41,9 +43,10 @@ type UserFitnessGoal struct {
 	FitnessGoalID uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:unique_user_fitness_goal_combo" json:"fitness_goal_id"`
 	Priority      int        `gorm:"default:0" json:"priority"` // 1=primary, 2=secondary, etc.
 	TargetDate    *time.Time `json:"target_date,omitempty"`     // Optional target completion date
-	Notes         string     `gorm:"type:text" json:"notes"`
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
+	Notes         string         `gorm:"type:text" json:"notes"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
 	User        User        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`

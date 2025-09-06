@@ -11,9 +11,10 @@ type Friendship struct {
 	ID        uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	UserID    uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
 	FriendID  uuid.UUID `gorm:"type:uuid;not null" json:"friend_id"`
-	Status    string    `gorm:"type:varchar(20);default:'pending'" json:"status"` // pending, accepted, blocked
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Status    string         `gorm:"type:varchar(20);default:'pending'" json:"status"` // pending, accepted, blocked
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	User   User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
 	Friend User `gorm:"foreignKey:FriendID;constraint:OnDelete:CASCADE" json:"friend,omitempty"`

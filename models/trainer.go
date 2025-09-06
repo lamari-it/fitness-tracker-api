@@ -17,6 +17,7 @@ type TrainerProfile struct {
 	Location    string         `gorm:"type:text" json:"location"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
 }
@@ -26,9 +27,10 @@ type TrainerReview struct {
 	TrainerID  uuid.UUID `gorm:"type:uuid;not null" json:"trainer_id"`
 	ReviewerID uuid.UUID `gorm:"type:uuid;not null" json:"reviewer_id"`
 	Rating     int       `gorm:"not null;check:rating >= 1 AND rating <= 5" json:"rating"`
-	Comment    string    `gorm:"type:text" json:"comment"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	Comment    string         `gorm:"type:text" json:"comment"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	Trainer  User `gorm:"foreignKey:TrainerID;constraint:OnDelete:CASCADE" json:"trainer,omitempty"`
 	Reviewer User `gorm:"foreignKey:ReviewerID;constraint:OnDelete:CASCADE" json:"reviewer,omitempty"`
@@ -38,9 +40,10 @@ type TrainerClientLink struct {
 	ID        uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	TrainerID uuid.UUID `gorm:"type:uuid;not null" json:"trainer_id"`
 	ClientID  uuid.UUID `gorm:"type:uuid;not null" json:"client_id"`
-	Status    string    `gorm:"type:varchar(20);default:'pending'" json:"status"` // pending, active, inactive
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Status    string         `gorm:"type:varchar(20);default:'pending'" json:"status"` // pending, active, inactive
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	Trainer User `gorm:"foreignKey:TrainerID;constraint:OnDelete:CASCADE" json:"trainer,omitempty"`
 	Client  User `gorm:"foreignKey:ClientID;constraint:OnDelete:CASCADE" json:"client,omitempty"`

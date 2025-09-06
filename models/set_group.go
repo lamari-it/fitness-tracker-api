@@ -27,9 +27,10 @@ type SetGroup struct {
 	Notes       string       `gorm:"type:text" json:"notes"`
 	OrderNumber int          `gorm:"not null" json:"order_number"`
 	RestBetweenSets int      `json:"rest_between_sets"`
-	Rounds      int          `gorm:"default:1" json:"rounds"`
-	CreatedAt   time.Time    `json:"created_at"`
-	UpdatedAt   time.Time    `json:"updated_at"`
+	Rounds      int            `gorm:"default:1" json:"rounds"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	Workout          Workout           `gorm:"foreignKey:WorkoutID;constraint:OnDelete:CASCADE" json:"workout,omitempty"`
 	WorkoutExercises []WorkoutExercise `gorm:"foreignKey:SetGroupID" json:"exercises,omitempty"`

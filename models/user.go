@@ -17,10 +17,11 @@ type User struct {
 	GoogleID       string     `gorm:"unique" json:"google_id,omitempty"`
 	AppleID        string     `gorm:"unique" json:"apple_id,omitempty"`
 	FitnessLevelID *uuid.UUID `gorm:"type:uuid" json:"fitness_level_id,omitempty"`
-	IsActive       bool       `gorm:"default:true" json:"is_active"`
-	IsAdmin        bool       `gorm:"default:false" json:"is_admin"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
+	IsActive       bool           `gorm:"default:true" json:"is_active"`
+	IsAdmin        bool           `gorm:"default:false" json:"is_admin"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
 	FitnessLevel   *FitnessLevel      `gorm:"foreignKey:FitnessLevelID;constraint:OnDelete:SET NULL" json:"fitness_level,omitempty"`

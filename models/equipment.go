@@ -14,9 +14,10 @@ type Equipment struct {
 	Slug        string    `gorm:"type:varchar(100);unique" json:"slug"` // e.g. 'dumbbells', 'barbell'
 	Description string    `gorm:"type:text" json:"description"`
 	Category    string    `gorm:"type:varchar(50)" json:"category"` // machine, free_weight, cable, cardio, other
-	ImageURL    string    `gorm:"type:text" json:"image_url"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ImageURL    string         `gorm:"type:text" json:"image_url"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
 	ExerciseLinks []ExerciseEquipment `gorm:"foreignKey:EquipmentID" json:"exercise_links,omitempty"`
@@ -30,9 +31,10 @@ type UserEquipment struct {
 	EquipmentID  uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_user_equipment_combo" json:"equipment_id"`
 	LocationType string    `gorm:"type:varchar(10);not null;uniqueIndex:unique_user_equipment_combo" json:"location_type"` // 'home' or 'gym'
 	GymLocation  string    `gorm:"type:text" json:"gym_location,omitempty"`        // Optional: specific gym location
-	Notes        string    `gorm:"type:text" json:"notes,omitempty"`               // Optional: notes (e.g., "20lb dumbbells")
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	Notes        string         `gorm:"type:text" json:"notes,omitempty"`               // Optional: notes (e.g., "20lb dumbbells")
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
 	User      User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
@@ -45,9 +47,10 @@ type ExerciseEquipment struct {
 	ExerciseID  uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_equipment_combo" json:"exercise_id"`
 	EquipmentID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_equipment_combo" json:"equipment_id"`
 	Optional    bool      `gorm:"default:false" json:"optional"` // Whether this equipment is optional for the exercise
-	Notes       string    `gorm:"type:text" json:"notes"`        // Additional notes about using this equipment
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Notes       string         `gorm:"type:text" json:"notes"`        // Additional notes about using this equipment
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
 	Exercise  Exercise  `gorm:"foreignKey:ExerciseID;constraint:OnDelete:CASCADE" json:"exercise,omitempty"`

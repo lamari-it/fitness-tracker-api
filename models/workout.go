@@ -15,10 +15,11 @@ type WorkoutPlan struct {
 	Title         string    `gorm:"type:text;not null" json:"title"`
 	Description   string    `gorm:"type:text" json:"description"`
 	Visibility    string    `gorm:"type:varchar(20);default:'private'" json:"visibility"` // private, public, friends
-	TemplateWeeks int       `gorm:"not null;default:1" json:"template_weeks"`                 // allows multi-week blocks
+	TemplateWeeks int            `gorm:"not null;default:1" json:"template_weeks"`                 // allows multi-week blocks
 
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	Items []WorkoutPlanItem `gorm:"foreignKey:PlanID;constraint:OnDelete:CASCADE" json:"items,omitempty"`
 }
@@ -28,10 +29,11 @@ type Workout struct {
 	UserID      uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
 	Title       string    `gorm:"type:text;not null" json:"title"`
 	Description string    `gorm:"type:text" json:"description"`
-	Visibility  string    `gorm:"type:varchar(20);default:'private'" json:"visibility"`
+	Visibility  string         `gorm:"type:varchar(20);default:'private'" json:"visibility"`
 
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Exercises inside workout define their own order (not handled by plan)
 	// Exercises []Exercise ...
@@ -46,10 +48,11 @@ type WorkoutPlanItem struct {
 	PlanID    uuid.UUID `gorm:"type:uuid;not null;index" json:"plan_id"`
 	WorkoutID uuid.UUID `gorm:"type:uuid;not null;index" json:"workout_id"`
 
-	WeekIndex int `gorm:"not null;default:0" json:"week_index"` // optional, for multi-week blocks
+	WeekIndex int            `gorm:"not null;default:0" json:"week_index"` // optional, for multi-week blocks
 
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	Workout Workout `gorm:"constraint:OnDelete:CASCADE" json:"workout,omitempty"`
 }
@@ -67,9 +70,10 @@ type PlanEnrollment struct {
 	ScheduleMode      string         `gorm:"type:varchar(20);default:'rolling'" json:"schedule_mode"` // rolling | calendar
 	PreferredWeekdays pq.Int32Array  `gorm:"type:int[];default:'{}'" json:"preferred_weekdays"`       // only used in calendar mode (0=Mon..6=Sun)
 
-	Status    string    `gorm:"type:varchar(20);default:'active'" json:"status"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Status    string         `gorm:"type:varchar(20);default:'active'" json:"status"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 }
 
 type Exercise struct {
@@ -79,9 +83,10 @@ type Exercise struct {
 	Description  string    `gorm:"type:text" json:"description"`
 	IsBodyweight bool      `gorm:"default:false" json:"is_bodyweight"`
 	Instructions string    `gorm:"type:text" json:"instructions"`
-	VideoURL     string    `gorm:"type:text" json:"video_url"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	VideoURL     string         `gorm:"type:text" json:"video_url"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	WorkoutExercises []WorkoutExercise     `gorm:"foreignKey:ExerciseID" json:"workout_exercises,omitempty"`
 	ExerciseLogs     []ExerciseLog         `gorm:"foreignKey:ExerciseID" json:"exercise_logs,omitempty"`
@@ -100,10 +105,11 @@ type WorkoutExercise struct {
 	TargetWeight      float64   `gorm:"type:numeric(10,2)" json:"target_weight"`
 	TargetRestSec     int       `json:"target_rest_sec"`
 	Prescription      string    `gorm:"type:varchar(20);not null;default:'reps'" json:"prescription"` // reps | time
-	TargetDurationSec int       `gorm:"default:0" json:"target_duration_sec"`
+	TargetDurationSec int            `gorm:"default:0" json:"target_duration_sec"`
 
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	Workout  Workout  `gorm:"foreignKey:WorkoutID;constraint:OnDelete:CASCADE" json:"workout,omitempty"`
 	SetGroup SetGroup `gorm:"foreignKey:SetGroupID;constraint:OnDelete:CASCADE" json:"set_group,omitempty"`
@@ -134,6 +140,20 @@ func (e *Exercise) BeforeCreate(tx *gorm.DB) (err error) {
 func (we *WorkoutExercise) BeforeCreate(tx *gorm.DB) (err error) {
 	if we.ID == uuid.Nil {
 		we.ID = uuid.New()
+	}
+	return
+}
+
+func (wpi *WorkoutPlanItem) BeforeCreate(tx *gorm.DB) (err error) {
+	if wpi.ID == uuid.Nil {
+		wpi.ID = uuid.New()
+	}
+	return
+}
+
+func (pe *PlanEnrollment) BeforeCreate(tx *gorm.DB) (err error) {
+	if pe.ID == uuid.Nil {
+		pe.ID = uuid.New()
 	}
 	return
 }

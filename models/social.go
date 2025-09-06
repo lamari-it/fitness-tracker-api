@@ -12,9 +12,10 @@ type SharedWorkout struct {
 	WorkoutID     uuid.UUID `gorm:"type:uuid;not null" json:"workout_id"`
 	SharedByID    uuid.UUID `gorm:"type:uuid;not null" json:"shared_by_id"`
 	SharedWithID  uuid.UUID `gorm:"type:uuid;not null" json:"shared_with_id"`
-	Permission    string    `gorm:"type:varchar(20);default:'view'" json:"permission"` // view, edit, copy
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	Permission    string         `gorm:"type:varchar(20);default:'view'" json:"permission"` // view, edit, copy
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	Workout      Workout           `gorm:"foreignKey:WorkoutID;constraint:OnDelete:CASCADE" json:"workout,omitempty"`
 	SharedBy     User              `gorm:"foreignKey:SharedByID;constraint:OnDelete:CASCADE" json:"shared_by,omitempty"`
@@ -27,9 +28,10 @@ type WorkoutComment struct {
 	SharedWorkoutID  uuid.UUID `gorm:"type:uuid;not null" json:"shared_workout_id"`
 	UserID           uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
 	ParentID         *uuid.UUID `gorm:"type:uuid" json:"parent_id"` // for threaded comments
-	Content          string    `gorm:"type:text;not null" json:"content"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	Content          string         `gorm:"type:text;not null" json:"content"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	DeletedAt        gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	SharedWorkout SharedWorkout              `gorm:"foreignKey:SharedWorkoutID;constraint:OnDelete:CASCADE" json:"shared_workout,omitempty"`
 	User          User                       `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
@@ -42,9 +44,10 @@ type WorkoutCommentReaction struct {
 	ID        uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	CommentID uuid.UUID `gorm:"type:uuid;not null" json:"comment_id"`
 	UserID    uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
-	Reaction  string    `gorm:"type:varchar(20);not null" json:"reaction"` // like, love, laugh, wow, sad, angry
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Reaction  string         `gorm:"type:varchar(20);not null" json:"reaction"` // like, love, laugh, wow, sad, angry
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	Comment WorkoutComment `gorm:"foreignKey:CommentID;constraint:OnDelete:CASCADE" json:"comment,omitempty"`
 	User    User           `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`

@@ -13,9 +13,10 @@ type WorkoutSession struct {
 	WorkoutID *uuid.UUID `gorm:"type:uuid" json:"workout_id"` // nullable for free-form workouts
 	StartedAt time.Time  `gorm:"not null" json:"started_at"`
 	EndedAt   *time.Time `json:"ended_at"`
-	Notes     string     `gorm:"type:text" json:"notes"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	Notes     string         `gorm:"type:text" json:"notes"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	User         User          `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
 	Workout      *Workout      `gorm:"foreignKey:WorkoutID;constraint:OnDelete:SET NULL" json:"workout,omitempty"`
@@ -30,9 +31,10 @@ type ExerciseLog struct {
 	OrderNumber      int        `gorm:"not null" json:"order_number"`
 	Notes            string     `gorm:"type:text" json:"notes"`
 	DifficultyRating int        `gorm:"check:difficulty_rating >= 1 AND difficulty_rating <= 10" json:"difficulty_rating"`
-	DifficultyType   string     `gorm:"type:varchar(20)" json:"difficulty_type"` // easy, moderate, hard, very_hard
-	CreatedAt        time.Time  `json:"created_at"`
-	UpdatedAt        time.Time  `json:"updated_at"`
+	DifficultyType   string         `gorm:"type:varchar(20)" json:"difficulty_type"` // easy, moderate, hard, very_hard
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	DeletedAt        gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	Session  WorkoutSession `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE" json:"session,omitempty"`
 	SetGroup *SetGroup      `gorm:"foreignKey:SetGroupID;constraint:OnDelete:SET NULL" json:"set_group,omitempty"`
@@ -49,9 +51,10 @@ type SetLog struct {
 	Reps          int       `json:"reps"`
 	RestAfterSec  int       `json:"rest_after_sec"`
 	Tempo         string    `gorm:"type:varchar(10)" json:"tempo"`                             // e.g., "3-1-2-1"
-	RPE           float64   `gorm:"type:numeric(3,1);check:rpe >= 1 AND rpe <= 10" json:"rpe"` // Rate of Perceived Exertion
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	RPE           float64        `gorm:"type:numeric(3,1);check:rpe >= 1 AND rpe <= 10" json:"rpe"` // Rate of Perceived Exertion
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	ExerciseLog ExerciseLog `gorm:"foreignKey:ExerciseLogID;constraint:OnDelete:CASCADE" json:"exercise_log,omitempty"`
 }
