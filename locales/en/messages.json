@@ -9,7 +9,7 @@
     "token_expired": "Token expired",
     "token_missing": "Token missing",
     "unauthorized": "Unauthorized access",
-    "forbidden": "Access forbidden"
+    "forbidden": "Access forbidden",
   },
   "validation": {
     "required_field": "This field is required",
