@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 	"net/http"
-	"strings"
+	"unicode"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -135,7 +135,8 @@ func HandleBindingError(c *gin.Context, err error) {
 	// Parse field validation errors from binding
 	if bindingErr, ok := err.(validator.ValidationErrors); ok {
 		for _, fieldErr := range bindingErr {
-			field := fieldErr.Field()
+			// Convert struct field name (e.g., "LastName") to snake_case (e.g., "last_name")
+			field := toSnakeCase(fieldErr.Field())
 			tag := fieldErr.Tag()
 			
 			var message string
@@ -152,9 +153,26 @@ func HandleBindingError(c *gin.Context, err error) {
 				message = fmt.Sprintf("This field failed %s validation.", tag)
 			}
 			
-			validationErrors[strings.ToLower(field)] = []string{message}
+			validationErrors[field] = []string{message}
 		}
 	}
 	
 	ValidationErrorResponse(c, validationErrors)
+}
+
+// toSnakeCase converts CamelCase to snake_case
+func toSnakeCase(str string) string {
+	var result []rune
+	for i, r := range str {
+		if i > 0 && unicode.IsUpper(r) {
+			// Check if previous character was lowercase or if next is lowercase
+			// to properly handle cases like "LastName" -> "last_name"
+			if (i > 0 && unicode.IsLower(rune(str[i-1]))) ||
+			   (i < len(str)-1 && unicode.IsLower(rune(str[i+1]))) {
+				result = append(result, '_')
+			}
+		}
+		result = append(result, unicode.ToLower(r))
+	}
+	return string(result)
 }

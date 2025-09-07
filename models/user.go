@@ -14,8 +14,8 @@ type User struct {
 	FirstName      string     `gorm:"not null" json:"first_name"`
 	LastName       string     `gorm:"not null" json:"last_name"`
 	Provider       string     `gorm:"default:'local'" json:"provider"`
-	GoogleID       string     `gorm:"unique" json:"google_id,omitempty"`
-	AppleID        string     `gorm:"unique" json:"apple_id,omitempty"`
+	GoogleID       *string    `gorm:"unique" json:"google_id,omitempty"`
+	AppleID        *string    `gorm:"unique" json:"apple_id,omitempty"`
 	FitnessLevelID *uuid.UUID `gorm:"type:uuid" json:"fitness_level_id,omitempty"`
 	IsActive       bool           `gorm:"default:true" json:"is_active"`
 	IsAdmin        bool           `gorm:"default:false" json:"is_admin"`

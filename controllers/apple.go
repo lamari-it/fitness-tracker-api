@@ -69,12 +69,13 @@ func AppleLogin(c *gin.Context) {
 			lastName = ""
 		}
 		
+		appleID := subject
 		user = models.User{
 			Email:     strings.ToLower(email),
 			FirstName: firstName,
 			LastName:  lastName,
 			Provider:  "apple",
-			AppleID:   subject,
+			AppleID:   &appleID,
 			Password:  uuid.New().String(),
 		}
 		
@@ -83,8 +84,9 @@ func AppleLogin(c *gin.Context) {
 			return
 		}
 	} else {
-		if user.AppleID == "" {
-			user.AppleID = subject
+		if user.AppleID == nil || *user.AppleID == "" {
+			appleID := subject
+			user.AppleID = &appleID
 			database.DB.Save(&user)
 		}
 	}

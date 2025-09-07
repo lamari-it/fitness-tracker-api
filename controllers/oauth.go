@@ -83,12 +83,13 @@ func GoogleCallback(c *gin.Context) {
 	err = database.DB.Where("google_id = ? OR email = ?", googleUser.ID, strings.ToLower(googleUser.Email)).First(&user).Error
 	
 	if err != nil {
+		googleID := googleUser.ID
 		user = models.User{
 			Email:     strings.ToLower(googleUser.Email),
 			FirstName: googleUser.GivenName,
 			LastName:  googleUser.FamilyName,
 			Provider:  "google",
-			GoogleID:  googleUser.ID,
+			GoogleID:  &googleID,
 			Password:  uuid.New().String(),
 		}
 		
@@ -97,8 +98,9 @@ func GoogleCallback(c *gin.Context) {
 			return
 		}
 	} else {
-		if user.GoogleID == "" {
-			user.GoogleID = googleUser.ID
+		if user.GoogleID == nil || *user.GoogleID == "" {
+			googleID := googleUser.ID
+			user.GoogleID = &googleID
 			database.DB.Save(&user)
 		}
 	}
