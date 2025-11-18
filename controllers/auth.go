@@ -8,14 +8,24 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
+type TrainerProfileData struct {
+	Bio         string   `json:"bio" binding:"required,min=10,max=1000"`
+	Specialties []string `json:"specialties" binding:"required,min=1,max=20,dive,max=100"`
+	HourlyRate  float64  `json:"hourly_rate" binding:"required,gt=0,lte=9999.99"`
+	Location    string   `json:"location" binding:"required,min=2,max=500"`
+	Visibility  string   `json:"visibility" binding:"omitempty,oneof=public link_only private"`
+}
+
 type RegisterRequest struct {
-	Email           string `json:"email" binding:"required,email,max=255"`
-	Password        string `json:"password" binding:"required,min=8,max=128"`
-	PasswordConfirm string `json:"password_confirm" binding:"required"`
-	FirstName       string `json:"first_name" binding:"required,min=1,max=100"`
-	LastName        string `json:"last_name" binding:"required,min=1,max=100"`
+	Email           string              `json:"email" binding:"required,email,max=255"`
+	Password        string              `json:"password" binding:"required,min=8,max=128"`
+	PasswordConfirm string              `json:"password_confirm" binding:"required"`
+	FirstName       string              `json:"first_name" binding:"required,min=1,max=100"`
+	LastName        string              `json:"last_name" binding:"required,min=1,max=100"`
+	TrainerProfile  *TrainerProfileData `json:"trainer_profile" binding:"omitempty"`
 }
 
 type LoginRequest struct {
@@ -24,8 +34,9 @@ type LoginRequest struct {
 }
 
 type AuthResponse struct {
-	User  models.UserResponse `json:"user"`
-	Token string              `json:"token"`
+	User           models.UserResponse            `json:"user"`
+	Token          string                         `json:"token"`
+	TrainerProfile *models.TrainerProfileResponse `json:"trainer_profile,omitempty"`
 }
 
 func Register(c *gin.Context) {
@@ -64,9 +75,56 @@ func Register(c *gin.Context) {
 		IsActive:  true,
 	}
 
-	if err := database.DB.Create(&user).Error; err != nil {
-		utils.InternalServerErrorResponse(c, "Failed to create user.")
-		return
+	// Use transaction if trainer profile is provided
+	var trainerProfile *models.TrainerProfile
+	if req.TrainerProfile != nil {
+		// Validate trainer profile data
+		visibility := req.TrainerProfile.Visibility
+		if visibility == "" {
+			visibility = "public"
+		}
+
+		tp := models.TrainerProfile{
+			Bio:         req.TrainerProfile.Bio,
+			Specialties: pq.StringArray(req.TrainerProfile.Specialties),
+			HourlyRate:  req.TrainerProfile.HourlyRate,
+			Location:    req.TrainerProfile.Location,
+			Visibility:  visibility,
+		}
+
+		if err := tp.Validate(); err != nil {
+			utils.BadRequestResponse(c, "Trainer profile validation failed", err.Error())
+			return
+		}
+
+		// Create user and trainer profile in transaction
+		tx := database.DB.Begin()
+		if err := tx.Create(&user).Error; err != nil {
+			tx.Rollback()
+			utils.InternalServerErrorResponse(c, "Failed to create user.")
+			return
+		}
+
+		tp.UserID = user.ID
+		if err := tx.Create(&tp).Error; err != nil {
+			tx.Rollback()
+			utils.InternalServerErrorResponse(c, "Failed to create trainer profile.")
+			return
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			utils.InternalServerErrorResponse(c, "Failed to complete registration.")
+			return
+		}
+
+		// Preload user for response
+		database.DB.Preload("User").First(&tp, "id = ?", tp.ID)
+		trainerProfile = &tp
+	} else {
+		if err := database.DB.Create(&user).Error; err != nil {
+			utils.InternalServerErrorResponse(c, "Failed to create user.")
+			return
+		}
 	}
 
 	token, err := utils.GenerateJWT(user.ID, user.Email)
@@ -78,6 +136,11 @@ func Register(c *gin.Context) {
 	response := AuthResponse{
 		User:  user.ToResponse(),
 		Token: token,
+	}
+
+	if trainerProfile != nil {
+		profileResponse := trainerProfile.ToResponse()
+		response.TrainerProfile = &profileResponse
 	}
 
 	utils.CreatedResponse(c, "User registered successfully.", response)

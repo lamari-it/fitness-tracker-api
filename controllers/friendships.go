@@ -38,7 +38,7 @@ func SendFriendRequest(c *gin.Context) {
 	}
 
 	var existingFriendship models.Friendship
-	if err := database.DB.Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)", 
+	if err := database.DB.Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)",
 		userID, friend.ID, friend.ID, userID).First(&existingFriendship).Error; err == nil {
 		utils.ConflictResponse(c, "Friend request already exists or you are already friends.")
 		return
@@ -72,7 +72,7 @@ func GetFriendRequests(c *gin.Context) {
 		utils.HandleBindingError(c, err)
 		return
 	}
-	
+
 	SetDefaultPagination(&query)
 	offset := (query.Page - 1) * query.Limit
 
@@ -131,7 +131,7 @@ func RespondToFriendRequest(c *gin.Context) {
 	}
 
 	var friendship models.Friendship
-	if err := database.DB.Where("id = ? AND friend_id = ? AND status = ?", 
+	if err := database.DB.Where("id = ? AND friend_id = ? AND status = ?",
 		requestID, userID, "pending").First(&friendship).Error; err != nil {
 		utils.NotFoundResponse(c, "Friend request not found.")
 		return
@@ -165,7 +165,7 @@ func GetFriends(c *gin.Context) {
 		utils.HandleBindingError(c, err)
 		return
 	}
-	
+
 	SetDefaultPagination(&query)
 	offset := (query.Page - 1) * query.Limit
 
@@ -179,7 +179,7 @@ func GetFriends(c *gin.Context) {
 	}
 
 	var friendships []models.Friendship
-	if err := database.DB.Where("(user_id = ? OR friend_id = ?) AND status = ?", 
+	if err := database.DB.Where("(user_id = ? OR friend_id = ?) AND status = ?",
 		userID, userID, "accepted").
 		Preload("User").
 		Preload("Friend").
@@ -227,9 +227,9 @@ func RemoveFriend(c *gin.Context) {
 		return
 	}
 
-	result := database.DB.Where("id = ? AND (user_id = ? OR friend_id = ?)", 
+	result := database.DB.Where("id = ? AND (user_id = ? OR friend_id = ?)",
 		friendshipID, userID, userID).Delete(&models.Friendship{})
-	
+
 	if result.Error != nil {
 		utils.InternalServerErrorResponse(c, "Failed to remove friend.")
 		return

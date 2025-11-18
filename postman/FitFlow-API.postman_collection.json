@@ -325,6 +325,61 @@
           "response": []
         },
         {
+          "name": "Register as Trainer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('auth_token', jsonData.data.token);",
+                  "    pm.environment.set('user_id', jsonData.data.user.id);",
+                  "    pm.environment.set('user_email', jsonData.data.user.email);",
+                  "    if (jsonData.data.trainer_profile) {",
+                  "        pm.environment.set('trainer_profile_id', jsonData.data.trainer_profile.id);",
+                  "    }",
+                  "    pm.test('Registration as trainer successful', function () {",
+                  "        pm.expect(jsonData.data.token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.user.email).to.be.a('string');",
+                  "        pm.expect(jsonData.data.trainer_profile).to.be.an('object');",
+                  "        pm.expect(jsonData.data.trainer_profile.visibility).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"trainer@example.com\",\n  \"password\": \"{{test_password}}\",\n  \"password_confirm\": \"{{test_password}}\",\n  \"first_name\": \"Personal\",\n  \"last_name\": \"Trainer\",\n  \"trainer_profile\": {\n    \"bio\": \"Experienced fitness trainer specializing in strength and conditioning with over 10 years of experience.\",\n    \"specialties\": [\"Strength Training\", \"HIIT\", \"Weight Loss\"],\n    \"hourly_rate\": 75.00,\n    \"location\": \"New York, NY\",\n    \"visibility\": \"public\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user account with trainer profile. The trainer_profile field is optional. Visibility options: public (searchable), link_only (viewable with link), private (owner/admin only)."
+          },
+          "response": []
+        },
+        {
           "name": "Login User",
           "event": [
             {
@@ -3712,6 +3767,331 @@
         }
       ],
       "description": "Friend system endpoints"
+    },
+    {
+      "name": "Trainers",
+      "item": [
+        {
+          "name": "Create Trainer Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('trainer_id', jsonData.data.id);",
+                  "    pm.test('Trainer profile created successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "        pm.expect(jsonData.data.id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.bio).to.be.a('string');",
+                  "        pm.expect(jsonData.data.specialties).to.be.an('array');",
+                  "        pm.expect(jsonData.data.hourly_rate).to.be.a('number');",
+                  "        pm.expect(jsonData.data.location).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding.\",\n  \"specialties\": [\"Strength Training\", \"Weight Loss\", \"Bodybuilding\"],\n  \"hourly_rate\": 75.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"public\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/trainers/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trainers",
+                "profile"
+              ]
+            },
+            "description": "Create a trainer profile for the authenticated user. Visibility options: public (searchable and viewable), link_only (viewable with direct link), private (only owner/admin can view)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Trainer Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Trainer profile retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.id).to.be.a('string');",
+                  "    pm.expect(jsonData.data.bio).to.be.a('string');",
+                  "    pm.expect(jsonData.data.specialties).to.be.an('array');",
+                  "    pm.expect(jsonData.data.hourly_rate).to.be.a('number');",
+                  "    pm.expect(jsonData.data.location).to.be.a('string');",
+                  "    pm.expect(jsonData.data.user).to.be.an('object');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/trainers/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trainers",
+                "profile"
+              ]
+            },
+            "description": "Get the authenticated user's trainer profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Trainer Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Trainer profile updated successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.hourly_rate).to.equal(85);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Updated bio with more experience and certifications in advanced training techniques.\",\n  \"specialties\": [\"Strength Training\", \"Weight Loss\", \"Bodybuilding\", \"HIIT\"],\n  \"hourly_rate\": 85.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"link_only\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/trainers/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trainers",
+                "profile"
+              ]
+            },
+            "description": "Update the authenticated user's trainer profile. Can update visibility to: public, link_only, or private"
+          },
+          "response": []
+        },
+        {
+          "name": "List Trainers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Trainers list retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.meta.current_page).to.be.a('number');",
+                  "    pm.expect(jsonData.meta.total_items).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/trainers?page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trainers"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "specialty",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "location",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "min_rating",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort_by",
+                  "value": "recent",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List all trainers with optional filtering and pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trainer Public Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Trainer public profile retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.id).to.be.a('string');",
+                  "    pm.expect(jsonData.data.bio).to.be.a('string');",
+                  "    pm.expect(jsonData.data.specialties).to.be.an('array');",
+                  "    pm.expect(jsonData.data.hourly_rate).to.be.a('number');",
+                  "    pm.expect(jsonData.data.location).to.be.a('string');",
+                  "    pm.expect(jsonData.data.user).to.be.an('object');",
+                  "    pm.expect(jsonData.data.review_count).to.be.a('number');",
+                  "    pm.expect(jsonData.data.average_rating).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/trainers/{{trainer_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trainers",
+                "{{trainer_id}}"
+              ]
+            },
+            "description": "Get a trainer's public profile by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Trainer Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Trainer profile deleted successfully', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/trainers/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trainers",
+                "profile"
+              ]
+            },
+            "description": "Delete the authenticated user's trainer profile"
+          },
+          "response": []
+        }
+      ],
+      "description": "Trainer profile management endpoints"
     },
     {
       "name": "Legacy Routes",

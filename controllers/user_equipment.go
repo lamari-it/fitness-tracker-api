@@ -29,7 +29,7 @@ func GetUserEquipment(c *gin.Context) {
 	offset := (queryParams.Page - 1) * queryParams.Limit
 
 	query := database.DB.Model(&models.UserEquipment{}).Where("user_id = ?", userID).Preload("Equipment")
-	
+
 	// Apply location filter if provided
 	if queryParams.LocationType != "" {
 		query = query.Where("location_type = ?", queryParams.LocationType)
@@ -77,9 +77,9 @@ func AddUserEquipment(c *gin.Context) {
 
 	// Check if user already has this equipment at this location
 	var existingUE models.UserEquipment
-	err := database.DB.Where("user_id = ? AND equipment_id = ? AND location_type = ?", 
+	err := database.DB.Where("user_id = ? AND equipment_id = ? AND location_type = ?",
 		userID, req.EquipmentID, req.LocationType).First(&existingUE).Error
-	
+
 	if err == nil {
 		utils.ConflictResponse(c, "You already have this equipment at this location.")
 		return
@@ -147,20 +147,20 @@ func UpdateUserEquipment(c *gin.Context) {
 	if req.LocationType != "" {
 		// Check if changing location would create a duplicate
 		var existingUE models.UserEquipment
-		err := database.DB.Where("user_id = ? AND equipment_id = ? AND location_type = ? AND id != ?", 
+		err := database.DB.Where("user_id = ? AND equipment_id = ? AND location_type = ? AND id != ?",
 			userID, userEquipment.EquipmentID, req.LocationType, id).First(&existingUE).Error
-		
+
 		if err == nil {
 			utils.ConflictResponse(c, "You already have this equipment at this location.")
 			return
 		}
 		userEquipment.LocationType = req.LocationType
 	}
-	
+
 	if req.GymLocation != "" {
 		userEquipment.GymLocation = req.GymLocation
 	}
-	
+
 	if req.Notes != "" {
 		userEquipment.Notes = req.Notes
 	}
@@ -283,7 +283,7 @@ func BulkAddUserEquipment(c *gin.Context) {
 	var req struct {
 		Equipment []models.AddUserEquipmentRequest `json:"equipment" binding:"required,dive"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.HandleBindingError(c, err)
 		return
@@ -314,9 +314,9 @@ func BulkAddUserEquipment(c *gin.Context) {
 	for _, item := range req.Equipment {
 		// Check if already exists
 		var existing models.UserEquipment
-		err := tx.Where("user_id = ? AND equipment_id = ? AND location_type = ?", 
+		err := tx.Where("user_id = ? AND equipment_id = ? AND location_type = ?",
 			userID, item.EquipmentID, item.LocationType).First(&existing).Error
-		
+
 		if err == nil {
 			continue // Skip if already exists
 		}

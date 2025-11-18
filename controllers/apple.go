@@ -58,7 +58,7 @@ func AppleLogin(c *gin.Context) {
 
 	var user models.User
 	err = database.DB.Where("apple_id = ? OR email = ?", subject, strings.ToLower(email)).First(&user).Error
-	
+
 	if err != nil {
 		firstName := req.FirstName
 		lastName := req.LastName
@@ -68,7 +68,7 @@ func AppleLogin(c *gin.Context) {
 		if lastName == "" {
 			lastName = ""
 		}
-		
+
 		appleID := subject
 		user = models.User{
 			Email:     strings.ToLower(email),
@@ -78,7 +78,7 @@ func AppleLogin(c *gin.Context) {
 			AppleID:   &appleID,
 			Password:  uuid.New().String(),
 		}
-		
+
 		if err := database.DB.Create(&user).Error; err != nil {
 			utils.InternalServerErrorResponse(c, "Failed to create user.")
 			return
@@ -90,22 +90,22 @@ func AppleLogin(c *gin.Context) {
 			database.DB.Save(&user)
 		}
 	}
-	
+
 	if !user.IsActive {
 		utils.UnauthorizedResponse(c, "Account is deactivated.")
 		return
 	}
-	
+
 	jwtToken, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to generate token.")
 		return
 	}
-	
+
 	response := AuthResponse{
 		User:  user.ToResponse(),
 		Token: jwtToken,
 	}
-	
+
 	utils.SuccessResponse(c, "Apple login successful.", response)
 }

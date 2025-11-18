@@ -8,9 +8,9 @@ import (
 )
 
 type Friendship struct {
-	ID        uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID    uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
-	FriendID  uuid.UUID `gorm:"type:uuid;not null" json:"friend_id"`
+	ID        uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	UserID    uuid.UUID      `gorm:"type:uuid;not null" json:"user_id"`
+	FriendID  uuid.UUID      `gorm:"type:uuid;not null" json:"friend_id"`
 	Status    string         `gorm:"type:varchar(20);default:'pending'" json:"status"` // pending, accepted, blocked
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`

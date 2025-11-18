@@ -2287,6 +2287,53 @@ func SeedEquipment() {
 	}
 }
 
+func SeedTrainerProfiles() {
+	// Get existing users (at least 2-3 should exist from previous seeds)
+	var users []models.User
+	DB.Limit(3).Find(&users)
+
+	if len(users) < 2 {
+		log.Println("Not enough users to seed trainer profiles")
+		return
+	}
+
+	trainerProfiles := []models.TrainerProfile{
+		{
+			UserID:      users[0].ID,
+			Bio:         "Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding. Passionate about helping clients achieve their fitness goals through customized workout programs and nutrition guidance.",
+			Specialties: []string{"Strength Training", "Weight Loss", "Bodybuilding"},
+			HourlyRate:  75.00,
+			Location:    "New York, NY",
+			Visibility:  "public",
+		},
+	}
+
+	// Add second trainer profile if we have enough users
+	if len(users) >= 2 {
+		trainerProfiles = append(trainerProfiles, models.TrainerProfile{
+			UserID:      users[1].ID,
+			Bio:         "Specializing in functional fitness and injury prevention. I help clients improve mobility, recover from injuries, and build sustainable fitness habits. Certified in rehabilitation and corrective exercise.",
+			Specialties: []string{"Functional Fitness", "Rehabilitation", "Mobility"},
+			HourlyRate:  60.00,
+			Location:    "Los Angeles, CA",
+			Visibility:  "public",
+		})
+	}
+
+	for _, profile := range trainerProfiles {
+		var existing models.TrainerProfile
+		if err := DB.Where("user_id = ?", profile.UserID).First(&existing).Error; err != nil {
+			if err := DB.Create(&profile).Error; err != nil {
+				log.Printf("Failed to create trainer profile: %v", err)
+			} else {
+				log.Printf("Created trainer profile for user %s", profile.UserID)
+			}
+		} else {
+			log.Printf("Trainer profile already exists for user %s", profile.UserID)
+		}
+	}
+}
+
 func SeedDatabase() {
 	log.Println("Starting database seeding...")
 	SeedMuscleGroups()
@@ -2308,6 +2355,9 @@ func SeedDatabase() {
 	if err := MigrateExistingUsersToRoles(DB); err != nil {
 		log.Printf("Failed to migrate users to roles: %v", err)
 	}
+
+	// Seed trainer profiles
+	SeedTrainerProfiles()
 
 	log.Println("Database seeding completed!")
 }

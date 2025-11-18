@@ -38,10 +38,10 @@ func getGoogleOAuthConfig() *oauth2.Config {
 
 func GoogleLogin(c *gin.Context) {
 	oauthConfig := getGoogleOAuthConfig()
-	
+
 	state := uuid.New().String()
 	c.SetCookie("oauth_state", state, 600, "/", "", false, true)
-	
+
 	url := oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
@@ -49,22 +49,22 @@ func GoogleLogin(c *gin.Context) {
 func GoogleCallback(c *gin.Context) {
 	state := c.Query("state")
 	code := c.Query("code")
-	
+
 	storedState, err := c.Cookie("oauth_state")
 	if err != nil || state != storedState {
 		utils.BadRequestResponse(c, "Invalid state parameter.", nil)
 		return
 	}
-	
+
 	c.SetCookie("oauth_state", "", -1, "/", "", false, true)
-	
+
 	oauthConfig := getGoogleOAuthConfig()
 	token, err := oauthConfig.Exchange(context.Background(), code)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to exchange code for token.")
 		return
 	}
-	
+
 	client := oauthConfig.Client(context.Background(), token)
 	response, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
@@ -72,16 +72,16 @@ func GoogleCallback(c *gin.Context) {
 		return
 	}
 	defer response.Body.Close()
-	
+
 	var googleUser GoogleUser
 	if err := json.NewDecoder(response.Body).Decode(&googleUser); err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to decode user info.")
 		return
 	}
-	
+
 	var user models.User
 	err = database.DB.Where("google_id = ? OR email = ?", googleUser.ID, strings.ToLower(googleUser.Email)).First(&user).Error
-	
+
 	if err != nil {
 		googleID := googleUser.ID
 		user = models.User{
@@ -92,7 +92,7 @@ func GoogleCallback(c *gin.Context) {
 			GoogleID:  &googleID,
 			Password:  uuid.New().String(),
 		}
-		
+
 		if err := database.DB.Create(&user).Error; err != nil {
 			utils.InternalServerErrorResponse(c, "Failed to create user.")
 			return
@@ -104,22 +104,22 @@ func GoogleCallback(c *gin.Context) {
 			database.DB.Save(&user)
 		}
 	}
-	
+
 	if !user.IsActive {
 		utils.UnauthorizedResponse(c, "Account is deactivated.")
 		return
 	}
-	
+
 	jwtToken, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to generate token.")
 		return
 	}
-	
+
 	response2 := AuthResponse{
 		User:  user.ToResponse(),
 		Token: jwtToken,
 	}
-	
+
 	utils.SuccessResponse(c, "Google login successful.", response2)
 }

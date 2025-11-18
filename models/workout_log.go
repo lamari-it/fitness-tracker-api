@@ -8,11 +8,11 @@ import (
 )
 
 type WorkoutSession struct {
-	ID        uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID    uuid.UUID  `gorm:"type:uuid;not null" json:"user_id"`
-	WorkoutID *uuid.UUID `gorm:"type:uuid" json:"workout_id"` // nullable for free-form workouts
-	StartedAt time.Time  `gorm:"not null" json:"started_at"`
-	EndedAt   *time.Time `json:"ended_at"`
+	ID        uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	UserID    uuid.UUID      `gorm:"type:uuid;not null" json:"user_id"`
+	WorkoutID *uuid.UUID     `gorm:"type:uuid" json:"workout_id"` // nullable for free-form workouts
+	StartedAt time.Time      `gorm:"not null" json:"started_at"`
+	EndedAt   *time.Time     `json:"ended_at"`
 	Notes     string         `gorm:"type:text" json:"notes"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
@@ -24,13 +24,13 @@ type WorkoutSession struct {
 }
 
 type ExerciseLog struct {
-	ID               uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	SessionID        uuid.UUID  `gorm:"type:uuid;not null" json:"session_id"`
-	SetGroupID       *uuid.UUID `gorm:"type:uuid" json:"set_group_id"`
-	ExerciseID       uuid.UUID  `gorm:"type:uuid;not null" json:"exercise_id"`
-	OrderNumber      int        `gorm:"not null" json:"order_number"`
-	Notes            string     `gorm:"type:text" json:"notes"`
-	DifficultyRating int        `gorm:"check:difficulty_rating >= 1 AND difficulty_rating <= 10" json:"difficulty_rating"`
+	ID               uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	SessionID        uuid.UUID      `gorm:"type:uuid;not null" json:"session_id"`
+	SetGroupID       *uuid.UUID     `gorm:"type:uuid" json:"set_group_id"`
+	ExerciseID       uuid.UUID      `gorm:"type:uuid;not null" json:"exercise_id"`
+	OrderNumber      int            `gorm:"not null" json:"order_number"`
+	Notes            string         `gorm:"type:text" json:"notes"`
+	DifficultyRating int            `gorm:"check:difficulty_rating >= 1 AND difficulty_rating <= 10" json:"difficulty_rating"`
 	DifficultyType   string         `gorm:"type:varchar(20)" json:"difficulty_type"` // easy, moderate, hard, very_hard
 	CreatedAt        time.Time      `json:"created_at"`
 	UpdatedAt        time.Time      `json:"updated_at"`
@@ -43,14 +43,14 @@ type ExerciseLog struct {
 }
 
 type SetLog struct {
-	ID            uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	ExerciseLogID uuid.UUID `gorm:"type:uuid;not null" json:"exercise_log_id"`
-	SetNumber     int       `gorm:"not null" json:"set_number"`
-	Weight        float64   `gorm:"type:numeric(10,2)" json:"weight"`
-	WeightUnit    string    `gorm:"type:varchar(5);default:'kg'" json:"weight_unit"`
-	Reps          int       `json:"reps"`
-	RestAfterSec  int       `json:"rest_after_sec"`
-	Tempo         string    `gorm:"type:varchar(10)" json:"tempo"`                             // e.g., "3-1-2-1"
+	ID            uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	ExerciseLogID uuid.UUID      `gorm:"type:uuid;not null" json:"exercise_log_id"`
+	SetNumber     int            `gorm:"not null" json:"set_number"`
+	Weight        float64        `gorm:"type:numeric(10,2)" json:"weight"`
+	WeightUnit    string         `gorm:"type:varchar(5);default:'kg'" json:"weight_unit"`
+	Reps          int            `json:"reps"`
+	RestAfterSec  int            `json:"rest_after_sec"`
+	Tempo         string         `gorm:"type:varchar(10)" json:"tempo"`                             // e.g., "3-1-2-1"
 	RPE           float64        `gorm:"type:numeric(3,1);check:rpe >= 1 AND rpe <= 10" json:"rpe"` // Rate of Perceived Exertion
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`

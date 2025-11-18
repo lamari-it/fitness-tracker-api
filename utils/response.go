@@ -52,7 +52,7 @@ func CreatedResponse(c *gin.Context, message string, data interface{}) {
 // PaginatedResponse sends a successful response with pagination metadata
 func PaginatedResponse(c *gin.Context, message string, data interface{}, currentPage, perPage, totalItems int) {
 	totalPages := (totalItems + perPage - 1) / perPage // Ceiling division
-	
+
 	c.JSON(http.StatusOK, StandardResponse{
 		Success: true,
 		Message: message,
@@ -127,18 +127,17 @@ func DeletedResponse(c *gin.Context, message string) {
 	})
 }
 
-
 // HandleBindingError processes Gin binding errors and sends appropriate response
 func HandleBindingError(c *gin.Context, err error) {
 	validationErrors := make(ValidationErrors)
-	
+
 	// Parse field validation errors from binding
 	if bindingErr, ok := err.(validator.ValidationErrors); ok {
 		for _, fieldErr := range bindingErr {
 			// Convert struct field name (e.g., "LastName") to snake_case (e.g., "last_name")
 			field := toSnakeCase(fieldErr.Field())
 			tag := fieldErr.Tag()
-			
+
 			var message string
 			switch tag {
 			case "required":
@@ -152,11 +151,11 @@ func HandleBindingError(c *gin.Context, err error) {
 			default:
 				message = fmt.Sprintf("This field failed %s validation.", tag)
 			}
-			
+
 			validationErrors[field] = []string{message}
 		}
 	}
-	
+
 	ValidationErrorResponse(c, validationErrors)
 }
 
@@ -168,7 +167,7 @@ func toSnakeCase(str string) string {
 			// Check if previous character was lowercase or if next is lowercase
 			// to properly handle cases like "LastName" -> "last_name"
 			if (i > 0 && unicode.IsLower(rune(str[i-1]))) ||
-			   (i < len(str)-1 && unicode.IsLower(rune(str[i+1]))) {
+				(i < len(str)-1 && unicode.IsLower(rune(str[i+1]))) {
 				result = append(result, '_')
 			}
 		}

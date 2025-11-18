@@ -353,7 +353,7 @@ func GetExerciseEquipmentMappings() map[string][]struct {
 		"jump_squats": {
 			{Slug: "dumbbells", Optional: true, Notes: "Optional for added resistance"},
 		},
-		"high_knees": {},
+		"high_knees":    {},
 		"jumping_jacks": {},
 		"bear_crawls": {
 			{Slug: "exercise_mat", Optional: true, Notes: "Optional for comfort"},
@@ -458,10 +458,10 @@ func GetExerciseEquipmentMappings() map[string][]struct {
 		},
 		"standing_quad_stretch": {},
 		"standing_calf_stretch": {},
-		"shoulder_rolls": {},
-		"arm_circles": {},
-		"neck_rolls": {},
-		"hip_circles": {},
-		"leg_swings": {},
+		"shoulder_rolls":        {},
+		"arm_circles":           {},
+		"neck_rolls":            {},
+		"hip_circles":           {},
+		"leg_swings":            {},
 	}
 }

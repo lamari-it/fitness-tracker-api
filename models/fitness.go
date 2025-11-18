@@ -9,9 +9,9 @@ import (
 
 // FitnessLevel represents different fitness experience levels
 type FitnessLevel struct {
-	ID          uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	Name        string    `gorm:"type:varchar(50);not null;unique" json:"name"`
-	Description string    `gorm:"type:text" json:"description"`
+	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	Name        string         `gorm:"type:varchar(50);not null;unique" json:"name"`
+	Description string         `gorm:"type:text" json:"description"`
 	SortOrder   int            `gorm:"default:0" json:"sort_order"` // For ordering levels (beginner->advanced)
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
@@ -23,10 +23,10 @@ type FitnessLevel struct {
 
 // FitnessGoal represents different fitness objectives
 type FitnessGoal struct {
-	ID          uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	Name        string    `gorm:"type:varchar(100);not null;unique" json:"name"`
-	Description string    `gorm:"type:text" json:"description"`
-	Category    string    `gorm:"type:varchar(50)" json:"category"` // strength, cardio, flexibility, etc.
+	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	Name        string         `gorm:"type:varchar(100);not null;unique" json:"name"`
+	Description string         `gorm:"type:text" json:"description"`
+	Category    string         `gorm:"type:varchar(50)" json:"category"`  // strength, cardio, flexibility, etc.
 	IconName    string         `gorm:"type:varchar(50)" json:"icon_name"` // For UI icon display
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
@@ -38,11 +38,11 @@ type FitnessGoal struct {
 
 // UserFitnessGoal represents the many-to-many relationship between users and fitness goals
 type UserFitnessGoal struct {
-	ID            uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID        uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:unique_user_fitness_goal_combo" json:"user_id"`
-	FitnessGoalID uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:unique_user_fitness_goal_combo" json:"fitness_goal_id"`
-	Priority      int        `gorm:"default:0" json:"priority"` // 1=primary, 2=secondary, etc.
-	TargetDate    *time.Time `json:"target_date,omitempty"`     // Optional target completion date
+	ID            uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	UserID        uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:unique_user_fitness_goal_combo" json:"user_id"`
+	FitnessGoalID uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:unique_user_fitness_goal_combo" json:"fitness_goal_id"`
+	Priority      int            `gorm:"default:0" json:"priority"` // 1=primary, 2=secondary, etc.
+	TargetDate    *time.Time     `json:"target_date,omitempty"`     // Optional target completion date
 	Notes         string         `gorm:"type:text" json:"notes"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
@@ -96,15 +96,15 @@ type FitnessGoalResponse struct {
 }
 
 type UserFitnessGoalResponse struct {
-	ID            uuid.UUID            `json:"id"`
-	UserID        uuid.UUID            `json:"user_id"`
-	FitnessGoalID uuid.UUID            `json:"fitness_goal_id"`
-	Priority      int                  `json:"priority"`
-	TargetDate    *time.Time           `json:"target_date,omitempty"`
-	Notes         string               `json:"notes"`
-	FitnessGoal   FitnessGoalResponse  `json:"fitness_goal"`
-	CreatedAt     time.Time            `json:"created_at"`
-	UpdatedAt     time.Time            `json:"updated_at"`
+	ID            uuid.UUID           `json:"id"`
+	UserID        uuid.UUID           `json:"user_id"`
+	FitnessGoalID uuid.UUID           `json:"fitness_goal_id"`
+	Priority      int                 `json:"priority"`
+	TargetDate    *time.Time          `json:"target_date,omitempty"`
+	Notes         string              `json:"notes"`
+	FitnessGoal   FitnessGoalResponse `json:"fitness_goal"`
+	CreatedAt     time.Time           `json:"created_at"`
+	UpdatedAt     time.Time           `json:"updated_at"`
 }
 
 // Helper methods

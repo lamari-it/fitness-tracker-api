@@ -15,6 +15,11 @@ func TestAuthEndpoints(t *testing.T) {
 		testRegistration(t, e)
 	})
 
+	t.Run("Registration With Trainer Profile", func(t *testing.T) {
+		CleanDatabase(t) // Clean before registration with trainer profile tests
+		testRegistrationWithTrainerProfile(t, e)
+	})
+
 	t.Run("Login", func(t *testing.T) {
 		CleanDatabase(t) // Clean before login tests
 		testLogin(t, e)
@@ -42,7 +47,7 @@ func testRegistration(t *testing.T, e *httpexpect.Expect) {
 		// Check response structure
 		response.Value("success").Boolean().IsTrue()
 		response.Value("message").String().NotEmpty()
-		
+
 		// Check user data
 		data := response.Value("data").Object()
 		data.Value("user").Object().NotEmpty()
@@ -174,6 +179,194 @@ func testRegistration(t *testing.T, e *httpexpect.Expect) {
 	})
 }
 
+func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
+	t.Run("Successful Registration With Trainer Profile", func(t *testing.T) {
+		userData := map[string]interface{}{
+			"email":            "traineruser@example.com",
+			"password":         "TrainerPassword123!",
+			"password_confirm": "TrainerPassword123!",
+			"first_name":       "Trainer",
+			"last_name":        "User",
+			"trainer_profile": map[string]interface{}{
+				"bio":         "Experienced fitness trainer with focus on strength training and nutrition.",
+				"specialties": []string{"Strength Training", "Nutrition", "Weight Loss"},
+				"hourly_rate": 75.00,
+				"location":    "New York, NY",
+				"visibility":  "public",
+			},
+		}
+
+		response := e.POST("/api/v1/auth/register").
+			WithJSON(userData).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		// Check response structure
+		response.Value("success").Boolean().IsTrue()
+		response.Value("message").String().NotEmpty()
+
+		// Check user data
+		data := response.Value("data").Object()
+		data.Value("user").Object().NotEmpty()
+		data.Value("token").String().NotEmpty()
+		data.Value("trainer_profile").Object().NotEmpty()
+
+		// Verify user fields
+		user := data.Value("user").Object()
+		user.Value("id").String().NotEmpty()
+		user.Value("email").String().IsEqual("traineruser@example.com")
+		user.Value("first_name").String().IsEqual("Trainer")
+		user.Value("last_name").String().IsEqual("User")
+		user.NotContainsKey("password")
+
+		// Verify trainer profile fields
+		trainerProfile := data.Value("trainer_profile").Object()
+		trainerProfile.Value("id").String().NotEmpty()
+		trainerProfile.Value("user_id").String().NotEmpty()
+		trainerProfile.Value("bio").String().Contains("Experienced fitness trainer")
+		trainerProfile.Value("specialties").Array().Length().IsEqual(3)
+		trainerProfile.Value("hourly_rate").Number().IsEqual(75.00)
+		trainerProfile.Value("location").String().IsEqual("New York, NY")
+		trainerProfile.Value("visibility").String().IsEqual("public")
+	})
+
+	t.Run("Registration With Trainer Profile Private Visibility", func(t *testing.T) {
+		userData := map[string]interface{}{
+			"email":            "privatetrainer@example.com",
+			"password":         "PrivatePass123!",
+			"password_confirm": "PrivatePass123!",
+			"first_name":       "Private",
+			"last_name":        "Trainer",
+			"trainer_profile": map[string]interface{}{
+				"bio":         "Private trainer with exclusive clientele.",
+				"specialties": []string{"VIP Training", "Executive Coaching"},
+				"hourly_rate": 200.00,
+				"location":    "Beverly Hills, CA",
+				"visibility":  "private",
+			},
+		}
+
+		response := e.POST("/api/v1/auth/register").
+			WithJSON(userData).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		// Verify visibility is set correctly
+		trainerProfile := response.Value("data").Object().Value("trainer_profile").Object()
+		trainerProfile.Value("visibility").String().IsEqual("private")
+	})
+
+	t.Run("Registration With Trainer Profile Default Visibility", func(t *testing.T) {
+		userData := map[string]interface{}{
+			"email":            "defaultvis@example.com",
+			"password":         "DefaultPass123!",
+			"password_confirm": "DefaultPass123!",
+			"first_name":       "Default",
+			"last_name":        "Visibility",
+			"trainer_profile": map[string]interface{}{
+				"bio":         "Trainer profile with default visibility setting.",
+				"specialties": []string{"General Fitness"},
+				"hourly_rate": 50.00,
+				"location":    "Chicago, IL",
+				// No visibility specified - should default to "public"
+			},
+		}
+
+		response := e.POST("/api/v1/auth/register").
+			WithJSON(userData).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		// Verify default visibility is "public"
+		trainerProfile := response.Value("data").Object().Value("trainer_profile").Object()
+		trainerProfile.Value("visibility").String().IsEqual("public")
+	})
+
+	t.Run("Registration With Invalid Trainer Profile", func(t *testing.T) {
+		userData := map[string]interface{}{
+			"email":            "invalidprofile@example.com",
+			"password":         "InvalidPass123!",
+			"password_confirm": "InvalidPass123!",
+			"first_name":       "Invalid",
+			"last_name":        "Profile",
+			"trainer_profile": map[string]interface{}{
+				"bio":         "Short", // Too short, should be at least 10 characters
+				"specialties": []string{"Strength Training"},
+				"hourly_rate": 75.00,
+				"location":    "New York, NY",
+			},
+		}
+
+		response := e.POST("/api/v1/auth/register").
+			WithJSON(userData).
+			Expect().
+			Status(400).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsFalse()
+	})
+
+	t.Run("Registration With Missing Trainer Profile Fields", func(t *testing.T) {
+		userData := map[string]interface{}{
+			"email":            "missingfields@example.com",
+			"password":         "MissingPass123!",
+			"password_confirm": "MissingPass123!",
+			"first_name":       "Missing",
+			"last_name":        "Fields",
+			"trainer_profile": map[string]interface{}{
+				"bio": "This bio is long enough to pass validation.",
+				// Missing specialties, hourly_rate, and location
+			},
+		}
+
+		response := e.POST("/api/v1/auth/register").
+			WithJSON(userData).
+			Expect().
+			Status(400).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsFalse()
+	})
+
+	t.Run("Registration Without Trainer Profile Still Works", func(t *testing.T) {
+		userData := map[string]interface{}{
+			"email":            "regularuser@example.com",
+			"password":         "RegularPass123!",
+			"password_confirm": "RegularPass123!",
+			"first_name":       "Regular",
+			"last_name":        "User",
+			// No trainer_profile field
+		}
+
+		response := e.POST("/api/v1/auth/register").
+			WithJSON(userData).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		// Verify no trainer_profile in response
+		data := response.Value("data").Object()
+		data.Value("user").Object().NotEmpty()
+		data.Value("token").String().NotEmpty()
+		data.NotContainsKey("trainer_profile")
+	})
+}
+
 func testLogin(t *testing.T, e *httpexpect.Expect) {
 	// Setup: Create a user for login tests
 	setupUserData := map[string]interface{}{
@@ -206,7 +399,7 @@ func testLogin(t *testing.T, e *httpexpect.Expect) {
 		// Check response structure
 		response.Value("success").Boolean().IsTrue()
 		response.Value("message").String().Contains("success")
-		
+
 		// Check data
 		data := response.Value("data").Object()
 		data.Value("token").String().NotEmpty()

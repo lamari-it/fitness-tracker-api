@@ -8,9 +8,9 @@ import (
 )
 
 type MuscleGroup struct {
-	ID          uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	Name        string    `gorm:"type:varchar(100);not null;unique" json:"name"`
-	Description string    `gorm:"type:text" json:"description"`
+	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	Name        string         `gorm:"type:varchar(100);not null;unique" json:"name"`
+	Description string         `gorm:"type:text" json:"description"`
 	Category    string         `gorm:"type:varchar(50)" json:"category"` // upper, lower, core, cardio
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
@@ -21,10 +21,10 @@ type MuscleGroup struct {
 }
 
 type ExerciseMuscleGroup struct {
-	ID            uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	ExerciseID    uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_muscle_combo" json:"exercise_id"`
-	MuscleGroupID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_muscle_combo" json:"muscle_group_id"`
-	Primary       bool      `gorm:"default:false" json:"primary"`
+	ID            uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	ExerciseID    uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_muscle_combo" json:"exercise_id"`
+	MuscleGroupID uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:unique_exercise_muscle_combo" json:"muscle_group_id"`
+	Primary       bool           `gorm:"default:false" json:"primary"`
 	Intensity     string         `gorm:"type:varchar(20);default:'moderate'" json:"intensity"` // high, moderate, low
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`

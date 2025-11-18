@@ -189,6 +189,20 @@ func SetupRoutes(r *gin.Engine) {
 				friends.DELETE("/:id", controllers.RemoveFriend)
 			}
 
+			// Trainers
+			trainers := protected.Group("/trainers")
+			{
+				// Profile management (authenticated user's own profile)
+				trainers.POST("/profile", controllers.CreateTrainerProfile)
+				trainers.GET("/profile", controllers.GetTrainerProfile)
+				trainers.PUT("/profile", controllers.UpdateTrainerProfile)
+				trainers.DELETE("/profile", controllers.DeleteTrainerProfile)
+
+				// Public trainer endpoints
+				trainers.GET("/", controllers.ListTrainers)
+				trainers.GET("/:id", controllers.GetTrainerPublicProfile)
+			}
+
 			// Translations (Admin only)
 			translations := protected.Group("/translations")
 			translations.Use(middleware.AdminMiddleware())
@@ -201,7 +215,7 @@ func SetupRoutes(r *gin.Engine) {
 				translations.GET("/resource/:resource_type/:resource_id", controllers.GetResourceTranslations)
 				translations.POST("/upsert", controllers.CreateOrUpdateTranslation)
 			}
-			
+
 			protected.GET("/nutrition", func(c *gin.Context) {
 				c.JSON(http.StatusOK, gin.H{
 					"message": "Your nutrition data",

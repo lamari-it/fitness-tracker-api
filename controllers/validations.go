@@ -9,11 +9,11 @@ type PaginationQuery struct {
 // ExerciseQuery represents query parameters for exercise endpoints
 type ExerciseQuery struct {
 	PaginationQuery
-	Search       string `form:"search" validate:"omitempty,max=100" binding:"omitempty,max=100"`
+	Search        string `form:"search" validate:"omitempty,max=100" binding:"omitempty,max=100"`
 	MuscleGroupID string `form:"muscle_group_id" validate:"omitempty,uuid" binding:"omitempty,uuid"`
-	Equipment    string `form:"equipment" validate:"omitempty,max=50" binding:"omitempty,max=50"`
-	Bodyweight   string `form:"bodyweight" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
-	PrimaryOnly  string `form:"primary_only" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
+	Equipment     string `form:"equipment" validate:"omitempty,max=50" binding:"omitempty,max=50"`
+	Bodyweight    string `form:"bodyweight" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
+	PrimaryOnly   string `form:"primary_only" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
 }
 
 // EquipmentQuery represents query parameters for equipment endpoints
@@ -54,6 +54,16 @@ type EnrollmentQuery struct {
 type UserEquipmentQuery struct {
 	PaginationQuery
 	LocationType string `form:"location_type" validate:"omitempty,oneof=home gym" binding:"omitempty,oneof=home gym"`
+}
+
+// TrainerQuery represents query parameters for trainer endpoints
+type TrainerQuery struct {
+	PaginationQuery
+	Search    string  `form:"search" validate:"omitempty,max=100" binding:"omitempty,max=100"`
+	Specialty string  `form:"specialty" validate:"omitempty,max=100" binding:"omitempty,max=100"`
+	Location  string  `form:"location" validate:"omitempty,max=100" binding:"omitempty,max=100"`
+	MinRating float64 `form:"min_rating" validate:"omitempty,min=0,max=5" binding:"omitempty,min=0,max=5"`
+	SortBy    string  `form:"sort_by" validate:"omitempty,oneof=rating rate recent" binding:"omitempty,oneof=rating rate recent"`
 }
 
 // IDParam represents common UUID path parameters

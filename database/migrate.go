@@ -24,7 +24,7 @@ func MigrateUp(db *gorm.DB) error {
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://migrations",
-		"postgres", 
+		"postgres",
 		driver,
 	)
 	if err != nil {
@@ -54,7 +54,7 @@ func MigrateDown(db *gorm.DB) error {
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://migrations",
-		"postgres", 
+		"postgres",
 		driver,
 	)
 	if err != nil {
@@ -84,7 +84,7 @@ func MigrateToVersion(db *gorm.DB, version uint) error {
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://migrations",
-		"postgres", 
+		"postgres",
 		driver,
 	)
 	if err != nil {
@@ -114,7 +114,7 @@ func GetMigrationVersion(db *gorm.DB) (uint, bool, error) {
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://migrations",
-		"postgres", 
+		"postgres",
 		driver,
 	)
 	if err != nil {
@@ -144,7 +144,7 @@ func ForceMigrationVersion(db *gorm.DB, version int) error {
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://migrations",
-		"postgres", 
+		"postgres",
 		driver,
 	)
 	if err != nil {

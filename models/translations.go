@@ -12,8 +12,8 @@ type Translation struct {
 	ID           uuid.UUID      `gorm:"type:uuid;primary_key" json:"id"`
 	ResourceType string         `gorm:"size:50;not null;uniqueIndex:unique_translation_combo" json:"resource_type"` // e.g., "exercise", "muscle_group", "workout_plan"
 	ResourceID   uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:unique_translation_combo" json:"resource_id"`
-	FieldName    string         `gorm:"size:50;not null;uniqueIndex:unique_translation_combo" json:"field_name"`    // e.g., "name", "description"
-	Language     string         `gorm:"size:5;not null;uniqueIndex:unique_translation_combo" json:"language"`       // e.g., "en", "es", "fr"
+	FieldName    string         `gorm:"size:50;not null;uniqueIndex:unique_translation_combo" json:"field_name"` // e.g., "name", "description"
+	Language     string         `gorm:"size:5;not null;uniqueIndex:unique_translation_combo" json:"language"`    // e.g., "en", "es", "fr"
 	Content      string         `gorm:"type:text;not null" json:"content"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
@@ -95,7 +95,7 @@ type UpdateTranslationRequest struct {
 
 // MultilingualContent represents content with multiple language versions
 type MultilingualContent struct {
-	Default     string            `json:"default"`
+	Default      string            `json:"default"`
 	Translations map[string]string `json:"translations,omitempty"`
 }
 

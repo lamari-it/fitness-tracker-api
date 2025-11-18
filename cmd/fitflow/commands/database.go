@@ -56,33 +56,33 @@ func HandleDatabaseCommand(args []string) {
 			fmt.Println("This command can only be run when APP_ENV is set to 'development' or 'staging'")
 			os.Exit(1)
 		}
-		
+
 		fmt.Println("🚨 WARNING: This will DELETE ALL DATA and re-seed the database!")
 		fmt.Println("Environment: " + cfg.Environment)
 		fmt.Print("Are you sure you want to continue? (yes/no): ")
-		
+
 		var response string
 		fmt.Scanln(&response)
-		
+
 		if response != "yes" {
 			fmt.Println("Operation cancelled")
 			os.Exit(0)
 		}
-		
+
 		fmt.Println("Dropping all data...")
 		err = database.DropAllData(db)
 		if err != nil {
 			fmt.Printf("Error dropping data: %v\n", err)
 			os.Exit(1)
 		}
-		
+
 		fmt.Println("Re-seeding database...")
 		err = database.RunSeeders(db)
 		if err != nil {
 			fmt.Printf("Error running seeders: %v\n", err)
 			os.Exit(1)
 		}
-		
+
 		fmt.Println("✅ Database re-seeded successfully!")
 
 	case "reset":

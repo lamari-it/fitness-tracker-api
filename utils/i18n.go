@@ -33,7 +33,7 @@ func GetI18n() *I18n {
 // loadTranslations loads all translation files from the locales directory
 func (i *I18n) loadTranslations() {
 	supportedLanguages := []string{"en", "es", "fr"}
-	
+
 	for _, lang := range supportedLanguages {
 		filePath := filepath.Join("locales", lang, "messages.json")
 		data, err := ioutil.ReadFile(filePath)
@@ -41,13 +41,13 @@ func (i *I18n) loadTranslations() {
 			fmt.Printf("Error reading translation file %s: %v\n", filePath, err)
 			continue
 		}
-		
+
 		var translations map[string]interface{}
 		if err := json.Unmarshal(data, &translations); err != nil {
 			fmt.Printf("Error parsing translation file %s: %v\n", filePath, err)
 			continue
 		}
-		
+
 		i.mu.Lock()
 		i.translations[lang] = translations
 		i.mu.Unlock()
@@ -58,7 +58,7 @@ func (i *I18n) loadTranslations() {
 func (i *I18n) GetSupportedLanguages() []string {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
-	
+
 	languages := make([]string, 0, len(i.translations))
 	for lang := range i.translations {
 		languages = append(languages, lang)
@@ -70,7 +70,7 @@ func (i *I18n) GetSupportedLanguages() []string {
 func (i *I18n) IsLanguageSupported(lang string) bool {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
-	
+
 	_, exists := i.translations[lang]
 	return exists
 }
@@ -79,22 +79,22 @@ func (i *I18n) IsLanguageSupported(lang string) bool {
 func (i *I18n) Translate(lang, key string, args ...interface{}) string {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
-	
+
 	// If language not supported, use default
 	if !i.IsLanguageSupported(lang) {
 		lang = i.defaultLanguage
 	}
-	
+
 	// Get translation for the language
 	langTranslations, exists := i.translations[lang]
 	if !exists {
 		return key // Return key if no translations found
 	}
-	
+
 	// Navigate through nested keys (e.g., "auth.login_success")
 	keys := strings.Split(key, ".")
 	current := langTranslations
-	
+
 	for _, k := range keys {
 		if nested, ok := current[k]; ok {
 			if nestedMap, isMap := nested.(map[string]interface{}); isMap {
@@ -114,7 +114,7 @@ func (i *I18n) Translate(lang, key string, args ...interface{}) string {
 			return key // Return key if not found in any language
 		}
 	}
-	
+
 	return key // Return key if we couldn't find the translation
 }
 

@@ -17,14 +17,14 @@ type EnrollInPlanRequest struct {
 	StartDate         string    `json:"start_date" binding:"required"`
 	DaysPerWeek       int       `json:"days_per_week" binding:"required,min=1,max=7"`
 	ScheduleMode      string    `json:"schedule_mode" binding:"omitempty,oneof=rolling calendar"` // rolling or calendar
-	PreferredWeekdays []int32   `json:"preferred_weekdays" binding:"omitempty,dive,min=0,max=6"` // Only for calendar mode
+	PreferredWeekdays []int32   `json:"preferred_weekdays" binding:"omitempty,dive,min=0,max=6"`  // Only for calendar mode
 }
 
 type UpdateEnrollmentRequest struct {
-	DaysPerWeek       int       `json:"days_per_week" binding:"omitempty,min=1,max=7"`
-	ScheduleMode      string    `json:"schedule_mode" binding:"omitempty,oneof=rolling calendar"`
-	PreferredWeekdays []int32   `json:"preferred_weekdays" binding:"omitempty,dive,min=0,max=6"`
-	Status            string    `json:"status" binding:"omitempty,oneof=active paused completed cancelled"`
+	DaysPerWeek       int     `json:"days_per_week" binding:"omitempty,min=1,max=7"`
+	ScheduleMode      string  `json:"schedule_mode" binding:"omitempty,oneof=rolling calendar"`
+	PreferredWeekdays []int32 `json:"preferred_weekdays" binding:"omitempty,dive,min=0,max=6"`
+	Status            string  `json:"status" binding:"omitempty,oneof=active paused completed cancelled"`
 }
 
 func EnrollInPlan(c *gin.Context) {
@@ -131,7 +131,7 @@ func GetUserEnrollments(c *gin.Context) {
 	var total int64
 
 	query := database.DB.Model(&models.PlanEnrollment{}).Where("user_id = ?", userID)
-	
+
 	if status != "" {
 		query = query.Where("status = ?", status)
 	}
@@ -207,11 +207,11 @@ func UpdateEnrollment(c *gin.Context) {
 	}
 
 	updates := map[string]interface{}{}
-	
+
 	if req.DaysPerWeek > 0 && req.DaysPerWeek <= 7 {
 		updates["days_per_week"] = req.DaysPerWeek
 	}
-	
+
 	if req.ScheduleMode != "" {
 		if req.ScheduleMode != "rolling" && req.ScheduleMode != "calendar" {
 			validationErrors := utils.ValidationErrors{
@@ -221,12 +221,12 @@ func UpdateEnrollment(c *gin.Context) {
 			return
 		}
 		updates["schedule_mode"] = req.ScheduleMode
-		
+
 		if req.ScheduleMode == "calendar" && len(req.PreferredWeekdays) > 0 {
 			updates["preferred_weekdays"] = pq.Int32Array(req.PreferredWeekdays)
 		}
 	}
-	
+
 	if req.Status != "" {
 		if req.Status != "active" && req.Status != "paused" && req.Status != "completed" {
 			validationErrors := utils.ValidationErrors{

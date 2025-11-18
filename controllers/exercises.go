@@ -139,10 +139,10 @@ func GetExercises(c *gin.Context) {
 		utils.HandleBindingError(c, err)
 		return
 	}
-	
+
 	// Set default pagination values
 	SetDefaultPagination(&params.PaginationQuery)
-	
+
 	offset := (params.Page - 1) * params.Limit
 
 	query := database.DB.Model(&models.Exercise{}).
@@ -191,7 +191,7 @@ func GetExercise(c *gin.Context) {
 		utils.HandleBindingError(c, err)
 		return
 	}
-	
+
 	exerciseID, _ := uuid.Parse(params.ID)
 
 	var exercise models.Exercise
