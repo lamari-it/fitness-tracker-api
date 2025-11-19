@@ -63,14 +63,18 @@ func createTestUserAndGetToken(e *httpexpect.Expect, email, password, firstName,
 }
 
 func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
+	// Seed specialties for tests
+	SeedTestSpecialties(t)
+	specialtyIDs := GetSpecialtyIDs(t, "Strength Training", "Weight Loss", "Bodybuilding")
+
 	token := createTestUserAndGetToken(e, "trainer@example.com", "TrainerPass123!", "John", "Trainer")
 
 	t.Run("Successful Profile Creation", func(t *testing.T) {
 		profileData := map[string]interface{}{
-			"bio":         "Certified personal trainer with 5+ years experience in strength training.",
-			"specialties": []string{"Strength Training", "Weight Loss", "Bodybuilding"},
-			"hourly_rate": 75.00,
-			"location":    "New York, NY",
+			"bio":           "Certified personal trainer with 5+ years experience in strength training.",
+			"specialty_ids": specialtyIDs,
+			"hourly_rate":   75.00,
+			"location":      "New York, NY",
 		}
 
 		response := e.POST("/api/v1/trainers/profile").

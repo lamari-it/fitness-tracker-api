@@ -203,6 +203,12 @@ func SetupRoutes(r *gin.Engine) {
 				trainers.GET("/:id", controllers.GetTrainerPublicProfile)
 			}
 
+			// Specialties
+			specialties := protected.Group("/specialties")
+			{
+				specialties.GET("/", controllers.ListSpecialties)
+			}
+
 			// Translations (Admin only)
 			translations := protected.Group("/translations")
 			translations.Use(middleware.AdminMiddleware())

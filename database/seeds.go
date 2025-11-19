@@ -2287,6 +2287,64 @@ func SeedEquipment() {
 	}
 }
 
+func SeedSpecialties() {
+	specialties := []models.Specialty{
+		{
+			Name:        "Strength Training",
+			Description: "Build muscle mass, increase strength, and improve overall power through resistance training and weightlifting.",
+		},
+		{
+			Name:        "Weight Loss",
+			Description: "Achieve sustainable fat loss through customized workout programs and nutritional guidance tailored to your goals.",
+		},
+		{
+			Name:        "Bodybuilding",
+			Description: "Develop muscle definition, symmetry, and size with specialized training techniques for competitive or aesthetic goals.",
+		},
+		{
+			Name:        "Functional Fitness",
+			Description: "Improve everyday movement patterns, balance, and coordination through exercises that mimic real-life activities.",
+		},
+		{
+			Name:        "HIIT",
+			Description: "High-Intensity Interval Training for maximum calorie burn, cardiovascular fitness, and metabolic conditioning.",
+		},
+		{
+			Name:        "Yoga",
+			Description: "Enhance flexibility, mindfulness, and inner peace through traditional and modern yoga practices.",
+		},
+		{
+			Name:        "Cardio",
+			Description: "Improve cardiovascular health, endurance, and stamina through running, cycling, and other aerobic exercises.",
+		},
+		{
+			Name:        "Rehabilitation",
+			Description: "Recover from injuries and improve mobility through specialized corrective exercise and therapeutic movement.",
+		},
+		{
+			Name:        "Mobility",
+			Description: "Increase range of motion, reduce stiffness, and prevent injuries through targeted mobility work and stretching.",
+		},
+		{
+			Name:        "CrossFit",
+			Description: "Build overall fitness through constantly varied, high-intensity functional movements and competitive workouts.",
+		},
+	}
+
+	for _, specialty := range specialties {
+		var existing models.Specialty
+		if err := DB.Where("name = ?", specialty.Name).First(&existing).Error; err != nil {
+			if err := DB.Create(&specialty).Error; err != nil {
+				log.Printf("Failed to create specialty: %v", err)
+			} else {
+				log.Printf("Created specialty: %s", specialty.Name)
+			}
+		} else {
+			log.Printf("Specialty already exists: %s", specialty.Name)
+		}
+	}
+}
+
 func SeedTrainerProfiles() {
 	// Get existing users (at least 2-3 should exist from previous seeds)
 	var users []models.User
@@ -2297,39 +2355,58 @@ func SeedTrainerProfiles() {
 		return
 	}
 
-	trainerProfiles := []models.TrainerProfile{
-		{
-			UserID:      users[0].ID,
-			Bio:         "Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding. Passionate about helping clients achieve their fitness goals through customized workout programs and nutrition guidance.",
-			Specialties: []string{"Strength Training", "Weight Loss", "Bodybuilding"},
-			HourlyRate:  75.00,
-			Location:    "New York, NY",
-			Visibility:  "public",
-		},
+	// Get specialties for trainer profiles
+	var strengthTraining, weightLoss, bodybuilding, functionalFitness, rehabilitation, mobility models.Specialty
+	DB.Where("name = ?", "Strength Training").First(&strengthTraining)
+	DB.Where("name = ?", "Weight Loss").First(&weightLoss)
+	DB.Where("name = ?", "Bodybuilding").First(&bodybuilding)
+	DB.Where("name = ?", "Functional Fitness").First(&functionalFitness)
+	DB.Where("name = ?", "Rehabilitation").First(&rehabilitation)
+	DB.Where("name = ?", "Mobility").First(&mobility)
+
+	// First trainer profile
+	var existing1 models.TrainerProfile
+	if err := DB.Where("user_id = ?", users[0].ID).First(&existing1).Error; err != nil {
+		profile1 := models.TrainerProfile{
+			UserID:     users[0].ID,
+			Bio:        "Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding. Passionate about helping clients achieve their fitness goals through customized workout programs and nutrition guidance.",
+			HourlyRate: 75.00,
+			Location:   "New York, NY",
+			Visibility: "public",
+		}
+		if err := DB.Create(&profile1).Error; err != nil {
+			log.Printf("Failed to create trainer profile: %v", err)
+		} else {
+			// Associate specialties
+			specialties := []models.Specialty{strengthTraining, weightLoss, bodybuilding}
+			DB.Model(&profile1).Association("Specialties").Append(&specialties)
+			log.Printf("Created trainer profile for user %s", profile1.UserID)
+		}
+	} else {
+		log.Printf("Trainer profile already exists for user %s", users[0].ID)
 	}
 
-	// Add second trainer profile if we have enough users
+	// Second trainer profile if we have enough users
 	if len(users) >= 2 {
-		trainerProfiles = append(trainerProfiles, models.TrainerProfile{
-			UserID:      users[1].ID,
-			Bio:         "Specializing in functional fitness and injury prevention. I help clients improve mobility, recover from injuries, and build sustainable fitness habits. Certified in rehabilitation and corrective exercise.",
-			Specialties: []string{"Functional Fitness", "Rehabilitation", "Mobility"},
-			HourlyRate:  60.00,
-			Location:    "Los Angeles, CA",
-			Visibility:  "public",
-		})
-	}
-
-	for _, profile := range trainerProfiles {
-		var existing models.TrainerProfile
-		if err := DB.Where("user_id = ?", profile.UserID).First(&existing).Error; err != nil {
-			if err := DB.Create(&profile).Error; err != nil {
+		var existing2 models.TrainerProfile
+		if err := DB.Where("user_id = ?", users[1].ID).First(&existing2).Error; err != nil {
+			profile2 := models.TrainerProfile{
+				UserID:     users[1].ID,
+				Bio:        "Specializing in functional fitness and injury prevention. I help clients improve mobility, recover from injuries, and build sustainable fitness habits. Certified in rehabilitation and corrective exercise.",
+				HourlyRate: 60.00,
+				Location:   "Los Angeles, CA",
+				Visibility: "public",
+			}
+			if err := DB.Create(&profile2).Error; err != nil {
 				log.Printf("Failed to create trainer profile: %v", err)
 			} else {
-				log.Printf("Created trainer profile for user %s", profile.UserID)
+				// Associate specialties
+				specialties := []models.Specialty{functionalFitness, rehabilitation, mobility}
+				DB.Model(&profile2).Association("Specialties").Append(&specialties)
+				log.Printf("Created trainer profile for user %s", profile2.UserID)
 			}
 		} else {
-			log.Printf("Trainer profile already exists for user %s", profile.UserID)
+			log.Printf("Trainer profile already exists for user %s", users[1].ID)
 		}
 	}
 }
@@ -2355,6 +2432,9 @@ func SeedDatabase() {
 	if err := MigrateExistingUsersToRoles(DB); err != nil {
 		log.Printf("Failed to migrate users to roles: %v", err)
 	}
+
+	// Seed specialties (must be before trainer profiles)
+	SeedSpecialties()
 
 	// Seed trainer profiles
 	SeedTrainerProfiles()

@@ -361,7 +361,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"trainer@example.com\",\n  \"password\": \"{{test_password}}\",\n  \"password_confirm\": \"{{test_password}}\",\n  \"first_name\": \"Personal\",\n  \"last_name\": \"Trainer\",\n  \"trainer_profile\": {\n    \"bio\": \"Experienced fitness trainer specializing in strength and conditioning with over 10 years of experience.\",\n    \"specialties\": [\"Strength Training\", \"HIIT\", \"Weight Loss\"],\n    \"hourly_rate\": 75.00,\n    \"location\": \"New York, NY\",\n    \"visibility\": \"public\"\n  }\n}"
+              "raw": "{\n  \"email\": \"trainer@example.com\",\n  \"password\": \"{{test_password}}\",\n  \"password_confirm\": \"{{test_password}}\",\n  \"first_name\": \"Personal\",\n  \"last_name\": \"Trainer\",\n  \"trainer_profile\": {\n    \"bio\": \"Experienced fitness trainer specializing in strength and conditioning with over 10 years of experience.\",\n    \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_hiit_id}}\", \"{{specialty_weight_loss_id}}\"],\n    \"hourly_rate\": 75.00,\n    \"location\": \"New York, NY\",\n    \"visibility\": \"public\"\n  }\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/register",
@@ -3809,7 +3809,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bio\": \"Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding.\",\n  \"specialties\": [\"Strength Training\", \"Weight Loss\", \"Bodybuilding\"],\n  \"hourly_rate\": 75.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"public\"\n}"
+              "raw": "{\n  \"bio\": \"Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding.\",\n  \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_weight_loss_id}}\", \"{{specialty_bodybuilding_id}}\"],\n  \"hourly_rate\": 75.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"public\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/trainers/profile",
@@ -3906,7 +3906,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bio\": \"Updated bio with more experience and certifications in advanced training techniques.\",\n  \"specialties\": [\"Strength Training\", \"Weight Loss\", \"Bodybuilding\", \"HIIT\"],\n  \"hourly_rate\": 85.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"link_only\"\n}"
+              "raw": "{\n  \"bio\": \"Updated bio with more experience and certifications in advanced training techniques.\",\n  \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_weight_loss_id}}\", \"{{specialty_bodybuilding_id}}\", \"{{specialty_hiit_id}}\"],\n  \"hourly_rate\": 85.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"link_only\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/trainers/profile",
@@ -4092,6 +4092,67 @@
         }
       ],
       "description": "Trainer profile management endpoints"
+    },
+    {
+      "name": "Specialties",
+      "item": [
+        {
+          "name": "List Specialties",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Specialties retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    if (jsonData.data.length > 0) {",
+                  "        pm.expect(jsonData.data[0].id).to.be.a('string');",
+                  "        pm.expect(jsonData.data[0].name).to.be.a('string');",
+                  "        pm.expect(jsonData.data[0].description).to.be.a('string');",
+                  "    }",
+                  "});",
+                  "",
+                  "// Store specialty IDs for later use",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    jsonData.data.forEach(function(specialty) {",
+                  "        var varName = 'specialty_' + specialty.name.toLowerCase().replace(/\\s+/g, '_') + '_id';",
+                  "        pm.environment.set(varName, specialty.id);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/specialties",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "specialties"
+              ]
+            },
+            "description": "Get all available trainer specialties. Run this first to populate specialty IDs for other trainer-related requests."
+          },
+          "response": []
+        }
+      ],
+      "description": "Trainer specialty management. Run 'List Specialties' first to populate specialty IDs for use in trainer profile creation/update."
     },
     {
       "name": "Legacy Routes",

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +12,6 @@ type TrainerProfile struct {
 	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	UserID      uuid.UUID      `gorm:"type:uuid;not null;unique" json:"user_id"`
 	Bio         string         `gorm:"type:text" json:"bio"`
-	Specialties pq.StringArray `gorm:"type:text[]" json:"specialties"`
 	HourlyRate  float64        `gorm:"type:numeric(10,2)" json:"hourly_rate"`
 	Location    string         `gorm:"type:text" json:"location"`
 	Visibility  string         `gorm:"type:varchar(20);default:'public'" json:"visibility"` // public, link_only, private
@@ -21,7 +19,9 @@ type TrainerProfile struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
-	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
+	// Relationships
+	User        User        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
+	Specialties []Specialty `gorm:"many2many:trainer_specialties;" json:"specialties,omitempty"`
 }
 
 type TrainerReview struct {
@@ -74,40 +74,40 @@ func (tcl *TrainerClientLink) BeforeCreate(tx *gorm.DB) (err error) {
 
 // Request DTOs
 type CreateTrainerProfileRequest struct {
-	Bio         string   `json:"bio" binding:"required,min=10,max=1000"`
-	Specialties []string `json:"specialties" binding:"required,min=1,max=20,dive,max=100"`
-	HourlyRate  float64  `json:"hourly_rate" binding:"required,gt=0,lte=9999.99"`
-	Location    string   `json:"location" binding:"required,min=2,max=500"`
-	Visibility  string   `json:"visibility" binding:"omitempty,oneof=public link_only private"`
+	Bio          string      `json:"bio" binding:"required,min=10,max=1000"`
+	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"required,min=1,max=20"`
+	HourlyRate   float64     `json:"hourly_rate" binding:"required,gt=0,lte=9999.99"`
+	Location     string      `json:"location" binding:"required,min=2,max=500"`
+	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
 }
 
 type UpdateTrainerProfileRequest struct {
-	Bio         string   `json:"bio" binding:"omitempty,min=10,max=1000"`
-	Specialties []string `json:"specialties" binding:"omitempty,max=20,dive,max=100"`
-	HourlyRate  float64  `json:"hourly_rate" binding:"omitempty,gt=0,lte=9999.99"`
-	Location    string   `json:"location" binding:"omitempty,min=2,max=500"`
-	Visibility  string   `json:"visibility" binding:"omitempty,oneof=public link_only private"`
+	Bio          string      `json:"bio" binding:"omitempty,min=10,max=1000"`
+	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"omitempty,min=1,max=20"`
+	HourlyRate   float64     `json:"hourly_rate" binding:"omitempty,gt=0,lte=9999.99"`
+	Location     string      `json:"location" binding:"omitempty,min=2,max=500"`
+	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
 }
 
 // Response DTOs
 type TrainerProfileResponse struct {
-	ID          uuid.UUID      `json:"id"`
-	UserID      uuid.UUID      `json:"user_id"`
-	Bio         string         `json:"bio"`
-	Specialties pq.StringArray `json:"specialties"`
-	HourlyRate  float64        `json:"hourly_rate"`
-	Location    string         `json:"location"`
-	Visibility  string         `json:"visibility"`
-	User        *UserResponse  `json:"user,omitempty"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	ID          uuid.UUID           `json:"id"`
+	UserID      uuid.UUID           `json:"user_id"`
+	Bio         string              `json:"bio"`
+	Specialties []SpecialtyResponse `json:"specialties"`
+	HourlyRate  float64             `json:"hourly_rate"`
+	Location    string              `json:"location"`
+	Visibility  string              `json:"visibility"`
+	User        *UserResponse       `json:"user,omitempty"`
+	CreatedAt   time.Time           `json:"created_at"`
+	UpdatedAt   time.Time           `json:"updated_at"`
 }
 
 type TrainerPublicResponse struct {
 	ID            uuid.UUID           `json:"id"`
 	UserID        uuid.UUID           `json:"user_id"`
 	Bio           string              `json:"bio"`
-	Specialties   pq.StringArray      `json:"specialties"`
+	Specialties   []SpecialtyResponse `json:"specialties"`
 	HourlyRate    float64             `json:"hourly_rate"`
 	Location      string              `json:"location"`
 	Visibility    string              `json:"visibility"`
@@ -125,11 +125,17 @@ type UserPublicResponse struct {
 
 // Helper methods
 func (tp *TrainerProfile) ToResponse() TrainerProfileResponse {
+	// Convert specialties to response format
+	specialties := make([]SpecialtyResponse, 0, len(tp.Specialties))
+	for _, s := range tp.Specialties {
+		specialties = append(specialties, s.ToResponse())
+	}
+
 	resp := TrainerProfileResponse{
 		ID:          tp.ID,
 		UserID:      tp.UserID,
 		Bio:         tp.Bio,
-		Specialties: tp.Specialties,
+		Specialties: specialties,
 		HourlyRate:  tp.HourlyRate,
 		Location:    tp.Location,
 		Visibility:  tp.Visibility,
@@ -144,11 +150,17 @@ func (tp *TrainerProfile) ToResponse() TrainerProfileResponse {
 }
 
 func (tp *TrainerProfile) ToPublicResponse(reviewCount int, avgRating float64) TrainerPublicResponse {
+	// Convert specialties to response format
+	specialties := make([]SpecialtyResponse, 0, len(tp.Specialties))
+	for _, s := range tp.Specialties {
+		specialties = append(specialties, s.ToResponse())
+	}
+
 	resp := TrainerPublicResponse{
 		ID:            tp.ID,
 		UserID:        tp.UserID,
 		Bio:           tp.Bio,
-		Specialties:   tp.Specialties,
+		Specialties:   specialties,
 		HourlyRate:    tp.HourlyRate,
 		Location:      tp.Location,
 		Visibility:    tp.Visibility,
@@ -173,11 +185,6 @@ func (tp *TrainerProfile) Validate() error {
 	}
 	if len(tp.Specialties) == 0 || len(tp.Specialties) > 20 {
 		return fmt.Errorf("specialties must have 1 to 20 items")
-	}
-	for _, s := range tp.Specialties {
-		if len(s) > 100 {
-			return fmt.Errorf("each specialty must be at most 100 characters")
-		}
 	}
 	if tp.HourlyRate <= 0 || tp.HourlyRate > 9999.99 {
 		return fmt.Errorf("hourly rate must be between 0 and 9999.99")

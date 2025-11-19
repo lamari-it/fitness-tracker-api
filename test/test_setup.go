@@ -124,7 +124,9 @@ func CleanDatabase(t *testing.T) {
 		"friendships",
 		"trainer_client_links",
 		"trainer_reviews",
+		"trainer_specialties",
 		"trainer_profiles",
+		"specialties",
 		"translations",
 		"users",
 	}
@@ -162,4 +164,36 @@ func GetAuthToken(e *httpexpect.Expect, email, password string) string {
 
 	response.Value("success").Boolean().IsTrue()
 	return response.Value("data").Object().Value("token").String().Raw()
+}
+
+// SeedTestSpecialties creates test specialties and returns them for use in tests
+func SeedTestSpecialties(t *testing.T) *httpexpect.Expect {
+	if testDB == nil {
+		t.Fatal("Test database not initialized")
+	}
+
+	// Seed specialties that tests will use
+	database.SeedSpecialties()
+
+	return nil
+}
+
+// GetSpecialtyIDs retrieves specialty IDs by names for use in tests
+func GetSpecialtyIDs(t *testing.T, names ...string) []string {
+	if testDB == nil {
+		t.Fatal("Test database not initialized")
+	}
+
+	var ids []string
+	for _, name := range names {
+		var specialty struct {
+			ID string
+		}
+		if err := testDB.Table("specialties").Select("id").Where("name = ?", name).First(&specialty).Error; err != nil {
+			t.Fatalf("Failed to get specialty ID for %s: %v", name, err)
+		}
+		ids = append(ids, specialty.ID)
+	}
+
+	return ids
 }

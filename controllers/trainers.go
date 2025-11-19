@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -38,6 +37,17 @@ func CreateTrainerProfile(c *gin.Context) {
 		return
 	}
 
+	// Validate that all specialty IDs exist
+	var specialties []models.Specialty
+	if err := database.DB.Where("id IN ?", req.SpecialtyIDs).Find(&specialties).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to validate specialties")
+		return
+	}
+	if len(specialties) != len(req.SpecialtyIDs) {
+		utils.BadRequestResponse(c, "One or more specialty IDs are invalid", nil)
+		return
+	}
+
 	// Set default visibility if not provided
 	visibility := req.Visibility
 	if visibility == "" {
@@ -47,7 +57,7 @@ func CreateTrainerProfile(c *gin.Context) {
 	trainerProfile := models.TrainerProfile{
 		UserID:      userID,
 		Bio:         req.Bio,
-		Specialties: pq.StringArray(req.Specialties),
+		Specialties: specialties,
 		HourlyRate:  req.HourlyRate,
 		Location:    req.Location,
 		Visibility:  visibility,
@@ -63,8 +73,14 @@ func CreateTrainerProfile(c *gin.Context) {
 		return
 	}
 
-	// Preload user for response
-	database.DB.Preload("User").First(&trainerProfile, "id = ?", trainerProfile.ID)
+	// Associate specialties with the trainer profile
+	if err := database.DB.Model(&trainerProfile).Association("Specialties").Replace(&specialties); err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to associate specialties")
+		return
+	}
+
+	// Preload user and specialties for response
+	database.DB.Preload("User").Preload("Specialties").First(&trainerProfile, "id = ?", trainerProfile.ID)
 
 	utils.CreatedResponse(c, "Trainer profile created successfully", trainerProfile.ToResponse())
 }
@@ -84,7 +100,7 @@ func GetTrainerProfile(c *gin.Context) {
 	}
 
 	var trainerProfile models.TrainerProfile
-	if err := database.DB.Preload("User").Where("user_id = ?", userID).First(&trainerProfile).Error; err != nil {
+	if err := database.DB.Preload("User").Preload("Specialties").Where("user_id = ?", userID).First(&trainerProfile).Error; err != nil {
 		utils.NotFoundResponse(c, "Trainer profile not found")
 		return
 	}
@@ -134,8 +150,25 @@ func UpdateTrainerProfile(c *gin.Context) {
 	if req.Bio != "" {
 		trainerProfile.Bio = req.Bio
 	}
-	if len(req.Specialties) > 0 {
-		trainerProfile.Specialties = pq.StringArray(req.Specialties)
+	if len(req.SpecialtyIDs) > 0 {
+		// Validate that all specialty IDs exist
+		var specialties []models.Specialty
+		if err := database.DB.Where("id IN ?", req.SpecialtyIDs).Find(&specialties).Error; err != nil {
+			utils.InternalServerErrorResponse(c, "Failed to validate specialties")
+			return
+		}
+		if len(specialties) != len(req.SpecialtyIDs) {
+			utils.BadRequestResponse(c, "One or more specialty IDs are invalid", nil)
+			return
+		}
+
+		// Replace the specialties association
+		if err := database.DB.Model(&trainerProfile).Association("Specialties").Replace(&specialties); err != nil {
+			utils.InternalServerErrorResponse(c, "Failed to update specialties")
+			return
+		}
+
+		trainerProfile.Specialties = specialties
 	}
 	if req.HourlyRate > 0 {
 		trainerProfile.HourlyRate = req.HourlyRate
@@ -157,8 +190,8 @@ func UpdateTrainerProfile(c *gin.Context) {
 		return
 	}
 
-	// Preload user for response
-	database.DB.Preload("User").First(&trainerProfile, "id = ?", trainerProfile.ID)
+	// Preload user and specialties for response
+	database.DB.Preload("User").Preload("Specialties").First(&trainerProfile, "id = ?", trainerProfile.ID)
 
 	utils.SuccessResponse(c, "Trainer profile updated successfully", trainerProfile.ToResponse())
 }
@@ -233,7 +266,7 @@ func GetTrainerPublicProfile(c *gin.Context) {
 	}
 
 	var trainerProfile models.TrainerProfile
-	if err := database.DB.Preload("User").First(&trainerProfile, "id = ?", trainerID).Error; err != nil {
+	if err := database.DB.Preload("User").Preload("Specialties").First(&trainerProfile, "id = ?", trainerID).Error; err != nil {
 		utils.NotFoundResponse(c, "Trainer not found")
 		return
 	}
@@ -271,7 +304,7 @@ func ListTrainers(c *gin.Context) {
 
 	SetDefaultPagination(&queryParams.PaginationQuery)
 
-	query := database.DB.Model(&models.TrainerProfile{}).Preload("User")
+	query := database.DB.Model(&models.TrainerProfile{}).Preload("User").Preload("Specialties")
 
 	// Only show public trainers in list
 	query = query.Where("visibility = ?", "public")
@@ -284,9 +317,11 @@ func ListTrainers(c *gin.Context) {
 				searchPattern, searchPattern, searchPattern)
 	}
 
-	// Filter by specialty (check if array contains the specialty)
+	// Filter by specialty (join with trainer_specialties and specialties)
 	if queryParams.Specialty != "" {
-		query = query.Where("? = ANY(specialties)", queryParams.Specialty)
+		query = query.Joins("JOIN trainer_specialties ON trainer_specialties.trainer_profile_id = trainer_profiles.id").
+			Joins("JOIN specialties ON specialties.id = trainer_specialties.specialty_id").
+			Where("specialties.name ILIKE ?", "%"+queryParams.Specialty+"%")
 	}
 
 	// Filter by location

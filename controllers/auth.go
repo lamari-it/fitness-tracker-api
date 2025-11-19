@@ -8,15 +8,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 )
 
 type TrainerProfileData struct {
-	Bio         string   `json:"bio" binding:"required,min=10,max=1000"`
-	Specialties []string `json:"specialties" binding:"required,min=1,max=20,dive,max=100"`
-	HourlyRate  float64  `json:"hourly_rate" binding:"required,gt=0,lte=9999.99"`
-	Location    string   `json:"location" binding:"required,min=2,max=500"`
-	Visibility  string   `json:"visibility" binding:"omitempty,oneof=public link_only private"`
+	Bio          string      `json:"bio" binding:"required,min=10,max=1000"`
+	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"required,min=1,max=20"`
+	HourlyRate   float64     `json:"hourly_rate" binding:"required,gt=0,lte=9999.99"`
+	Location     string      `json:"location" binding:"required,min=2,max=500"`
+	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
 }
 
 type RegisterRequest struct {
@@ -78,6 +77,17 @@ func Register(c *gin.Context) {
 	// Use transaction if trainer profile is provided
 	var trainerProfile *models.TrainerProfile
 	if req.TrainerProfile != nil {
+		// Validate that all specialty IDs exist
+		var specialties []models.Specialty
+		if err := database.DB.Where("id IN ?", req.TrainerProfile.SpecialtyIDs).Find(&specialties).Error; err != nil {
+			utils.InternalServerErrorResponse(c, "Failed to validate specialties")
+			return
+		}
+		if len(specialties) != len(req.TrainerProfile.SpecialtyIDs) {
+			utils.BadRequestResponse(c, "One or more specialty IDs are invalid", nil)
+			return
+		}
+
 		// Validate trainer profile data
 		visibility := req.TrainerProfile.Visibility
 		if visibility == "" {
@@ -86,7 +96,7 @@ func Register(c *gin.Context) {
 
 		tp := models.TrainerProfile{
 			Bio:         req.TrainerProfile.Bio,
-			Specialties: pq.StringArray(req.TrainerProfile.Specialties),
+			Specialties: specialties,
 			HourlyRate:  req.TrainerProfile.HourlyRate,
 			Location:    req.TrainerProfile.Location,
 			Visibility:  visibility,
@@ -112,13 +122,20 @@ func Register(c *gin.Context) {
 			return
 		}
 
+		// Associate specialties with the trainer profile
+		if err := tx.Model(&tp).Association("Specialties").Replace(&specialties); err != nil {
+			tx.Rollback()
+			utils.InternalServerErrorResponse(c, "Failed to associate specialties")
+			return
+		}
+
 		if err := tx.Commit().Error; err != nil {
 			utils.InternalServerErrorResponse(c, "Failed to complete registration.")
 			return
 		}
 
-		// Preload user for response
-		database.DB.Preload("User").First(&tp, "id = ?", tp.ID)
+		// Preload user and specialties for response
+		database.DB.Preload("User").Preload("Specialties").First(&tp, "id = ?", tp.ID)
 		trainerProfile = &tp
 	} else {
 		if err := database.DB.Create(&user).Error; err != nil {
