@@ -102,13 +102,14 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Successful Profile Creation With Custom Visibility", func(t *testing.T) {
 		customToken := createTestUserAndGetToken(e, "custom@example.com", "CustomPass123!", "Custom", "Trainer")
+		customSpecialtyIDs := GetSpecialtyIDs(t, "Yoga", "Mobility")
 
 		profileData := map[string]interface{}{
-			"bio":         "Private trainer with exclusive clientele.",
-			"specialties": []string{"Executive Coaching", "Private Training"},
-			"hourly_rate": 200.00,
-			"location":    "Beverly Hills, CA",
-			"visibility":  "private",
+			"bio":           "Private trainer with exclusive clientele.",
+			"specialty_ids": customSpecialtyIDs,
+			"hourly_rate":   200.00,
+			"location":      "Beverly Hills, CA",
+			"visibility":    "private",
 		}
 
 		response := e.POST("/api/v1/trainers/profile").
@@ -125,11 +126,13 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Duplicate Profile Creation", func(t *testing.T) {
+		cardioIDs := GetSpecialtyIDs(t, "Cardio")
+
 		profileData := map[string]interface{}{
-			"bio":         "Another trainer bio",
-			"specialties": []string{"Cardio"},
-			"hourly_rate": 50.00,
-			"location":    "Los Angeles, CA",
+			"bio":           "Another trainer bio",
+			"specialty_ids": cardioIDs,
+			"hourly_rate":   50.00,
+			"location":      "Los Angeles, CA",
 		}
 
 		response := e.POST("/api/v1/trainers/profile").
@@ -146,6 +149,7 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Invalid Profile Data", func(t *testing.T) {
 		newToken := createTestUserAndGetToken(e, "newtrainer@example.com", "NewPass123!", "New", "Trainer")
+		strengthIDs := GetSpecialtyIDs(t, "Strength Training")
 
 		testCases := []struct {
 			name        string
@@ -154,45 +158,45 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			{
 				name: "Bio Too Short",
 				profileData: map[string]interface{}{
-					"bio":         "Short",
-					"specialties": []string{"Strength Training"},
-					"hourly_rate": 75.00,
-					"location":    "New York, NY",
+					"bio":           "Short",
+					"specialty_ids": strengthIDs,
+					"hourly_rate":   75.00,
+					"location":      "New York, NY",
 				},
 			},
 			{
 				name: "Empty Specialties",
 				profileData: map[string]interface{}{
-					"bio":         "Certified personal trainer with experience.",
-					"specialties": []string{},
-					"hourly_rate": 75.00,
-					"location":    "New York, NY",
+					"bio":           "Certified personal trainer with experience.",
+					"specialty_ids": []string{},
+					"hourly_rate":   75.00,
+					"location":      "New York, NY",
 				},
 			},
 			{
 				name: "Invalid Hourly Rate",
 				profileData: map[string]interface{}{
-					"bio":         "Certified personal trainer with experience.",
-					"specialties": []string{"Strength Training"},
-					"hourly_rate": -10.00,
-					"location":    "New York, NY",
+					"bio":           "Certified personal trainer with experience.",
+					"specialty_ids": strengthIDs,
+					"hourly_rate":   -10.00,
+					"location":      "New York, NY",
 				},
 			},
 			{
 				name: "Location Too Short",
 				profileData: map[string]interface{}{
-					"bio":         "Certified personal trainer with experience.",
-					"specialties": []string{"Strength Training"},
-					"hourly_rate": 75.00,
-					"location":    "A",
+					"bio":           "Certified personal trainer with experience.",
+					"specialty_ids": strengthIDs,
+					"hourly_rate":   75.00,
+					"location":      "A",
 				},
 			},
 			{
 				name: "Missing Bio",
 				profileData: map[string]interface{}{
-					"specialties": []string{"Strength Training"},
-					"hourly_rate": 75.00,
-					"location":    "New York, NY",
+					"specialty_ids": strengthIDs,
+					"hourly_rate":   75.00,
+					"location":      "New York, NY",
 				},
 			},
 		}
@@ -213,11 +217,13 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Create Profile Without Auth", func(t *testing.T) {
+		authStrengthIDs := GetSpecialtyIDs(t, "Strength Training")
+
 		profileData := map[string]interface{}{
-			"bio":         "Certified personal trainer with experience.",
-			"specialties": []string{"Strength Training"},
-			"hourly_rate": 75.00,
-			"location":    "New York, NY",
+			"bio":           "Certified personal trainer with experience.",
+			"specialty_ids": authStrengthIDs,
+			"hourly_rate":   75.00,
+			"location":      "New York, NY",
 		}
 
 		response := e.POST("/api/v1/trainers/profile").
@@ -232,6 +238,7 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 }
 
 func testGetTrainerProfile(t *testing.T, e *httpexpect.Expect) {
+	SeedTestSpecialties(t)
 	token := createTestUserAndGetToken(e, "getprofile@example.com", "GetPass123!", "Get", "Trainer")
 
 	t.Run("Get Non-existent Profile", func(t *testing.T) {
@@ -247,11 +254,12 @@ func testGetTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	// Create profile first
+	specialtyIDs := GetSpecialtyIDs(t, "Functional Fitness", "Mobility")
 	profileData := map[string]interface{}{
-		"bio":         "Experienced trainer specializing in functional fitness.",
-		"specialties": []string{"Functional Fitness", "Mobility"},
-		"hourly_rate": 60.00,
-		"location":    "San Francisco, CA",
+		"bio":           "Experienced trainer specializing in functional fitness.",
+		"specialty_ids": specialtyIDs,
+		"hourly_rate":   60.00,
+		"location":      "San Francisco, CA",
 	}
 
 	e.POST("/api/v1/trainers/profile").
@@ -298,14 +306,16 @@ func testGetTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 }
 
 func testUpdateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
+	SeedTestSpecialties(t)
 	token := createTestUserAndGetToken(e, "updateprofile@example.com", "UpdatePass123!", "Update", "Trainer")
 
 	// Create profile first
+	initialSpecialtyIDs := GetSpecialtyIDs(t, "Strength Training")
 	profileData := map[string]interface{}{
-		"bio":         "Original bio for the trainer profile.",
-		"specialties": []string{"Strength Training"},
-		"hourly_rate": 50.00,
-		"location":    "Miami, FL",
+		"bio":           "Original bio for the trainer profile.",
+		"specialty_ids": initialSpecialtyIDs,
+		"hourly_rate":   50.00,
+		"location":      "Miami, FL",
 	}
 
 	e.POST("/api/v1/trainers/profile").
@@ -314,12 +324,15 @@ func testUpdateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		Expect().
 		Status(201)
 
+	// Get specialty IDs for update tests - accessible to all subtests
+	updateSpecialtyIDs := GetSpecialtyIDs(t, "Strength Training", "HIIT", "Cardio")
+
 	t.Run("Successful Full Update", func(t *testing.T) {
 		updateData := map[string]interface{}{
-			"bio":         "Updated bio with more experience and certifications.",
-			"specialties": []string{"Strength Training", "Nutrition", "HIIT"},
-			"hourly_rate": 85.00,
-			"location":    "Miami Beach, FL",
+			"bio":           "Updated bio with more experience and certifications.",
+			"specialty_ids": updateSpecialtyIDs,
+			"hourly_rate":   85.00,
+			"location":      "Miami Beach, FL",
 		}
 
 		response := e.PUT("/api/v1/trainers/profile").
@@ -342,7 +355,8 @@ func testUpdateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Partial Update - Bio Only", func(t *testing.T) {
 		updateData := map[string]interface{}{
-			"bio": "Another updated bio content here.",
+			"bio":           "Another updated bio content here.",
+			"specialty_ids": updateSpecialtyIDs, // Required for validation
 		}
 
 		response := e.PUT("/api/v1/trainers/profile").
@@ -363,7 +377,8 @@ func testUpdateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Partial Update - Hourly Rate Only", func(t *testing.T) {
 		updateData := map[string]interface{}{
-			"hourly_rate": 100.00,
+			"hourly_rate":   100.00,
+			"specialty_ids": updateSpecialtyIDs, // Required for validation
 		}
 
 		response := e.PUT("/api/v1/trainers/profile").
@@ -381,7 +396,8 @@ func testUpdateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Update Visibility", func(t *testing.T) {
 		updateData := map[string]interface{}{
-			"visibility": "link_only",
+			"visibility":    "link_only",
+			"specialty_ids": updateSpecialtyIDs, // Required for validation
 		}
 
 		response := e.PUT("/api/v1/trainers/profile").
@@ -433,6 +449,7 @@ func testUpdateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 }
 
 func testDeleteTrainerProfile(t *testing.T, e *httpexpect.Expect) {
+	SeedTestSpecialties(t)
 	token := createTestUserAndGetToken(e, "deleteprofile@example.com", "DeletePass123!", "Delete", "Trainer")
 
 	t.Run("Delete Non-existent Profile", func(t *testing.T) {
@@ -448,11 +465,12 @@ func testDeleteTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	// Create profile first
+	cardioIDs := GetSpecialtyIDs(t, "Cardio")
 	profileData := map[string]interface{}{
-		"bio":         "Profile to be deleted.",
-		"specialties": []string{"Cardio"},
-		"hourly_rate": 40.00,
-		"location":    "Boston, MA",
+		"bio":           "Profile to be deleted.",
+		"specialty_ids": cardioIDs,
+		"hourly_rate":   40.00,
+		"location":      "Boston, MA",
 	}
 
 	e.POST("/api/v1/trainers/profile").
@@ -490,6 +508,8 @@ func testDeleteTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 }
 
 func testListTrainers(t *testing.T, e *httpexpect.Expect) {
+	SeedTestSpecialties(t)
+
 	// Create multiple trainers
 	trainer1Token := createTestUserAndGetToken(e, "trainer1@example.com", "Pass123!", "Alice", "Smith")
 	trainer2Token := createTestUserAndGetToken(e, "trainer2@example.com", "Pass123!", "Bob", "Jones")
@@ -498,13 +518,20 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 	trainer5Token := createTestUserAndGetToken(e, "trainer5@example.com", "Pass123!", "Eve", "Davis")
 	regularUserToken := createTestUserAndGetToken(e, "regular@example.com", "Pass123!", "Regular", "User")
 
+	// Get specialty IDs for profiles
+	strengthBodybuildingIDs := GetSpecialtyIDs(t, "Strength Training", "Bodybuilding")
+	yogaMobilityIDs := GetSpecialtyIDs(t, "Yoga", "Mobility")
+	cardioHIITIDs := GetSpecialtyIDs(t, "Cardio", "HIIT", "Weight Loss")
+	functionalIDs := GetSpecialtyIDs(t, "Functional Fitness")
+	rehabIDs := GetSpecialtyIDs(t, "Rehabilitation")
+
 	// Create trainer profiles with different visibility settings
 	profile1 := map[string]interface{}{
-		"bio":         "Strength training expert with certifications.",
-		"specialties": []string{"Strength Training", "Bodybuilding"},
-		"hourly_rate": 80.00,
-		"location":    "New York, NY",
-		"visibility":  "public",
+		"bio":           "Strength training expert with certifications.",
+		"specialty_ids": strengthBodybuildingIDs,
+		"hourly_rate":   80.00,
+		"location":      "New York, NY",
+		"visibility":    "public",
 	}
 	e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+trainer1Token).
@@ -513,11 +540,11 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 		Status(201)
 
 	profile2 := map[string]interface{}{
-		"bio":         "Yoga and mobility specialist.",
-		"specialties": []string{"Yoga", "Mobility", "Flexibility"},
-		"hourly_rate": 60.00,
-		"location":    "Los Angeles, CA",
-		"visibility":  "public",
+		"bio":           "Yoga and mobility specialist.",
+		"specialty_ids": yogaMobilityIDs,
+		"hourly_rate":   60.00,
+		"location":      "Los Angeles, CA",
+		"visibility":    "public",
 	}
 	e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+trainer2Token).
@@ -526,11 +553,11 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 		Status(201)
 
 	profile3 := map[string]interface{}{
-		"bio":         "Cardio and HIIT training expert.",
-		"specialties": []string{"Cardio", "HIIT", "Weight Loss"},
-		"hourly_rate": 70.00,
-		"location":    "New York, NY",
-		"visibility":  "public",
+		"bio":           "Cardio and HIIT training expert.",
+		"specialty_ids": cardioHIITIDs,
+		"hourly_rate":   70.00,
+		"location":      "New York, NY",
+		"visibility":    "public",
 	}
 	e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+trainer3Token).
@@ -540,11 +567,11 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 
 	// Create link_only profile - should NOT appear in list
 	profile4 := map[string]interface{}{
-		"bio":         "Exclusive trainer for link-only access.",
-		"specialties": []string{"VIP Training"},
-		"hourly_rate": 150.00,
-		"location":    "New York, NY",
-		"visibility":  "link_only",
+		"bio":           "Exclusive trainer for link-only access.",
+		"specialty_ids": functionalIDs,
+		"hourly_rate":   150.00,
+		"location":      "New York, NY",
+		"visibility":    "link_only",
 	}
 	e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+trainer4Token).
@@ -554,11 +581,11 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 
 	// Create private profile - should NOT appear in list
 	profile5 := map[string]interface{}{
-		"bio":         "Private trainer not listed publicly.",
-		"specialties": []string{"Private Training"},
-		"hourly_rate": 250.00,
-		"location":    "New York, NY",
-		"visibility":  "private",
+		"bio":           "Private trainer not listed publicly.",
+		"specialty_ids": rehabIDs,
+		"hourly_rate":   250.00,
+		"location":      "New York, NY",
+		"visibility":    "private",
 	}
 	e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+trainer5Token).
@@ -697,15 +724,17 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 }
 
 func testGetTrainerPublicProfile(t *testing.T, e *httpexpect.Expect) {
+	SeedTestSpecialties(t)
 	trainerToken := createTestUserAndGetToken(e, "publictrainer@example.com", "PublicPass123!", "Public", "Trainer")
 	clientToken := createTestUserAndGetToken(e, "client@example.com", "ClientPass123!", "Client", "User")
 
 	// Create trainer profile
+	specialtyIDs := GetSpecialtyIDs(t, "Strength Training", "Cardio")
 	profileData := map[string]interface{}{
-		"bio":         "Public trainer profile for viewing.",
-		"specialties": []string{"Personal Training", "Nutrition"},
-		"hourly_rate": 65.00,
-		"location":    "Chicago, IL",
+		"bio":           "Public trainer profile for viewing.",
+		"specialty_ids": specialtyIDs,
+		"hourly_rate":   65.00,
+		"location":      "Chicago, IL",
 	}
 
 	createResponse := e.POST("/api/v1/trainers/profile").
@@ -784,19 +813,26 @@ func testGetTrainerPublicProfile(t *testing.T, e *httpexpect.Expect) {
 }
 
 func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
+	SeedTestSpecialties(t)
+
 	// Create trainers with different visibility settings
 	publicTrainerToken := createTestUserAndGetToken(e, "public_trainer@example.com", "Pass123!", "Public", "Trainer")
 	linkOnlyTrainerToken := createTestUserAndGetToken(e, "linkonly_trainer@example.com", "Pass123!", "LinkOnly", "Trainer")
 	privateTrainerToken := createTestUserAndGetToken(e, "private_trainer@example.com", "Pass123!", "Private", "Trainer")
 	viewerToken := createTestUserAndGetToken(e, "viewer@example.com", "Pass123!", "Viewer", "User")
 
+	// Get specialty IDs
+	strengthIDs := GetSpecialtyIDs(t, "Strength Training")
+	yogaIDs := GetSpecialtyIDs(t, "Yoga")
+	cardioIDs := GetSpecialtyIDs(t, "Cardio")
+
 	// Create public profile
 	publicProfile := map[string]interface{}{
-		"bio":         "Public trainer visible to everyone.",
-		"specialties": []string{"Public Training"},
-		"hourly_rate": 50.00,
-		"location":    "Public City",
-		"visibility":  "public",
+		"bio":           "Public trainer visible to everyone.",
+		"specialty_ids": strengthIDs,
+		"hourly_rate":   50.00,
+		"location":      "Public City",
+		"visibility":    "public",
 	}
 	publicResp := e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+publicTrainerToken).
@@ -809,11 +845,11 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 
 	// Create link_only profile
 	linkOnlyProfile := map[string]interface{}{
-		"bio":         "Link-only trainer viewable with direct link.",
-		"specialties": []string{"Link Only Training"},
-		"hourly_rate": 100.00,
-		"location":    "Link City",
-		"visibility":  "link_only",
+		"bio":           "Link-only trainer viewable with direct link.",
+		"specialty_ids": yogaIDs,
+		"hourly_rate":   100.00,
+		"location":      "Link City",
+		"visibility":    "link_only",
 	}
 	linkOnlyResp := e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+linkOnlyTrainerToken).
@@ -826,11 +862,11 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 
 	// Create private profile
 	privateProfile := map[string]interface{}{
-		"bio":         "Private trainer only visible to owner.",
-		"specialties": []string{"Private Training"},
-		"hourly_rate": 200.00,
-		"location":    "Private City",
-		"visibility":  "private",
+		"bio":           "Private trainer only visible to owner.",
+		"specialty_ids": cardioIDs,
+		"hourly_rate":   200.00,
+		"location":      "Private City",
+		"visibility":    "private",
 	}
 	privateResp := e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+privateTrainerToken).
@@ -914,7 +950,8 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Owner Can Edit Own Private Profile", func(t *testing.T) {
 		updateData := map[string]interface{}{
-			"bio": "Updated private trainer bio content.",
+			"bio":           "Updated private trainer bio content.",
+			"specialty_ids": cardioIDs, // Required for validation
 		}
 
 		response := e.PUT("/api/v1/trainers/profile").
@@ -933,12 +970,13 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 	t.Run("Owner Can Delete Own Profile", func(t *testing.T) {
 		// Create a new trainer to delete
 		deleteToken := createTestUserAndGetToken(e, "delete_test@example.com", "Pass123!", "Delete", "Test")
+		deleteSpecialtyIDs := GetSpecialtyIDs(t, "HIIT")
 		deleteProfile := map[string]interface{}{
-			"bio":         "Profile to be deleted by owner.",
-			"specialties": []string{"Deletion Testing"},
-			"hourly_rate": 50.00,
-			"location":    "Delete City",
-			"visibility":  "private",
+			"bio":           "Profile to be deleted by owner.",
+			"specialty_ids": deleteSpecialtyIDs,
+			"hourly_rate":   50.00,
+			"location":      "Delete City",
+			"visibility":    "private",
 		}
 		e.POST("/api/v1/trainers/profile").
 			WithHeader("Authorization", "Bearer "+deleteToken).
@@ -953,8 +991,10 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Change Visibility From Private To Public", func(t *testing.T) {
+		// Include specialty_ids to satisfy validation requirement
 		updateData := map[string]interface{}{
-			"visibility": "public",
+			"visibility":    "public",
+			"specialty_ids": cardioIDs,
 		}
 
 		response := e.PUT("/api/v1/trainers/profile").

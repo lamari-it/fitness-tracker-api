@@ -123,6 +123,57 @@ type UserPublicResponse struct {
 	LastName  string    `json:"last_name"`
 }
 
+// TrainerClientLink Request DTOs
+type InviteClientRequest struct {
+	ClientID uuid.UUID `json:"client_id" binding:"required"`
+}
+
+type RespondToInvitationRequest struct {
+	Action string `json:"action" binding:"required,oneof=accept reject"`
+}
+
+// TrainerClientLink Response DTOs
+type TrainerClientLinkResponse struct {
+	ID        uuid.UUID           `json:"id"`
+	TrainerID uuid.UUID           `json:"trainer_id"`
+	ClientID  uuid.UUID           `json:"client_id"`
+	Status    string              `json:"status"`
+	Trainer   *UserPublicResponse `json:"trainer,omitempty"`
+	Client    *UserPublicResponse `json:"client,omitempty"`
+	CreatedAt time.Time           `json:"created_at"`
+	UpdatedAt time.Time           `json:"updated_at"`
+}
+
+// ToResponse converts TrainerClientLink to response format
+func (tcl *TrainerClientLink) ToResponse() TrainerClientLinkResponse {
+	resp := TrainerClientLinkResponse{
+		ID:        tcl.ID,
+		TrainerID: tcl.TrainerID,
+		ClientID:  tcl.ClientID,
+		Status:    tcl.Status,
+		CreatedAt: tcl.CreatedAt,
+		UpdatedAt: tcl.UpdatedAt,
+	}
+
+	if tcl.Trainer.ID != uuid.Nil {
+		resp.Trainer = &UserPublicResponse{
+			ID:        tcl.Trainer.ID,
+			FirstName: tcl.Trainer.FirstName,
+			LastName:  tcl.Trainer.LastName,
+		}
+	}
+
+	if tcl.Client.ID != uuid.Nil {
+		resp.Client = &UserPublicResponse{
+			ID:        tcl.Client.ID,
+			FirstName: tcl.Client.FirstName,
+			LastName:  tcl.Client.LastName,
+		}
+	}
+
+	return resp
+}
+
 // Helper methods
 func (tp *TrainerProfile) ToResponse() TrainerProfileResponse {
 	// Convert specialties to response format

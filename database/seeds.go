@@ -2411,6 +2411,74 @@ func SeedTrainerProfiles() {
 	}
 }
 
+func SeedTrainerClientLinks() {
+	// Get users and trainer profiles
+	var users []models.User
+	DB.Limit(4).Find(&users)
+
+	if len(users) < 3 {
+		log.Println("Not enough users to seed trainer-client links")
+		return
+	}
+
+	// Get trainer profiles to find trainer user IDs
+	var trainerProfiles []models.TrainerProfile
+	DB.Limit(2).Find(&trainerProfiles)
+
+	if len(trainerProfiles) < 1 {
+		log.Println("No trainer profiles found to seed trainer-client links")
+		return
+	}
+
+	// Create sample trainer-client relationships
+	// Using the first trainer with users who aren't trainers
+	trainerUserID := trainerProfiles[0].UserID
+
+	// Find users who aren't this trainer
+	var clientUsers []models.User
+	for _, user := range users {
+		if user.ID != trainerUserID {
+			clientUsers = append(clientUsers, user)
+		}
+	}
+
+	if len(clientUsers) < 2 {
+		log.Println("Not enough client users to seed trainer-client links")
+		return
+	}
+
+	// Create one active and one pending relationship
+	links := []models.TrainerClientLink{
+		{
+			TrainerID: trainerUserID,
+			ClientID:  clientUsers[0].ID,
+			Status:    "active",
+		},
+	}
+
+	// Add pending if we have another user
+	if len(clientUsers) >= 2 {
+		links = append(links, models.TrainerClientLink{
+			TrainerID: trainerUserID,
+			ClientID:  clientUsers[1].ID,
+			Status:    "pending",
+		})
+	}
+
+	for _, link := range links {
+		var existing models.TrainerClientLink
+		if err := DB.Where("trainer_id = ? AND client_id = ?", link.TrainerID, link.ClientID).First(&existing).Error; err != nil {
+			if err := DB.Create(&link).Error; err != nil {
+				log.Printf("Failed to create trainer-client link: %v", err)
+			} else {
+				log.Printf("Created trainer-client link: trainer=%s, client=%s, status=%s", link.TrainerID, link.ClientID, link.Status)
+			}
+		} else {
+			log.Printf("Trainer-client link already exists: trainer=%s, client=%s", link.TrainerID, link.ClientID)
+		}
+	}
+}
+
 func SeedDatabase() {
 	log.Println("Starting database seeding...")
 	SeedMuscleGroups()
@@ -2438,6 +2506,9 @@ func SeedDatabase() {
 
 	// Seed trainer profiles
 	SeedTrainerProfiles()
+
+	// Seed trainer-client links (must be after trainer profiles)
+	SeedTrainerClientLinks()
 
 	log.Println("Database seeding completed!")
 }

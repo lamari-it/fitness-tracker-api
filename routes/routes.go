@@ -198,9 +198,22 @@ func SetupRoutes(r *gin.Engine) {
 				trainers.PUT("/profile", controllers.UpdateTrainerProfile)
 				trainers.DELETE("/profile", controllers.DeleteTrainerProfile)
 
+				// Client management (trainer side)
+				trainers.POST("/clients", controllers.InviteClient)
+				trainers.GET("/clients", controllers.GetTrainerClients)
+				trainers.DELETE("/clients/:id", controllers.RemoveClient)
+
 				// Public trainer endpoints
 				trainers.GET("/", controllers.ListTrainers)
 				trainers.GET("/:id", controllers.GetTrainerPublicProfile)
+			}
+
+			// User's trainer relationships (client side)
+			me := protected.Group("/me")
+			{
+				me.GET("/trainers", controllers.GetMyTrainers)
+				me.GET("/trainer-invitations", controllers.GetMyTrainerInvitations)
+				me.PUT("/trainer-invitations/:id", controllers.RespondToInvitation)
 			}
 
 			// Specialties
