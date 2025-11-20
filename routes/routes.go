@@ -126,6 +126,27 @@ func SetupRoutes(r *gin.Engine) {
 				userFitness.PUT("/level", controllers.UpdateUserFitnessLevel)
 			}
 
+			// User Fitness Profile
+			userFitnessProfile := protected.Group("/user/fitness-profile")
+			{
+				userFitnessProfile.POST("", controllers.CreateUserFitnessProfile)
+				userFitnessProfile.GET("", controllers.GetUserFitnessProfile)
+				userFitnessProfile.PUT("", controllers.UpdateUserFitnessProfile)
+				userFitnessProfile.DELETE("", controllers.DeleteUserFitnessProfile)
+				userFitnessProfile.POST("/log-weight", controllers.LogWeight)
+			}
+
+			// Weight Logs
+			weightLogs := protected.Group("/user/weight-logs")
+			{
+				weightLogs.POST("", controllers.CreateWeightLog)
+				weightLogs.GET("", controllers.GetWeightLogs)
+				weightLogs.GET("/stats", controllers.GetWeightStats)
+				weightLogs.GET("/:id", controllers.GetWeightLog)
+				weightLogs.PUT("/:id", controllers.UpdateWeightLog)
+				weightLogs.DELETE("/:id", controllers.DeleteWeightLog)
+			}
+
 			// User Equipment
 			userEquipment := protected.Group("/user/equipment")
 			{

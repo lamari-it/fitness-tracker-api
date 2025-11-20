@@ -1894,6 +1894,416 @@
       "description": "User-specific fitness settings endpoints"
     },
     {
+      "name": "User Fitness Profile",
+      "item": [
+        {
+          "name": "Create Fitness Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('fitness_profile_id', jsonData.data.id);",
+                  "    pm.test('Fitness profile created successfully', function () {",
+                  "        pm.expect(jsonData.data.id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.gender).to.be.oneOf(['male', 'female', 'other', 'prefer_not_to_say']);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date_of_birth\": \"1990-05-15\",\n  \"gender\": \"male\",\n  \"height_cm\": 180.5,\n  \"current_weight_kg\": 80,\n  \"primary_goal\": \"muscle_gain\",\n  \"preferred_unit_system\": \"metric\",\n  \"target_weight_kg\": 85,\n  \"target_weekly_workouts\": 4,\n  \"activity_level\": \"active\",\n  \"training_locations\": [\"gym\", \"home\"],\n  \"preferred_workout_duration_mins\": 60,\n  \"available_days\": [\"monday\", \"wednesday\", \"friday\", \"saturday\"],\n  \"health_conditions\": \"None\",\n  \"injuries_notes\": \"Minor shoulder strain - recovering\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/fitness-profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "fitness-profile"
+              ]
+            },
+            "description": "Create fitness profile for the authenticated user. Required fields: date_of_birth, gender, height_cm, current_weight_kg, primary_goal. Optional fields have defaults."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Fitness Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/fitness-profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "fitness-profile"
+              ]
+            },
+            "description": "Get the authenticated user's fitness profile with unit conversions (metric and imperial)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Fitness Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_weight_kg\": 82,\n  \"primary_goal\": \"strength\",\n  \"target_weekly_workouts\": 5,\n  \"activity_level\": \"very_active\",\n  \"training_locations\": [\"gym\"],\n  \"available_days\": [\"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/fitness-profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "fitness-profile"
+              ]
+            },
+            "description": "Update fitness profile. All fields are optional - only provided fields will be updated."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Fitness Profile",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/fitness-profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "fitness-profile"
+              ]
+            },
+            "description": "Delete the authenticated user's fitness profile (soft delete)"
+          },
+          "response": []
+        },
+        {
+          "name": "Log Weight",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weight_kg\": 81.5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/fitness-profile/log-weight",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "fitness-profile",
+                "log-weight"
+              ]
+            },
+            "description": "Quick endpoint to log current weight (updates current_weight_kg in fitness profile)"
+          },
+          "response": []
+        }
+      ],
+      "description": "User fitness profile management - physical stats, goals, and training preferences"
+    },
+    {
+      "name": "Weight Logs",
+      "item": [
+        {
+          "name": "Create Weight Log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('weight_log_id', jsonData.data.id);",
+                  "    pm.test('Weight log created successfully', function () {",
+                  "        pm.expect(jsonData.data.id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.weight_kg).to.be.a('number');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weight_kg\": 80.5,\n  \"notes\": \"Morning weigh-in\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/weight-logs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "weight-logs"
+              ]
+            },
+            "description": "Create a new weight log entry. Also updates current_weight_kg in fitness profile if one exists."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weight Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/weight-logs?page=1&limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "weight-logs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page (default: 20, max: 100)"
+                },
+                {
+                  "key": "start_date",
+                  "value": "2024-01-01",
+                  "description": "Filter logs from this date (YYYY-MM-DD)",
+                  "disabled": true
+                },
+                {
+                  "key": "end_date",
+                  "value": "2024-12-31",
+                  "description": "Filter logs until this date (YYYY-MM-DD)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated weight history with optional date filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weight Log",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/weight-logs/{{weight_log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "weight-logs",
+                "{{weight_log_id}}"
+              ]
+            },
+            "description": "Get a specific weight log entry"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Weight Log",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weight_kg\": 80.0,\n  \"notes\": \"Updated notes\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/weight-logs/{{weight_log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "weight-logs",
+                "{{weight_log_id}}"
+              ]
+            },
+            "description": "Update a weight log entry. Only allowed within 24 hours of creation."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Weight Log",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/weight-logs/{{weight_log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "weight-logs",
+                "{{weight_log_id}}"
+              ]
+            },
+            "description": "Delete a weight log entry (soft delete)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weight Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/weight-logs/stats?days=30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "weight-logs",
+                "stats"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30",
+                  "description": "Number of days to calculate stats for (default: 30, max: 365)"
+                }
+              ]
+            },
+            "description": "Get weight statistics including min, max, avg, and trend over a period"
+          },
+          "response": []
+        }
+      ],
+      "description": "Weight tracking history and statistics"
+    },
+    {
       "name": "User Equipment",
       "item": [
         {
