@@ -26,6 +26,14 @@ type Config struct {
 	AppleRedirectURL    string
 	UseMigrations       bool
 	Environment         string
+	// Email configuration
+	SMTPHost            string
+	SMTPPort            string
+	SMTPUsername        string
+	SMTPPassword        string
+	SMTPFromEmail       string
+	SMTPFromName        string
+	AppURL              string
 }
 
 var AppConfig *Config
@@ -55,6 +63,14 @@ func LoadConfig() {
 		AppleRedirectURL:    getEnv("APPLE_REDIRECT_URL", ""),
 		UseMigrations:       getEnv("USE_MIGRATIONS", "false") == "true",
 		Environment:         getEnv("APP_ENV", "development"),
+		// Email configuration
+		SMTPHost:            getEnv("SMTP_HOST", "localhost"),
+		SMTPPort:            getEnv("SMTP_PORT", "587"),
+		SMTPUsername:        getEnv("SMTP_USERNAME", ""),
+		SMTPPassword:        getEnv("SMTP_PASSWORD", ""),
+		SMTPFromEmail:       getEnv("SMTP_FROM_EMAIL", "noreply@fitflow.com"),
+		SMTPFromName:        getEnv("SMTP_FROM_NAME", "FitFlow"),
+		AppURL:              getEnv("APP_URL", "http://localhost:3000"),
 	}
 }
 

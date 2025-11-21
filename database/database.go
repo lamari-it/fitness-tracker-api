@@ -71,6 +71,7 @@ func AutoMigrate() {
 		&models.TrainerSpecialty{},
 		&models.TrainerReview{},
 		&models.TrainerClientLink{},
+		&models.TrainerInvitation{},
 		&models.Friendship{},
 		&models.MuscleGroup{},
 		&models.Exercise{},

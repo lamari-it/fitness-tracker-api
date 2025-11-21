@@ -122,6 +122,7 @@ func CleanDatabase(t *testing.T) {
 		"fitness_goals",
 		"fitness_levels",
 		"friendships",
+		"trainer_invitations",
 		"trainer_client_links",
 		"trainer_reviews",
 		"trainer_specialties",

@@ -4840,6 +4840,168 @@
       "description": "Trainer-client relationship management. Trainers can invite clients, and clients can accept/reject invitations."
     },
     {
+      "name": "Email Invitations",
+      "item": [
+        {
+          "name": "Create Email Invitation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('email_invitation_id', jsonData.data.id);",
+                  "    pm.test('Email invitation created successfully', function () {",
+                  "        pm.expect(jsonData.data.id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.invitee_email).to.be.a('string');",
+                  "        pm.expect(jsonData.data.status).to.equal('pending');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"potentialclient@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/trainers/email-invitations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trainers",
+                "email-invitations"
+              ]
+            },
+            "description": "Send an email invitation to a potential client. The invitee will receive an email with a link to register or accept. When they register, a pending trainer-client link is automatically created."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Email Invitations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/trainers/email-invitations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trainers",
+                "email-invitations"
+              ]
+            },
+            "description": "Get all email invitations sent by the authenticated trainer"
+          },
+          "response": []
+        },
+        {
+          "name": "Resend Email Invitation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/trainers/email-invitations/{{email_invitation_id}}/resend",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trainers",
+                "email-invitations",
+                "{{email_invitation_id}}",
+                "resend"
+              ]
+            },
+            "description": "Resend an email invitation with a new token and extended expiration"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Email Invitation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/trainers/email-invitations/{{email_invitation_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trainers",
+                "email-invitations",
+                "{{email_invitation_id}}"
+              ]
+            },
+            "description": "Cancel a pending email invitation"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Invitation Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/invitations/verify/{{invitation_token}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "invitations",
+                "verify",
+                "{{invitation_token}}"
+              ]
+            },
+            "description": "Verify an invitation token (public endpoint, no auth required). Returns trainer info and invitation details if valid."
+          },
+          "response": []
+        }
+      ],
+      "description": "Email-based invitations for trainers to invite potential clients who may not have accounts yet. Invitations are converted to trainer-client links when the invitee registers."
+    },
+    {
       "name": "Specialties",
       "item": [
         {

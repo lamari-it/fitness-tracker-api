@@ -3,7 +3,7 @@ package controllers
 // PaginationQuery represents common pagination parameters with validation
 type PaginationQuery struct {
 	Page  int `form:"page" validate:"min=1" binding:"omitempty,min=1"`
-	Limit int `form:"limit" validate:"min=1,max=50" binding:"omitempty,min=1,max=50"`
+	Limit int `form:"limit" validate:"min=1,max=100" binding:"omitempty,min=1,max=50"`
 }
 
 // ExerciseQuery represents query parameters for exercise endpoints

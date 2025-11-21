@@ -87,7 +87,7 @@ func GetAllEquipment(c *gin.Context) {
 		responses[i] = eq.ToResponse()
 	}
 
-	utils.PaginatedResponse(c, "Equipment list retrieved successfully", responses, queryParams.Page, queryParams.Limit, int(total))
+	utils.PaginatedResponse(c, "  list retrieved successfully", responses, queryParams.Page, queryParams.Limit, int(total))
 }
 
 // GetEquipmentByID retrieves a specific equipment by ID

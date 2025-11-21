@@ -43,6 +43,9 @@ func SetupRoutes(r *gin.Engine) {
 			auth.GET("/profile", controllers.GetProfile)
 		}
 
+		// Public invitation verification (no auth required)
+		api.GET("/invitations/verify/:token", controllers.VerifyInvitationToken)
+
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware())
 		{
@@ -223,6 +226,12 @@ func SetupRoutes(r *gin.Engine) {
 				trainers.POST("/clients", controllers.InviteClient)
 				trainers.GET("/clients", controllers.GetTrainerClients)
 				trainers.DELETE("/clients/:id", controllers.RemoveClient)
+
+				// Email invitations (trainer side)
+				trainers.POST("/email-invitations", controllers.CreateEmailInvitation)
+				trainers.GET("/email-invitations", controllers.GetEmailInvitations)
+				trainers.DELETE("/email-invitations/:id", controllers.CancelEmailInvitation)
+				trainers.POST("/email-invitations/:id/resend", controllers.ResendEmailInvitation)
 
 				// Public trainer endpoints
 				trainers.GET("/", controllers.ListTrainers)

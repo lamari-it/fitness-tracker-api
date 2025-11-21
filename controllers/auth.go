@@ -144,6 +144,33 @@ func Register(c *gin.Context) {
 		}
 	}
 
+	// Check for pending email invitations and create TrainerClientLinks
+	var pendingInvitations []models.TrainerInvitation
+	if err := database.DB.Where("invitee_email = ? AND status = ?", strings.ToLower(req.Email), models.InvitationStatusPending).Find(&pendingInvitations).Error; err == nil {
+		for _, invitation := range pendingInvitations {
+			// Skip expired invitations
+			if invitation.IsExpired() {
+				invitation.Status = models.InvitationStatusExpired
+				database.DB.Save(&invitation)
+				continue
+			}
+
+			// Create pending TrainerClientLink
+			clientLink := models.TrainerClientLink{
+				TrainerID: invitation.TrainerID,
+				ClientID:  user.ID,
+				Status:    "pending",
+			}
+			database.DB.Create(&clientLink)
+
+			// Mark invitation as accepted
+			invitation.Status = models.InvitationStatusAccepted
+			now := database.DB.NowFunc()
+			invitation.AcceptedAt = &now
+			database.DB.Save(&invitation)
+		}
+	}
+
 	token, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to generate authentication token.")
