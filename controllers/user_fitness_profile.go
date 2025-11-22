@@ -45,6 +45,17 @@ func CreateUserFitnessProfile(c *gin.Context) {
 		return
 	}
 
+	// Validate that all fitness goal IDs exist
+	var fitnessGoals []models.FitnessGoal
+	if err := database.DB.Where("id IN ?", req.FitnessGoalIDs).Find(&fitnessGoals).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to validate fitness goals")
+		return
+	}
+	if len(fitnessGoals) != len(req.FitnessGoalIDs) {
+		utils.BadRequestResponse(c, "One or more fitness goal IDs are invalid", nil)
+		return
+	}
+
 	// Create profile with defaults for optional fields
 	profile := models.UserFitnessProfile{
 		UserID:          userID,
@@ -52,7 +63,6 @@ func CreateUserFitnessProfile(c *gin.Context) {
 		Gender:          req.Gender,
 		HeightCm:        req.HeightCm,
 		CurrentWeightKg: req.CurrentWeightKg,
-		PrimaryGoal:     req.PrimaryGoal,
 	}
 
 	// Set optional fields with defaults
@@ -99,10 +109,36 @@ func CreateUserFitnessProfile(c *gin.Context) {
 	profile.HealthConditions = req.HealthConditions
 	profile.InjuriesNotes = req.InjuriesNotes
 
-	if err := database.DB.Create(&profile).Error; err != nil {
+	// Use transaction for profile creation and goal associations
+	tx := database.DB.Begin()
+
+	if err := tx.Create(&profile).Error; err != nil {
+		tx.Rollback()
 		utils.InternalServerErrorResponse(c, "Failed to create fitness profile")
 		return
 	}
+
+	// Create fitness goal associations
+	for i, goalID := range req.FitnessGoalIDs {
+		userGoal := models.UserFitnessGoal{
+			UserFitnessProfileID: profile.ID,
+			FitnessGoalID:        goalID,
+			Priority:             i + 1, // First goal is primary (priority 1)
+		}
+		if err := tx.Create(&userGoal).Error; err != nil {
+			tx.Rollback()
+			utils.InternalServerErrorResponse(c, "Failed to associate fitness goals")
+			return
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to create fitness profile")
+		return
+	}
+
+	// Preload fitness goals for response
+	database.DB.Preload("FitnessGoals.FitnessGoal").First(&profile, "id = ?", profile.ID)
 
 	utils.CreatedResponse(c, "Fitness profile created successfully", profile.ToResponse())
 }
@@ -122,7 +158,7 @@ func GetUserFitnessProfile(c *gin.Context) {
 	}
 
 	var profile models.UserFitnessProfile
-	if err := database.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
+	if err := database.DB.Preload("FitnessGoals.FitnessGoal").Where("user_id = ?", userID).First(&profile).Error; err != nil {
 		utils.NotFoundResponse(c, "Fitness profile not found")
 		return
 	}
@@ -182,10 +218,6 @@ func UpdateUserFitnessProfile(c *gin.Context) {
 		profile.PreferredUnitSystem = req.PreferredUnitSystem
 	}
 
-	if req.PrimaryGoal != "" {
-		profile.PrimaryGoal = req.PrimaryGoal
-	}
-
 	if req.TargetWeightKg != nil {
 		profile.TargetWeightKg = req.TargetWeightKg
 	}
@@ -218,10 +250,62 @@ func UpdateUserFitnessProfile(c *gin.Context) {
 		profile.InjuriesNotes = req.InjuriesNotes
 	}
 
-	if err := database.DB.Save(&profile).Error; err != nil {
-		utils.InternalServerErrorResponse(c, "Failed to update fitness profile")
-		return
+	// Use transaction if updating fitness goals
+	if len(req.FitnessGoalIDs) > 0 {
+		// Validate that all fitness goal IDs exist
+		var fitnessGoals []models.FitnessGoal
+		if err := database.DB.Where("id IN ?", req.FitnessGoalIDs).Find(&fitnessGoals).Error; err != nil {
+			utils.InternalServerErrorResponse(c, "Failed to validate fitness goals")
+			return
+		}
+		if len(fitnessGoals) != len(req.FitnessGoalIDs) {
+			utils.BadRequestResponse(c, "One or more fitness goal IDs are invalid", nil)
+			return
+		}
+
+		tx := database.DB.Begin()
+
+		// Save profile updates
+		if err := tx.Save(&profile).Error; err != nil {
+			tx.Rollback()
+			utils.InternalServerErrorResponse(c, "Failed to update fitness profile")
+			return
+		}
+
+		// Delete existing goal associations
+		if err := tx.Where("user_fitness_profile_id = ?", profile.ID).Delete(&models.UserFitnessGoal{}).Error; err != nil {
+			tx.Rollback()
+			utils.InternalServerErrorResponse(c, "Failed to update fitness goals")
+			return
+		}
+
+		// Create new goal associations
+		for i, goalID := range req.FitnessGoalIDs {
+			userGoal := models.UserFitnessGoal{
+				UserFitnessProfileID: profile.ID,
+				FitnessGoalID:        goalID,
+				Priority:             i + 1,
+			}
+			if err := tx.Create(&userGoal).Error; err != nil {
+				tx.Rollback()
+				utils.InternalServerErrorResponse(c, "Failed to associate fitness goals")
+				return
+			}
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			utils.InternalServerErrorResponse(c, "Failed to update fitness profile")
+			return
+		}
+	} else {
+		if err := database.DB.Save(&profile).Error; err != nil {
+			utils.InternalServerErrorResponse(c, "Failed to update fitness profile")
+			return
+		}
 	}
+
+	// Preload fitness goals for response
+	database.DB.Preload("FitnessGoals.FitnessGoal").First(&profile, "id = ?", profile.ID)
 
 	utils.SuccessResponse(c, "Fitness profile updated successfully", profile.ToResponse())
 }

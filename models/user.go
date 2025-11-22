@@ -24,9 +24,8 @@ type User struct {
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
-	FitnessLevel *FitnessLevel     `gorm:"foreignKey:FitnessLevelID;constraint:OnDelete:SET NULL" json:"fitness_level,omitempty"`
-	FitnessGoals []UserFitnessGoal `gorm:"foreignKey:UserID" json:"fitness_goals,omitempty"`
-	Roles        []Role            `gorm:"many2many:user_roles;" json:"roles,omitempty"`
+	FitnessLevel *FitnessLevel `gorm:"foreignKey:FitnessLevelID;constraint:OnDelete:SET NULL" json:"fitness_level,omitempty"`
+	Roles        []Role        `gorm:"many2many:user_roles;" json:"roles,omitempty"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
@@ -37,19 +36,18 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 type UserResponse struct {
-	ID             uuid.UUID                 `json:"id"`
-	Email          string                    `json:"email"`
-	FirstName      string                    `json:"first_name"`
-	LastName       string                    `json:"last_name"`
-	Provider       string                    `json:"provider"`
-	FitnessLevelID *uuid.UUID                `json:"fitness_level_id,omitempty"`
-	FitnessLevel   *FitnessLevelResponse     `json:"fitness_level,omitempty"`
-	FitnessGoals   []UserFitnessGoalResponse `json:"fitness_goals,omitempty"`
-	Roles          []Role                    `json:"roles,omitempty"`
-	IsActive       bool                      `json:"is_active"`
-	IsAdmin        bool                      `json:"is_admin"`
-	CreatedAt      time.Time                 `json:"created_at"`
-	UpdatedAt      time.Time                 `json:"updated_at"`
+	ID             uuid.UUID             `json:"id"`
+	Email          string                `json:"email"`
+	FirstName      string                `json:"first_name"`
+	LastName       string                `json:"last_name"`
+	Provider       string                `json:"provider"`
+	FitnessLevelID *uuid.UUID            `json:"fitness_level_id,omitempty"`
+	FitnessLevel   *FitnessLevelResponse `json:"fitness_level,omitempty"`
+	Roles          []Role                `json:"roles,omitempty"`
+	IsActive       bool                  `json:"is_active"`
+	IsAdmin        bool                  `json:"is_admin"`
+	CreatedAt      time.Time             `json:"created_at"`
+	UpdatedAt      time.Time             `json:"updated_at"`
 }
 
 func (u *User) ToResponse() UserResponse {
@@ -69,13 +67,6 @@ func (u *User) ToResponse() UserResponse {
 	if u.FitnessLevel != nil {
 		levelResponse := u.FitnessLevel.ToResponse()
 		response.FitnessLevel = &levelResponse
-	}
-
-	if len(u.FitnessGoals) > 0 {
-		response.FitnessGoals = make([]UserFitnessGoalResponse, len(u.FitnessGoals))
-		for i, goal := range u.FitnessGoals {
-			response.FitnessGoals[i] = goal.ToResponse()
-		}
 	}
 
 	if len(u.Roles) > 0 {

@@ -180,29 +180,53 @@ func DropAllData(db *gorm.DB) error {
 func DropAllTables(db *gorm.DB) error {
 	// Drop tables in reverse order to respect foreign key constraints
 	tables := []interface{}{
+		// Social
 		&models.WorkoutCommentReaction{},
 		&models.WorkoutComment{},
 		&models.SharedWorkout{},
+		// Workout logs
 		&models.SetLog{},
 		&models.ExerciseLog{},
 		&models.WorkoutSession{},
+		// Workout structure
+		&models.SetGroup{},
 		&models.WorkoutExercise{},
+		&models.WorkoutPlanItem{},
+		&models.PlanEnrollment{},
 		&models.Workout{},
 		&models.WorkoutPlan{},
+		// User fitness
+		&models.WeightLog{},
 		&models.UserFitnessGoal{},
+		&models.UserFitnessProfile{},
+		// User equipment
 		&models.UserEquipment{},
+		// Exercise relationships
 		&models.ExerciseEquipment{},
 		&models.ExerciseMuscleGroup{},
 		&models.Exercise{},
+		// Reference data
 		&models.Equipment{},
 		&models.MuscleGroup{},
 		&models.FitnessGoal{},
 		&models.FitnessLevel{},
+		// Social/Friends
 		&models.Friendship{},
+		// Trainer
+		&models.TrainerInvitation{},
 		&models.TrainerClientLink{},
 		&models.TrainerReview{},
+		&models.TrainerSpecialty{},
 		&models.TrainerProfile{},
+		&models.Specialty{},
+		// RBAC
+		&models.UserRole{},
+		&models.RolePermission{},
+		&models.Role{},
+		&models.Permission{},
+		// Translations
 		&models.Translation{},
+		// Users (last)
 		&models.User{},
 	}
 

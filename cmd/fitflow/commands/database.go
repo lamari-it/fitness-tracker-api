@@ -94,6 +94,12 @@ func HandleDatabaseCommand(args []string) {
 				os.Exit(1)
 			}
 		} else {
+			// Drop all tables first to avoid foreign key constraint issues
+			err = database.DropAllTables(db)
+			if err != nil {
+				fmt.Printf("Error dropping tables: %v\n", err)
+				os.Exit(1)
+			}
 			database.DB = db
 			database.AutoMigrate()
 		}

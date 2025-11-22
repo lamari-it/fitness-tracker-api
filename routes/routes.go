@@ -124,8 +124,6 @@ func SetupRoutes(r *gin.Engine) {
 			// User Fitness Settings
 			userFitness := protected.Group("/user/fitness")
 			{
-				userFitness.GET("/goals", controllers.GetUserFitnessGoals)
-				userFitness.PUT("/goals", controllers.SetUserFitnessGoals)
 				userFitness.PUT("/level", controllers.UpdateUserFitnessLevel)
 			}
 

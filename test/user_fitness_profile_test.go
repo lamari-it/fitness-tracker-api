@@ -11,31 +11,37 @@ func TestUserFitnessProfileEndpoints(t *testing.T) {
 
 	t.Run("Create Fitness Profile", func(t *testing.T) {
 		CleanDatabase(t)
+		SeedTestFitnessGoals(t)
 		testCreateFitnessProfile(t, e)
 	})
 
 	t.Run("Get Fitness Profile", func(t *testing.T) {
 		CleanDatabase(t)
+		SeedTestFitnessGoals(t)
 		testGetFitnessProfile(t, e)
 	})
 
 	t.Run("Update Fitness Profile", func(t *testing.T) {
 		CleanDatabase(t)
+		SeedTestFitnessGoals(t)
 		testUpdateFitnessProfile(t, e)
 	})
 
 	t.Run("Delete Fitness Profile", func(t *testing.T) {
 		CleanDatabase(t)
+		SeedTestFitnessGoals(t)
 		testDeleteFitnessProfile(t, e)
 	})
 
 	t.Run("Log Weight", func(t *testing.T) {
 		CleanDatabase(t)
+		SeedTestFitnessGoals(t)
 		testLogWeight(t, e)
 	})
 
 	t.Run("Validation Errors", func(t *testing.T) {
 		CleanDatabase(t)
+		SeedTestFitnessGoals(t)
 		testFitnessProfileValidation(t, e)
 	})
 }
@@ -43,13 +49,17 @@ func TestUserFitnessProfileEndpoints(t *testing.T) {
 func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 	token := createTestUserAndGetToken(e, "profile@example.com", "ProfilePass123!", "John", "Doe")
 
+	// Get fitness goal IDs
+	muscleGainIDs := GetFitnessGoalIDs(t, "muscle_gain")
+	weightLossIDs := GetFitnessGoalIDs(t, "weight_loss")
+
 	t.Run("Successful Creation with Required Fields", func(t *testing.T) {
 		profileData := map[string]interface{}{
 			"date_of_birth":     "1990-05-15",
 			"gender":            "male",
 			"height_cm":         180.5,
 			"current_weight_kg": 80.0,
-			"primary_goal":      "muscle_gain",
+			"fitness_goal_ids":  muscleGainIDs,
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile").
@@ -72,13 +82,17 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("height_ft_in").String().NotEmpty()
 		data.Value("current_weight_kg").Number().IsEqual(80.0)
 		data.Value("current_weight_lbs").Number().Gt(0)
-		data.Value("primary_goal").String().IsEqual("muscle_gain")
 		data.Value("preferred_unit_system").String().IsEqual("metric")
 		data.Value("target_weekly_workouts").Number().IsEqual(3)
 		data.Value("activity_level").String().IsEqual("moderate")
 		data.Value("training_locations").Array().Length().IsEqual(1)
 		data.Value("preferred_workout_duration_mins").Number().IsEqual(45)
 		data.Value("available_days").Array().Length().IsEqual(3)
+
+		// Check fitness goals
+		fitnessGoals := data.Value("fitness_goals").Array()
+		fitnessGoals.Length().IsEqual(1)
+		fitnessGoals.Value(0).Object().Value("fitness_goal").Object().Value("name_slug").String().IsEqual("muscle_gain")
 	})
 
 	t.Run("Duplicate Profile Creation", func(t *testing.T) {
@@ -87,7 +101,7 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 			"gender":            "female",
 			"height_cm":         165.0,
 			"current_weight_kg": 60.0,
-			"primary_goal":      "weight_loss",
+			"fitness_goal_ids":  weightLossIDs,
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile").
@@ -105,21 +119,24 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 	t.Run("Successful Creation with All Fields", func(t *testing.T) {
 		fullToken := createTestUserAndGetToken(e, "fullprofile@example.com", "FullPass123!", "Jane", "Smith")
 
+		// Get multiple fitness goal IDs
+		multiGoalIDs := GetFitnessGoalIDs(t, "weight_loss", "endurance")
+
 		profileData := map[string]interface{}{
-			"date_of_birth":                  "1985-08-20",
-			"gender":                         "female",
-			"height_cm":                      165.0,
-			"current_weight_kg":              70.0,
-			"primary_goal":                   "weight_loss",
-			"preferred_unit_system":          "imperial",
-			"target_weight_kg":               60.0,
-			"target_weekly_workouts":         5,
-			"activity_level":                 "active",
-			"training_locations":             []string{"home", "gym"},
+			"date_of_birth":                   "1985-08-20",
+			"gender":                          "female",
+			"height_cm":                       165.0,
+			"current_weight_kg":               70.0,
+			"fitness_goal_ids":                multiGoalIDs,
+			"preferred_unit_system":           "imperial",
+			"target_weight_kg":                60.0,
+			"target_weekly_workouts":          5,
+			"activity_level":                  "active",
+			"training_locations":              []string{"home", "gym"},
 			"preferred_workout_duration_mins": 60,
-			"available_days":                 []string{"monday", "tuesday", "thursday", "saturday"},
-			"health_conditions":              "None",
-			"injuries_notes":                 "Minor knee issue",
+			"available_days":                  []string{"monday", "tuesday", "thursday", "saturday"},
+			"health_conditions":               "None",
+			"injuries_notes":                  "Minor knee issue",
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile").
@@ -143,15 +160,21 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("available_days").Array().Length().IsEqual(4)
 		data.Value("health_conditions").String().IsEqual("None")
 		data.Value("injuries_notes").String().IsEqual("Minor knee issue")
+
+		// Check fitness goals
+		fitnessGoals := data.Value("fitness_goals").Array()
+		fitnessGoals.Length().IsEqual(2)
 	})
 
 	t.Run("Create Profile Without Auth", func(t *testing.T) {
+		generalFitnessIDs := GetFitnessGoalIDs(t, "general_fitness")
+
 		profileData := map[string]interface{}{
 			"date_of_birth":     "1990-05-15",
 			"gender":            "male",
 			"height_cm":         180.0,
 			"current_weight_kg": 80.0,
-			"primary_goal":      "general_fitness",
+			"fitness_goal_ids":  generalFitnessIDs,
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile").
@@ -167,6 +190,9 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 func testGetFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 	token := createTestUserAndGetToken(e, "getprofile@example.com", "GetPass123!", "Get", "Profile")
+
+	// Get fitness goal IDs
+	strengthIDs := GetFitnessGoalIDs(t, "strength")
 
 	t.Run("Get Non-existent Profile", func(t *testing.T) {
 		response := e.GET("/api/v1/user/fitness-profile").
@@ -186,7 +212,7 @@ func testGetFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		"gender":            "other",
 		"height_cm":         170.0,
 		"current_weight_kg": 65.0,
-		"primary_goal":      "strength",
+		"fitness_goal_ids":  strengthIDs,
 	}
 
 	e.POST("/api/v1/user/fitness-profile").
@@ -212,7 +238,11 @@ func testGetFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("gender").String().IsEqual("other")
 		data.Value("height_cm").Number().IsEqual(170.0)
 		data.Value("current_weight_kg").Number().IsEqual(65.0)
-		data.Value("primary_goal").String().IsEqual("strength")
+
+		// Check fitness goals
+		fitnessGoals := data.Value("fitness_goals").Array()
+		fitnessGoals.Length().IsEqual(1)
+		fitnessGoals.Value(0).Object().Value("fitness_goal").Object().Value("name_slug").String().IsEqual("strength")
 	})
 
 	t.Run("Get Profile Without Auth", func(t *testing.T) {
@@ -229,13 +259,17 @@ func testGetFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 	token := createTestUserAndGetToken(e, "updateprofile@example.com", "UpdatePass123!", "Update", "Profile")
 
+	// Get fitness goal IDs
+	generalFitnessIDs := GetFitnessGoalIDs(t, "general_fitness")
+	muscleGainIDs := GetFitnessGoalIDs(t, "muscle_gain")
+
 	// Create profile first
 	profileData := map[string]interface{}{
 		"date_of_birth":     "1988-12-25",
 		"gender":            "male",
 		"height_cm":         175.0,
 		"current_weight_kg": 85.0,
-		"primary_goal":      "general_fitness",
+		"fitness_goal_ids":  generalFitnessIDs,
 	}
 
 	e.POST("/api/v1/user/fitness-profile").
@@ -246,14 +280,14 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Successful Full Update", func(t *testing.T) {
 		updateData := map[string]interface{}{
-			"current_weight_kg":              82.0,
-			"primary_goal":                   "muscle_gain",
-			"target_weight_kg":               78.0,
-			"target_weekly_workouts":         4,
-			"activity_level":                 "very_active",
-			"training_locations":             []string{"gym", "outdoors"},
+			"current_weight_kg":               82.0,
+			"fitness_goal_ids":                muscleGainIDs,
+			"target_weight_kg":                78.0,
+			"target_weekly_workouts":          4,
+			"activity_level":                  "very_active",
+			"training_locations":              []string{"gym", "outdoors"},
 			"preferred_workout_duration_mins": 90,
-			"available_days":                 []string{"monday", "wednesday", "friday", "sunday"},
+			"available_days":                  []string{"monday", "wednesday", "friday", "sunday"},
 		}
 
 		response := e.PUT("/api/v1/user/fitness-profile").
@@ -269,13 +303,17 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 		data := response.Value("data").Object()
 		data.Value("current_weight_kg").Number().IsEqual(82.0)
-		data.Value("primary_goal").String().IsEqual("muscle_gain")
 		data.Value("target_weight_kg").Number().IsEqual(78.0)
 		data.Value("target_weekly_workouts").Number().IsEqual(4)
 		data.Value("activity_level").String().IsEqual("very_active")
 		data.Value("training_locations").Array().Length().IsEqual(2)
 		data.Value("preferred_workout_duration_mins").Number().IsEqual(90)
 		data.Value("available_days").Array().Length().IsEqual(4)
+
+		// Check fitness goals were updated
+		fitnessGoals := data.Value("fitness_goals").Array()
+		fitnessGoals.Length().IsEqual(1)
+		fitnessGoals.Value(0).Object().Value("fitness_goal").Object().Value("name_slug").String().IsEqual("muscle_gain")
 	})
 
 	t.Run("Partial Update - Weight Only", func(t *testing.T) {
@@ -295,8 +333,12 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		data := response.Value("data").Object()
 		data.Value("current_weight_kg").Number().IsEqual(80.0)
 		// Other fields should remain unchanged
-		data.Value("primary_goal").String().IsEqual("muscle_gain")
 		data.Value("activity_level").String().IsEqual("very_active")
+
+		// Goals should remain unchanged
+		fitnessGoals := data.Value("fitness_goals").Array()
+		fitnessGoals.Length().IsEqual(1)
+		fitnessGoals.Value(0).Object().Value("fitness_goal").Object().Value("name_slug").String().IsEqual("muscle_gain")
 	})
 
 	t.Run("Update Non-existent Profile", func(t *testing.T) {
@@ -337,6 +379,9 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 func testDeleteFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 	token := createTestUserAndGetToken(e, "deleteprofile@example.com", "DeletePass123!", "Delete", "Profile")
 
+	// Get fitness goal IDs
+	flexibilityIDs := GetFitnessGoalIDs(t, "flexibility")
+
 	t.Run("Delete Non-existent Profile", func(t *testing.T) {
 		response := e.DELETE("/api/v1/user/fitness-profile").
 			WithHeader("Authorization", "Bearer "+token).
@@ -355,7 +400,7 @@ func testDeleteFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		"gender":            "female",
 		"height_cm":         162.0,
 		"current_weight_kg": 55.0,
-		"primary_goal":      "flexibility",
+		"fitness_goal_ids":  flexibilityIDs,
 	}
 
 	e.POST("/api/v1/user/fitness-profile").
@@ -395,13 +440,16 @@ func testDeleteFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 func testLogWeight(t *testing.T, e *httpexpect.Expect) {
 	token := createTestUserAndGetToken(e, "logweight@example.com", "LogWeightPass123!", "Log", "Weight")
 
+	// Get fitness goal IDs
+	weightLossIDs := GetFitnessGoalIDs(t, "weight_loss")
+
 	// Create profile first
 	profileData := map[string]interface{}{
 		"date_of_birth":     "1990-01-01",
 		"gender":            "male",
 		"height_cm":         180.0,
 		"current_weight_kg": 85.0,
-		"primary_goal":      "weight_loss",
+		"fitness_goal_ids":  weightLossIDs,
 		"target_weight_kg":  75.0,
 	}
 
@@ -469,6 +517,9 @@ func testLogWeight(t *testing.T, e *httpexpect.Expect) {
 func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 	token := createTestUserAndGetToken(e, "validation@example.com", "ValidationPass123!", "Valid", "Test")
 
+	// Get fitness goal IDs for valid test cases
+	generalFitnessIDs := GetFitnessGoalIDs(t, "general_fitness")
+
 	testCases := []struct {
 		name        string
 		profileData map[string]interface{}
@@ -479,7 +530,7 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 				"gender":            "male",
 				"height_cm":         180.0,
 				"current_weight_kg": 80.0,
-				"primary_goal":      "general_fitness",
+				"fitness_goal_ids":  generalFitnessIDs,
 			},
 		},
 		{
@@ -489,7 +540,7 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 				"gender":            "invalid",
 				"height_cm":         180.0,
 				"current_weight_kg": 80.0,
-				"primary_goal":      "general_fitness",
+				"fitness_goal_ids":  generalFitnessIDs,
 			},
 		},
 		{
@@ -499,7 +550,7 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 				"gender":            "male",
 				"height_cm":         40.0,
 				"current_weight_kg": 80.0,
-				"primary_goal":      "general_fitness",
+				"fitness_goal_ids":  generalFitnessIDs,
 			},
 		},
 		{
@@ -509,7 +560,7 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 				"gender":            "male",
 				"height_cm":         350.0,
 				"current_weight_kg": 80.0,
-				"primary_goal":      "general_fitness",
+				"fitness_goal_ids":  generalFitnessIDs,
 			},
 		},
 		{
@@ -519,17 +570,26 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 				"gender":            "male",
 				"height_cm":         180.0,
 				"current_weight_kg": 10.0,
-				"primary_goal":      "general_fitness",
+				"fitness_goal_ids":  generalFitnessIDs,
 			},
 		},
 		{
-			name: "Invalid Primary Goal",
+			name: "Missing Fitness Goals",
 			profileData: map[string]interface{}{
 				"date_of_birth":     "1990-05-15",
 				"gender":            "male",
 				"height_cm":         180.0,
 				"current_weight_kg": 80.0,
-				"primary_goal":      "invalid_goal",
+			},
+		},
+		{
+			name: "Empty Fitness Goals Array",
+			profileData: map[string]interface{}{
+				"date_of_birth":     "1990-05-15",
+				"gender":            "male",
+				"height_cm":         180.0,
+				"current_weight_kg": 80.0,
+				"fitness_goal_ids":  []string{},
 			},
 		},
 		{
@@ -539,19 +599,19 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 				"gender":            "male",
 				"height_cm":         180.0,
 				"current_weight_kg": 80.0,
-				"primary_goal":      "general_fitness",
+				"fitness_goal_ids":  generalFitnessIDs,
 				"activity_level":    "super_active",
 			},
 		},
 		{
 			name: "Invalid Training Location",
 			profileData: map[string]interface{}{
-				"date_of_birth":       "1990-05-15",
-				"gender":              "male",
-				"height_cm":           180.0,
-				"current_weight_kg":   80.0,
-				"primary_goal":        "general_fitness",
-				"training_locations":  []string{"space"},
+				"date_of_birth":      "1990-05-15",
+				"gender":             "male",
+				"height_cm":          180.0,
+				"current_weight_kg":  80.0,
+				"fitness_goal_ids":   generalFitnessIDs,
+				"training_locations": []string{"space"},
 			},
 		},
 		{
@@ -561,7 +621,7 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 				"gender":            "male",
 				"height_cm":         180.0,
 				"current_weight_kg": 80.0,
-				"primary_goal":      "general_fitness",
+				"fitness_goal_ids":  generalFitnessIDs,
 				"available_days":    []string{"funday"},
 			},
 		},
@@ -572,7 +632,7 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 				"gender":                 "male",
 				"height_cm":              180.0,
 				"current_weight_kg":      80.0,
-				"primary_goal":           "general_fitness",
+				"fitness_goal_ids":       generalFitnessIDs,
 				"target_weekly_workouts": 10,
 			},
 		},

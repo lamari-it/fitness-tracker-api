@@ -81,6 +81,13 @@ func SetupTestDatabase(t *testing.T) {
 	// Set global database
 	database.DB = testDB
 
+	// Drop all tables and re-run AutoMigrate to ensure clean schema
+	// This is necessary when model changes remove columns (AutoMigrate doesn't drop columns)
+	if err := database.DropAllTables(testDB); err != nil {
+		// Tables might not exist on first run, which is fine
+		t.Logf("Note: DropAllTables returned: %v", err)
+	}
+
 	// Run migrations
 	database.AutoMigrate()
 
@@ -194,6 +201,36 @@ func GetSpecialtyIDs(t *testing.T, names ...string) []string {
 			t.Fatalf("Failed to get specialty ID for %s: %v", name, err)
 		}
 		ids = append(ids, specialty.ID)
+	}
+
+	return ids
+}
+
+// SeedTestFitnessGoals creates test fitness goals for use in tests
+func SeedTestFitnessGoals(t *testing.T) {
+	if testDB == nil {
+		t.Fatal("Test database not initialized")
+	}
+
+	// Seed fitness goals that tests will use
+	database.SeedFitnessGoals()
+}
+
+// GetFitnessGoalIDs retrieves fitness goal IDs by name_slug for use in tests
+func GetFitnessGoalIDs(t *testing.T, slugs ...string) []string {
+	if testDB == nil {
+		t.Fatal("Test database not initialized")
+	}
+
+	var ids []string
+	for _, slug := range slugs {
+		var goal struct {
+			ID string
+		}
+		if err := testDB.Table("fitness_goals").Select("id").Where("name_slug = ?", slug).First(&goal).Error; err != nil {
+			t.Fatalf("Failed to get fitness goal ID for %s: %v", slug, err)
+		}
+		ids = append(ids, goal.ID)
 	}
 
 	return ids

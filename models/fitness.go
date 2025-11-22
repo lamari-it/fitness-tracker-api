@@ -25,6 +25,7 @@ type FitnessLevel struct {
 type FitnessGoal struct {
 	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	Name        string         `gorm:"type:varchar(100);not null;unique" json:"name"`
+	NameSlug    string         `gorm:"type:varchar(100);not null;uniqueIndex" json:"name_slug"`
 	Description string         `gorm:"type:text" json:"description"`
 	Category    string         `gorm:"type:varchar(50)" json:"category"`  // strength, cardio, flexibility, etc.
 	IconName    string         `gorm:"type:varchar(50)" json:"icon_name"` // For UI icon display
@@ -33,23 +34,22 @@ type FitnessGoal struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
-	UserGoals []UserFitnessGoal `gorm:"foreignKey:FitnessGoalID" json:"user_goals,omitempty"`
+	ProfileGoals []UserFitnessGoal `gorm:"foreignKey:FitnessGoalID" json:"profile_goals,omitempty"`
 }
 
-// UserFitnessGoal represents the many-to-many relationship between users and fitness goals
+// UserFitnessGoal represents the many-to-many relationship between user fitness profiles and fitness goals
 type UserFitnessGoal struct {
-	ID            uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID        uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:unique_user_fitness_goal_combo" json:"user_id"`
-	FitnessGoalID uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:unique_user_fitness_goal_combo" json:"fitness_goal_id"`
-	Priority      int            `gorm:"default:0" json:"priority"` // 1=primary, 2=secondary, etc.
-	TargetDate    *time.Time     `json:"target_date,omitempty"`     // Optional target completion date
-	Notes         string         `gorm:"type:text" json:"notes"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
-	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID                   uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	UserFitnessProfileID uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:unique_profile_fitness_goal_combo" json:"user_fitness_profile_id"`
+	FitnessGoalID        uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex:unique_profile_fitness_goal_combo" json:"fitness_goal_id"`
+	Priority             int            `gorm:"default:0" json:"priority"` // 1=primary, 2=secondary, etc.
+	TargetDate           *time.Time     `json:"target_date,omitempty"`     // Optional target completion date
+	Notes                string         `gorm:"type:text" json:"notes"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	DeletedAt            gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
-	User        User        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
 	FitnessGoal FitnessGoal `gorm:"foreignKey:FitnessGoalID;constraint:OnDelete:CASCADE" json:"fitness_goal,omitempty"`
 }
 
@@ -88,6 +88,7 @@ type FitnessLevelResponse struct {
 type FitnessGoalResponse struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
+	NameSlug    string    `json:"name_slug"`
 	Description string    `json:"description"`
 	Category    string    `json:"category"`
 	IconName    string    `json:"icon_name"`
@@ -96,15 +97,15 @@ type FitnessGoalResponse struct {
 }
 
 type UserFitnessGoalResponse struct {
-	ID            uuid.UUID           `json:"id"`
-	UserID        uuid.UUID           `json:"user_id"`
-	FitnessGoalID uuid.UUID           `json:"fitness_goal_id"`
-	Priority      int                 `json:"priority"`
-	TargetDate    *time.Time          `json:"target_date,omitempty"`
-	Notes         string              `json:"notes"`
-	FitnessGoal   FitnessGoalResponse `json:"fitness_goal"`
-	CreatedAt     time.Time           `json:"created_at"`
-	UpdatedAt     time.Time           `json:"updated_at"`
+	ID                   uuid.UUID           `json:"id"`
+	UserFitnessProfileID uuid.UUID           `json:"user_fitness_profile_id"`
+	FitnessGoalID        uuid.UUID           `json:"fitness_goal_id"`
+	Priority             int                 `json:"priority"`
+	TargetDate           *time.Time          `json:"target_date,omitempty"`
+	Notes                string              `json:"notes"`
+	FitnessGoal          FitnessGoalResponse `json:"fitness_goal"`
+	CreatedAt            time.Time           `json:"created_at"`
+	UpdatedAt            time.Time           `json:"updated_at"`
 }
 
 // Helper methods
@@ -123,6 +124,7 @@ func (fg *FitnessGoal) ToResponse() FitnessGoalResponse {
 	return FitnessGoalResponse{
 		ID:          fg.ID,
 		Name:        fg.Name,
+		NameSlug:    fg.NameSlug,
 		Description: fg.Description,
 		Category:    fg.Category,
 		IconName:    fg.IconName,
@@ -133,15 +135,15 @@ func (fg *FitnessGoal) ToResponse() FitnessGoalResponse {
 
 func (ufg *UserFitnessGoal) ToResponse() UserFitnessGoalResponse {
 	return UserFitnessGoalResponse{
-		ID:            ufg.ID,
-		UserID:        ufg.UserID,
-		FitnessGoalID: ufg.FitnessGoalID,
-		Priority:      ufg.Priority,
-		TargetDate:    ufg.TargetDate,
-		Notes:         ufg.Notes,
-		FitnessGoal:   ufg.FitnessGoal.ToResponse(),
-		CreatedAt:     ufg.CreatedAt,
-		UpdatedAt:     ufg.UpdatedAt,
+		ID:                   ufg.ID,
+		UserFitnessProfileID: ufg.UserFitnessProfileID,
+		FitnessGoalID:        ufg.FitnessGoalID,
+		Priority:             ufg.Priority,
+		TargetDate:           ufg.TargetDate,
+		Notes:                ufg.Notes,
+		FitnessGoal:          ufg.FitnessGoal.ToResponse(),
+		CreatedAt:            ufg.CreatedAt,
+		UpdatedAt:            ufg.UpdatedAt,
 	}
 }
 

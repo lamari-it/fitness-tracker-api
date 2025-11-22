@@ -1631,6 +1631,32 @@
       "item": [
         {
           "name": "Get All Fitness Goals",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    var goals = jsonData.data;",
+                  "    ",
+                  "    // Store fitness goal IDs by name_slug for use in other requests",
+                  "    for (var i = 0; i < goals.length; i++) {",
+                  "        var goal = goals[i];",
+                  "        var varName = 'fitness_goal_' + goal.name_slug + '_id';",
+                  "        pm.environment.set(varName, goal.id);",
+                  "    }",
+                  "    ",
+                  "    // Store the first goal ID as default",
+                  "    if (goals.length > 0) {",
+                  "        pm.environment.set('fitness_goal_id', goals[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
@@ -1650,7 +1676,7 @@
                 "fitness-goals"
               ]
             },
-            "description": "Get all fitness goals"
+            "description": "Get all fitness goals. Run this first to populate fitness goal IDs in environment variables (e.g., fitness_goal_muscle_gain_id, fitness_goal_weight_loss_id)"
           },
           "response": []
         },
@@ -1794,68 +1820,6 @@
       "name": "User Fitness Settings",
       "item": [
         {
-          "name": "Get User Fitness Goals",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/user/fitness/goals",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "user",
-                "fitness",
-                "goals"
-              ]
-            },
-            "description": "Get current user's selected fitness goals"
-          },
-          "response": []
-        },
-        {
-          "name": "Set User Fitness Goals",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"goals\": [\n    {\n      \"fitness_goal_id\": \"{{fitness_goal_id}}\",\n      \"priority\": 1,\n      \"target_date\": \"2024-12-31T00:00:00Z\",\n      \"notes\": \"Primary goal for this year\"\n    },\n    {\n      \"fitness_goal_id\": \"{{fitness_goal_id_2}}\",\n      \"priority\": 2,\n      \"target_date\": null,\n      \"notes\": \"Secondary goal\"\n    }\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/user/fitness/goals",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "user",
-                "fitness",
-                "goals"
-              ]
-            },
-            "description": "Set user's fitness goals (replaces all existing goals)"
-          },
-          "response": []
-        },
-        {
           "name": "Set User Fitness Level",
           "request": {
             "method": "PUT",
@@ -1930,7 +1894,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"date_of_birth\": \"1990-05-15\",\n  \"gender\": \"male\",\n  \"height_cm\": 180.5,\n  \"current_weight_kg\": 80,\n  \"primary_goal\": \"muscle_gain\",\n  \"preferred_unit_system\": \"metric\",\n  \"target_weight_kg\": 85,\n  \"target_weekly_workouts\": 4,\n  \"activity_level\": \"active\",\n  \"training_locations\": [\"gym\", \"home\"],\n  \"preferred_workout_duration_mins\": 60,\n  \"available_days\": [\"monday\", \"wednesday\", \"friday\", \"saturday\"],\n  \"health_conditions\": \"None\",\n  \"injuries_notes\": \"Minor shoulder strain - recovering\"\n}"
+              "raw": "{\n  \"date_of_birth\": \"1990-05-15\",\n  \"gender\": \"male\",\n  \"height_cm\": 180.5,\n  \"current_weight_kg\": 80,\n  \"fitness_goal_ids\": [\"{{fitness_goal_muscle_gain_id}}\", \"{{fitness_goal_strength_id}}\"],\n  \"preferred_unit_system\": \"metric\",\n  \"target_weight_kg\": 85,\n  \"target_weekly_workouts\": 4,\n  \"activity_level\": \"active\",\n  \"training_locations\": [\"gym\", \"home\"],\n  \"preferred_workout_duration_mins\": 60,\n  \"available_days\": [\"monday\", \"wednesday\", \"friday\", \"saturday\"],\n  \"health_conditions\": \"None\",\n  \"injuries_notes\": \"Minor shoulder strain - recovering\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/user/fitness-profile",
@@ -1944,7 +1908,7 @@
                 "fitness-profile"
               ]
             },
-            "description": "Create fitness profile for the authenticated user. Required fields: date_of_birth, gender, height_cm, current_weight_kg, primary_goal. Optional fields have defaults."
+            "description": "Create fitness profile for the authenticated user. Required fields: date_of_birth, gender, height_cm, current_weight_kg, fitness_goal_ids (array of UUID). Optional fields have defaults. First get fitness goal IDs from GET /fitness-goals endpoint."
           },
           "response": []
         },
@@ -1990,7 +1954,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"current_weight_kg\": 82,\n  \"primary_goal\": \"strength\",\n  \"target_weekly_workouts\": 5,\n  \"activity_level\": \"very_active\",\n  \"training_locations\": [\"gym\"],\n  \"available_days\": [\"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\"]\n}"
+              "raw": "{\n  \"current_weight_kg\": 82,\n  \"fitness_goal_ids\": [\"{{fitness_goal_strength_id}}\"],\n  \"target_weekly_workouts\": 5,\n  \"activity_level\": \"very_active\",\n  \"training_locations\": [\"gym\"],\n  \"available_days\": [\"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\"]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/user/fitness-profile",

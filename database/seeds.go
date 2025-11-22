@@ -2087,16 +2087,16 @@ func SeedFitnessLevels() {
 
 func SeedFitnessGoals() {
 	fitnessGoals := []models.FitnessGoal{
-		{Name: "Weight Loss", Description: "Reduce body weight and body fat percentage", Category: "body_composition", IconName: "scale"},
-		{Name: "Muscle Gain", Description: "Build lean muscle mass and increase strength", Category: "body_composition", IconName: "dumbbell"},
-		{Name: "Endurance", Description: "Improve cardiovascular fitness and stamina", Category: "performance", IconName: "running"},
-		{Name: "Strength", Description: "Increase maximum strength and power output", Category: "performance", IconName: "weight"},
-		{Name: "Flexibility", Description: "Improve range of motion and mobility", Category: "wellness", IconName: "stretch"},
-		{Name: "General Fitness", Description: "Overall health and wellness improvement", Category: "wellness", IconName: "heart"},
-		{Name: "Athletic Performance", Description: "Sport-specific performance enhancement", Category: "performance", IconName: "trophy"},
-		{Name: "Rehabilitation", Description: "Recover from injury or medical condition", Category: "wellness", IconName: "medical"},
-		{Name: "Body Recomposition", Description: "Simultaneous fat loss and muscle gain", Category: "body_composition", IconName: "transform"},
-		{Name: "Stress Relief", Description: "Mental health and stress management through exercise", Category: "wellness", IconName: "mindfulness"},
+		{Name: "Weight Loss", NameSlug: "weight_loss", Description: "Reduce body weight and body fat percentage", Category: "body_composition", IconName: "scale"},
+		{Name: "Muscle Gain", NameSlug: "muscle_gain", Description: "Build lean muscle mass and increase strength", Category: "body_composition", IconName: "dumbbell"},
+		{Name: "Endurance", NameSlug: "endurance", Description: "Improve cardiovascular fitness and stamina", Category: "performance", IconName: "running"},
+		{Name: "Strength", NameSlug: "strength", Description: "Increase maximum strength and power output", Category: "performance", IconName: "weight"},
+		{Name: "Flexibility", NameSlug: "flexibility", Description: "Improve range of motion and mobility", Category: "wellness", IconName: "stretch"},
+		{Name: "General Fitness", NameSlug: "general_fitness", Description: "Overall health and wellness improvement", Category: "wellness", IconName: "heart"},
+		{Name: "Athletic Performance", NameSlug: "athletic_performance", Description: "Sport-specific performance enhancement", Category: "performance", IconName: "trophy"},
+		{Name: "Rehabilitation", NameSlug: "rehabilitation", Description: "Recover from injury or medical condition", Category: "wellness", IconName: "medical"},
+		{Name: "Body Recomposition", NameSlug: "body_recomposition", Description: "Simultaneous fat loss and muscle gain", Category: "body_composition", IconName: "transform"},
+		{Name: "Stress Relief", NameSlug: "stress_relief", Description: "Mental health and stress management through exercise", Category: "wellness", IconName: "mindfulness"},
 	}
 
 	for _, goal := range fitnessGoals {

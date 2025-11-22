@@ -24,7 +24,6 @@ type UserFitnessProfile struct {
 	PreferredUnitSystem string `gorm:"type:varchar(10);not null;default:'metric'" json:"preferred_unit_system"`
 
 	// Fitness goals
-	PrimaryGoal         string   `gorm:"type:varchar(50);not null" json:"primary_goal"`
 	TargetWeightKg      *float64 `gorm:"type:decimal(5,2)" json:"target_weight_kg,omitempty"`
 	TargetWeeklyWorkouts int     `gorm:"not null;default:3" json:"target_weekly_workouts"`
 
@@ -46,18 +45,19 @@ type UserFitnessProfile struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relationships
-	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
+	User         User              `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
+	FitnessGoals []UserFitnessGoal `gorm:"foreignKey:UserFitnessProfileID" json:"fitness_goals,omitempty"`
 }
 
 // Request DTOs
 
 type CreateUserFitnessProfileRequest struct {
 	// Required fields
-	DateOfBirth      string  `json:"date_of_birth" binding:"required"`
-	Gender           string  `json:"gender" binding:"required,oneof=male female other prefer_not_to_say"`
-	HeightCm         float64 `json:"height_cm" binding:"required,gt=50,lt=300"`
-	CurrentWeightKg  float64 `json:"current_weight_kg" binding:"required,gt=20,lt=500"`
-	PrimaryGoal      string  `json:"primary_goal" binding:"required,oneof=weight_loss muscle_gain strength general_fitness endurance flexibility"`
+	DateOfBirth      string      `json:"date_of_birth" binding:"required"`
+	Gender           string      `json:"gender" binding:"required,oneof=male female other prefer_not_to_say"`
+	HeightCm         float64     `json:"height_cm" binding:"required,gt=50,lt=300"`
+	CurrentWeightKg  float64     `json:"current_weight_kg" binding:"required,gt=20,lt=500"`
+	FitnessGoalIDs   []uuid.UUID `json:"fitness_goal_ids" binding:"required,min=1,max=5"`
 
 	// Optional fields with defaults
 	PreferredUnitSystem       string   `json:"preferred_unit_system" binding:"omitempty,oneof=metric imperial"`
@@ -72,47 +72,47 @@ type CreateUserFitnessProfileRequest struct {
 }
 
 type UpdateUserFitnessProfileRequest struct {
-	DateOfBirth               string   `json:"date_of_birth" binding:"omitempty"`
-	Gender                    string   `json:"gender" binding:"omitempty,oneof=male female other prefer_not_to_say"`
-	HeightCm                  float64  `json:"height_cm" binding:"omitempty,gt=50,lt=300"`
-	CurrentWeightKg           float64  `json:"current_weight_kg" binding:"omitempty,gt=20,lt=500"`
-	PreferredUnitSystem       string   `json:"preferred_unit_system" binding:"omitempty,oneof=metric imperial"`
-	PrimaryGoal               string   `json:"primary_goal" binding:"omitempty,oneof=weight_loss muscle_gain strength general_fitness endurance flexibility"`
-	TargetWeightKg            *float64 `json:"target_weight_kg" binding:"omitempty,gt=20,lt=500"`
-	TargetWeeklyWorkouts      int      `json:"target_weekly_workouts" binding:"omitempty,min=1,max=7"`
-	ActivityLevel             string   `json:"activity_level" binding:"omitempty,oneof=sedentary lightly_active moderate active very_active"`
-	TrainingLocations         []string `json:"training_locations" binding:"omitempty,dive,oneof=home gym outdoors"`
-	PreferredWorkoutDurationMins int   `json:"preferred_workout_duration_mins" binding:"omitempty,min=10,max=180"`
-	AvailableDays             []string `json:"available_days" binding:"omitempty,dive,oneof=monday tuesday wednesday thursday friday saturday sunday"`
-	HealthConditions          string   `json:"health_conditions" binding:"omitempty,max=1000"`
-	InjuriesNotes             string   `json:"injuries_notes" binding:"omitempty,max=1000"`
+	DateOfBirth               string      `json:"date_of_birth" binding:"omitempty"`
+	Gender                    string      `json:"gender" binding:"omitempty,oneof=male female other prefer_not_to_say"`
+	HeightCm                  float64     `json:"height_cm" binding:"omitempty,gt=50,lt=300"`
+	CurrentWeightKg           float64     `json:"current_weight_kg" binding:"omitempty,gt=20,lt=500"`
+	PreferredUnitSystem       string      `json:"preferred_unit_system" binding:"omitempty,oneof=metric imperial"`
+	FitnessGoalIDs            []uuid.UUID `json:"fitness_goal_ids" binding:"omitempty,max=5"`
+	TargetWeightKg            *float64    `json:"target_weight_kg" binding:"omitempty,gt=20,lt=500"`
+	TargetWeeklyWorkouts      int         `json:"target_weekly_workouts" binding:"omitempty,min=1,max=7"`
+	ActivityLevel             string      `json:"activity_level" binding:"omitempty,oneof=sedentary lightly_active moderate active very_active"`
+	TrainingLocations         []string    `json:"training_locations" binding:"omitempty,dive,oneof=home gym outdoors"`
+	PreferredWorkoutDurationMins int      `json:"preferred_workout_duration_mins" binding:"omitempty,min=10,max=180"`
+	AvailableDays             []string    `json:"available_days" binding:"omitempty,dive,oneof=monday tuesday wednesday thursday friday saturday sunday"`
+	HealthConditions          string      `json:"health_conditions" binding:"omitempty,max=1000"`
+	InjuriesNotes             string      `json:"injuries_notes" binding:"omitempty,max=1000"`
 }
 
 // Response DTOs
 
 type UserFitnessProfileResponse struct {
-	ID                        uuid.UUID      `json:"id"`
-	UserID                    uuid.UUID      `json:"user_id"`
-	DateOfBirth               string         `json:"date_of_birth"`
-	Age                       int            `json:"age"`
-	Gender                    string         `json:"gender"`
-	HeightCm                  float64        `json:"height_cm"`
-	HeightFtIn                string         `json:"height_ft_in"`
-	CurrentWeightKg           float64        `json:"current_weight_kg"`
-	CurrentWeightLbs          float64        `json:"current_weight_lbs"`
-	PreferredUnitSystem       string         `json:"preferred_unit_system"`
-	PrimaryGoal               string         `json:"primary_goal"`
-	TargetWeightKg            *float64       `json:"target_weight_kg,omitempty"`
-	TargetWeightLbs           *float64       `json:"target_weight_lbs,omitempty"`
-	TargetWeeklyWorkouts      int            `json:"target_weekly_workouts"`
-	ActivityLevel             string         `json:"activity_level"`
-	TrainingLocations         []string       `json:"training_locations"`
-	PreferredWorkoutDurationMins int         `json:"preferred_workout_duration_mins"`
-	AvailableDays             []string       `json:"available_days"`
-	HealthConditions          string         `json:"health_conditions,omitempty"`
-	InjuriesNotes             string         `json:"injuries_notes,omitempty"`
-	CreatedAt                 time.Time      `json:"created_at"`
-	UpdatedAt                 time.Time      `json:"updated_at"`
+	ID                        uuid.UUID                 `json:"id"`
+	UserID                    uuid.UUID                 `json:"user_id"`
+	DateOfBirth               string                    `json:"date_of_birth"`
+	Age                       int                       `json:"age"`
+	Gender                    string                    `json:"gender"`
+	HeightCm                  float64                   `json:"height_cm"`
+	HeightFtIn                string                    `json:"height_ft_in"`
+	CurrentWeightKg           float64                   `json:"current_weight_kg"`
+	CurrentWeightLbs          float64                   `json:"current_weight_lbs"`
+	PreferredUnitSystem       string                    `json:"preferred_unit_system"`
+	FitnessGoals              []UserFitnessGoalResponse `json:"fitness_goals"`
+	TargetWeightKg            *float64                  `json:"target_weight_kg,omitempty"`
+	TargetWeightLbs           *float64                  `json:"target_weight_lbs,omitempty"`
+	TargetWeeklyWorkouts      int                       `json:"target_weekly_workouts"`
+	ActivityLevel             string                    `json:"activity_level"`
+	TrainingLocations         []string                  `json:"training_locations"`
+	PreferredWorkoutDurationMins int                    `json:"preferred_workout_duration_mins"`
+	AvailableDays             []string                  `json:"available_days"`
+	HealthConditions          string                    `json:"health_conditions,omitempty"`
+	InjuriesNotes             string                    `json:"injuries_notes,omitempty"`
+	CreatedAt                 time.Time                 `json:"created_at"`
+	UpdatedAt                 time.Time                 `json:"updated_at"`
 }
 
 // ToResponse converts the model to a response DTO with unit conversions
@@ -139,6 +139,12 @@ func (p *UserFitnessProfile) ToResponse() UserFitnessProfileResponse {
 		targetWeightLbs = &lbs
 	}
 
+	// Convert fitness goals to response
+	fitnessGoalResponses := make([]UserFitnessGoalResponse, len(p.FitnessGoals))
+	for i, goal := range p.FitnessGoals {
+		fitnessGoalResponses[i] = goal.ToResponse()
+	}
+
 	return UserFitnessProfileResponse{
 		ID:                        p.ID,
 		UserID:                    p.UserID,
@@ -150,7 +156,7 @@ func (p *UserFitnessProfile) ToResponse() UserFitnessProfileResponse {
 		CurrentWeightKg:           p.CurrentWeightKg,
 		CurrentWeightLbs:          currentWeightLbs,
 		PreferredUnitSystem:       p.PreferredUnitSystem,
-		PrimaryGoal:               p.PrimaryGoal,
+		FitnessGoals:              fitnessGoalResponses,
 		TargetWeightKg:            p.TargetWeightKg,
 		TargetWeightLbs:           targetWeightLbs,
 		TargetWeeklyWorkouts:      p.TargetWeeklyWorkouts,
