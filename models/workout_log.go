@@ -8,17 +8,19 @@ import (
 )
 
 type WorkoutSession struct {
-	ID        uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID    uuid.UUID      `gorm:"type:uuid;not null" json:"user_id"`
-	WorkoutID *uuid.UUID     `gorm:"type:uuid" json:"workout_id"` // nullable for free-form workouts
-	StartedAt time.Time      `gorm:"not null" json:"started_at"`
-	EndedAt   *time.Time     `json:"ended_at"`
-	Notes     string         `gorm:"type:text" json:"notes"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	UserID      uuid.UUID      `gorm:"type:uuid;not null" json:"user_id"`
+	CreatedByID *uuid.UUID     `gorm:"type:uuid" json:"created_by_id,omitempty"` // Who logged the session (trainer or self)
+	WorkoutID   *uuid.UUID     `gorm:"type:uuid" json:"workout_id"`              // nullable for free-form workouts
+	StartedAt   time.Time      `gorm:"not null" json:"started_at"`
+	EndedAt     *time.Time     `json:"ended_at"`
+	Notes       string         `gorm:"type:text" json:"notes"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	User         User          `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
+	CreatedBy    *User         `gorm:"foreignKey:CreatedByID;constraint:OnDelete:SET NULL" json:"created_by,omitempty"`
 	Workout      *Workout      `gorm:"foreignKey:WorkoutID;constraint:OnDelete:SET NULL" json:"workout,omitempty"`
 	ExerciseLogs []ExerciseLog `gorm:"foreignKey:SessionID" json:"exercise_logs,omitempty"`
 }
@@ -30,7 +32,7 @@ type ExerciseLog struct {
 	ExerciseID       uuid.UUID      `gorm:"type:uuid;not null" json:"exercise_id"`
 	OrderNumber      int            `gorm:"not null" json:"order_number"`
 	Notes            string         `gorm:"type:text" json:"notes"`
-	DifficultyRating int            `gorm:"check:difficulty_rating >= 1 AND difficulty_rating <= 10" json:"difficulty_rating"`
+	DifficultyRating int            `gorm:"check:difficulty_rating >= 0 AND difficulty_rating <= 10" json:"difficulty_rating"`
 	DifficultyType   string         `gorm:"type:varchar(20)" json:"difficulty_type"` // easy, moderate, hard, very_hard
 	CreatedAt        time.Time      `json:"created_at"`
 	UpdatedAt        time.Time      `json:"updated_at"`
@@ -84,16 +86,18 @@ func (sl *SetLog) BeforeCreate(tx *gorm.DB) (err error) {
 
 // Response DTOs
 type WorkoutSessionResponse struct {
-	ID           uuid.UUID          `json:"id"`
-	UserID       uuid.UUID          `json:"user_id"`
-	WorkoutID    *uuid.UUID         `json:"workout_id"`
-	StartedAt    time.Time          `json:"started_at"`
-	EndedAt      *time.Time         `json:"ended_at"`
-	Notes        string             `json:"notes"`
-	Duration     *int               `json:"duration_minutes,omitempty"`
-	ExerciseLogs []ExerciseLogBrief `json:"exercise_logs,omitempty"`
-	CreatedAt    time.Time          `json:"created_at"`
-	UpdatedAt    time.Time          `json:"updated_at"`
+	ID            uuid.UUID          `json:"id"`
+	UserID        uuid.UUID          `json:"user_id"`
+	CreatedByID   *uuid.UUID         `json:"created_by_id,omitempty"`
+	CreatedByName string             `json:"created_by_name,omitempty"`
+	WorkoutID     *uuid.UUID         `json:"workout_id"`
+	StartedAt     time.Time          `json:"started_at"`
+	EndedAt       *time.Time         `json:"ended_at"`
+	Notes         string             `json:"notes"`
+	Duration      *int               `json:"duration_minutes,omitempty"`
+	ExerciseLogs  []ExerciseLogBrief `json:"exercise_logs,omitempty"`
+	CreatedAt     time.Time          `json:"created_at"`
+	UpdatedAt     time.Time          `json:"updated_at"`
 }
 
 type ExerciseLogBrief struct {
@@ -109,14 +113,20 @@ type ExerciseLogBrief struct {
 
 func (ws *WorkoutSession) ToResponse() WorkoutSessionResponse {
 	response := WorkoutSessionResponse{
-		ID:        ws.ID,
-		UserID:    ws.UserID,
-		WorkoutID: ws.WorkoutID,
-		StartedAt: ws.StartedAt,
-		EndedAt:   ws.EndedAt,
-		Notes:     ws.Notes,
-		CreatedAt: ws.CreatedAt,
-		UpdatedAt: ws.UpdatedAt,
+		ID:          ws.ID,
+		UserID:      ws.UserID,
+		CreatedByID: ws.CreatedByID,
+		WorkoutID:   ws.WorkoutID,
+		StartedAt:   ws.StartedAt,
+		EndedAt:     ws.EndedAt,
+		Notes:       ws.Notes,
+		CreatedAt:   ws.CreatedAt,
+		UpdatedAt:   ws.UpdatedAt,
+	}
+
+	// Include creator's name if available
+	if ws.CreatedBy != nil {
+		response.CreatedByName = ws.CreatedBy.FirstName + " " + ws.CreatedBy.LastName
 	}
 
 	if ws.EndedAt != nil {

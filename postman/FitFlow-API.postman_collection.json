@@ -6125,6 +6125,593 @@
         }
       ],
       "description": "Test error scenarios and validation"
+    },
+    {
+      "name": "Workout Sessions",
+      "item": [
+        {
+          "name": "Create Workout Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('workout_session_id', jsonData.data.id);",
+                  "    pm.test('Workout session created successfully', function () {",
+                  "        pm.expect(jsonData.data.id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.started_at).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Morning workout session\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workout-sessions"
+              ]
+            },
+            "description": "Create a new workout session"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Workout Session for Client",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('client_session_id', jsonData.data.id);",
+                  "    pm.test('Session created for client', function () {",
+                  "        pm.expect(jsonData.data.created_by_id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.created_by_name).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{client_id}}\",\n  \"notes\": \"PT session - leg day\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workout-sessions"
+              ]
+            },
+            "description": "Create a workout session for a client (trainer only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Workout Sessions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Workout sessions retrieved', function () {",
+                  "        pm.expect(jsonData.data).to.be.an('array');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workout-sessions"
+              ]
+            },
+            "description": "Get all workout sessions for the authenticated user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Client Workout Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-sessions?client_id={{client_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workout-sessions"
+              ],
+              "query": [
+                {
+                  "key": "client_id",
+                  "value": "{{client_id}}"
+                }
+              ]
+            },
+            "description": "Get workout sessions for a specific client (trainer view)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workout Session by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-sessions/{{workout_session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workout-sessions",
+                "{{workout_session_id}}"
+              ]
+            },
+            "description": "Get a specific workout session with exercise logs"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Workout Session",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Updated session notes - felt great today!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-sessions/{{workout_session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workout-sessions",
+                "{{workout_session_id}}"
+              ]
+            },
+            "description": "Update workout session notes"
+          },
+          "response": []
+        },
+        {
+          "name": "End Workout Session",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Completed workout - good session!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-sessions/{{workout_session_id}}/end",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workout-sessions",
+                "{{workout_session_id}}",
+                "end"
+              ]
+            },
+            "description": "End a workout session and set the end time"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Workout Session",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-sessions/{{workout_session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workout-sessions",
+                "{{workout_session_id}}"
+              ]
+            },
+            "description": "Delete a workout session"
+          },
+          "response": []
+        }
+      ],
+      "description": "Workout session logging endpoints"
+    },
+    {
+      "name": "Exercise Logs",
+      "item": [
+        {
+          "name": "Create Exercise Log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('exercise_log_id', jsonData.data.id);",
+                  "    pm.test('Exercise log created successfully', function () {",
+                  "        pm.expect(jsonData.data.id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.exercise_name).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"{{workout_session_id}}\",\n  \"exercise_id\": \"{{exercise_id}}\",\n  \"order_number\": 1,\n  \"notes\": \"Feeling strong today\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercise-logs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercise-logs"
+              ]
+            },
+            "description": "Create an exercise log in a workout session"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exercise Log by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercise-logs/{{exercise_log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercise-logs",
+                "{{exercise_log_id}}"
+              ]
+            },
+            "description": "Get a specific exercise log with set logs"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Exercise Log",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Updated notes - PR achieved!\",\n  \"difficulty_rating\": 8,\n  \"difficulty_type\": \"hard\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercise-logs/{{exercise_log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercise-logs",
+                "{{exercise_log_id}}"
+              ]
+            },
+            "description": "Update exercise log notes and difficulty"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Exercise Log",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercise-logs/{{exercise_log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercise-logs",
+                "{{exercise_log_id}}"
+              ]
+            },
+            "description": "Delete an exercise log"
+          },
+          "response": []
+        }
+      ],
+      "description": "Exercise log endpoints within workout sessions"
+    },
+    {
+      "name": "Set Logs",
+      "item": [
+        {
+          "name": "Create Set Log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('set_log_id', jsonData.data.id);",
+                  "    pm.test('Set log created successfully', function () {",
+                  "        pm.expect(jsonData.data.id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.set_number).to.be.a('number');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercise_log_id\": \"{{exercise_log_id}}\",\n  \"set_number\": 1,\n  \"weight\": 100.0,\n  \"weight_unit\": \"kg\",\n  \"reps\": 8,\n  \"rpe\": 7.5,\n  \"rest_after_sec\": 90,\n  \"tempo\": \"3-1-2-1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/set-logs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "set-logs"
+              ]
+            },
+            "description": "Create a set log for an exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Set Log by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/set-logs/{{set_log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "set-logs",
+                "{{set_log_id}}"
+              ]
+            },
+            "description": "Get a specific set log"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Set Log",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weight\": 105.0,\n  \"weight_unit\": \"kg\",\n  \"reps\": 8,\n  \"rpe\": 8.0,\n  \"rest_after_sec\": 120\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/set-logs/{{set_log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "set-logs",
+                "{{set_log_id}}"
+              ]
+            },
+            "description": "Update a set log"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Set Log",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/set-logs/{{set_log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "set-logs",
+                "{{set_log_id}}"
+              ]
+            },
+            "description": "Delete a set log"
+          },
+          "response": []
+        }
+      ],
+      "description": "Set log endpoints for individual exercise sets"
     }
   ],
   "event": [

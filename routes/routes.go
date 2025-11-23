@@ -262,6 +262,35 @@ func SetupRoutes(r *gin.Engine) {
 				rpe.POST("/scales/:id/values", controllers.AddRPEScaleValue)
 			}
 
+			// Workout Sessions (Logging)
+			workoutSessions := protected.Group("/workout-sessions")
+			{
+				workoutSessions.POST("", controllers.CreateWorkoutSession)
+				workoutSessions.GET("", controllers.GetWorkoutSessions)
+				workoutSessions.GET("/:id", controllers.GetWorkoutSession)
+				workoutSessions.PUT("/:id", controllers.UpdateWorkoutSession)
+				workoutSessions.PUT("/:id/end", controllers.EndWorkoutSession)
+				workoutSessions.DELETE("/:id", controllers.DeleteWorkoutSession)
+			}
+
+			// Exercise Logs
+			exerciseLogs := protected.Group("/exercise-logs")
+			{
+				exerciseLogs.POST("", controllers.CreateExerciseLog)
+				exerciseLogs.GET("/:id", controllers.GetExerciseLog)
+				exerciseLogs.PUT("/:id", controllers.UpdateExerciseLog)
+				exerciseLogs.DELETE("/:id", controllers.DeleteExerciseLog)
+			}
+
+			// Set Logs
+			setLogs := protected.Group("/set-logs")
+			{
+				setLogs.POST("", controllers.CreateSetLog)
+				setLogs.GET("/:id", controllers.GetSetLog)
+				setLogs.PUT("/:id", controllers.UpdateSetLog)
+				setLogs.DELETE("/:id", controllers.DeleteSetLog)
+			}
+
 			// Translations (Admin only)
 			translations := protected.Group("/translations")
 			translations.Use(middleware.AdminMiddleware())
