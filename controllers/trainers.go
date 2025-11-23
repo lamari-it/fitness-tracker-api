@@ -51,7 +51,7 @@ func CreateTrainerProfile(c *gin.Context) {
 	// Set default visibility if not provided
 	visibility := req.Visibility
 	if visibility == "" {
-		visibility = "public"
+		visibility = "private"
 	}
 
 	trainerProfile := models.TrainerProfile{

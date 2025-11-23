@@ -383,7 +383,7 @@
                 "register"
               ]
             },
-            "description": "Register a new user account with trainer profile. The trainer_profile field is optional. Visibility options: public (searchable), link_only (viewable with link), private (owner/admin only)."
+            "description": "Register a new user account with trainer profile. The trainer_profile field is optional. All trainer profile fields are optional (bio, specialty_ids, hourly_rate, location). Visibility defaults to 'private' if not specified. Visibility options: public (searchable), link_only (viewable with link), private (owner/admin only)."
           },
           "response": []
         },

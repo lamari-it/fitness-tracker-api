@@ -74,18 +74,18 @@ func (tcl *TrainerClientLink) BeforeCreate(tx *gorm.DB) (err error) {
 
 // Request DTOs
 type CreateTrainerProfileRequest struct {
-	Bio          string      `json:"bio" binding:"required,min=10,max=1000"`
-	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"required,min=1,max=20"`
-	HourlyRate   float64     `json:"hourly_rate" binding:"required,gt=0,lte=9999.99"`
-	Location     string      `json:"location" binding:"required,min=2,max=500"`
+	Bio          string      `json:"bio" binding:"omitempty,max=1000"`
+	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
+	HourlyRate   float64     `json:"hourly_rate" binding:"omitempty,gte=0,lte=9999.99"`
+	Location     string      `json:"location" binding:"omitempty,max=500"`
 	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
 }
 
 type UpdateTrainerProfileRequest struct {
-	Bio          string      `json:"bio" binding:"omitempty,min=10,max=1000"`
-	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"omitempty,min=1,max=20"`
-	HourlyRate   float64     `json:"hourly_rate" binding:"omitempty,gt=0,lte=9999.99"`
-	Location     string      `json:"location" binding:"omitempty,min=2,max=500"`
+	Bio          string      `json:"bio" binding:"omitempty,max=1000"`
+	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
+	HourlyRate   float64     `json:"hourly_rate" binding:"omitempty,gte=0,lte=9999.99"`
+	Location     string      `json:"location" binding:"omitempty,max=500"`
 	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
 }
 
@@ -231,18 +231,23 @@ func (tp *TrainerProfile) ToPublicResponse(reviewCount int, avgRating float64) T
 
 // Validation method
 func (tp *TrainerProfile) Validate() error {
-	if tp.Bio == "" || len(tp.Bio) < 10 || len(tp.Bio) > 1000 {
-		return fmt.Errorf("bio must be between 10 and 1000 characters")
+	// Bio: allow empty or 1-1000 characters
+	if tp.Bio != "" && len(tp.Bio) > 1000 {
+		return fmt.Errorf("bio must be at most 1000 characters")
 	}
-	if len(tp.Specialties) == 0 || len(tp.Specialties) > 20 {
-		return fmt.Errorf("specialties must have 1 to 20 items")
+	// Specialties: allow empty or up to 20 items
+	if len(tp.Specialties) > 20 {
+		return fmt.Errorf("specialties must have at most 20 items")
 	}
-	if tp.HourlyRate <= 0 || tp.HourlyRate > 9999.99 {
+	// HourlyRate: allow 0-9999.99
+	if tp.HourlyRate < 0 || tp.HourlyRate > 9999.99 {
 		return fmt.Errorf("hourly rate must be between 0 and 9999.99")
 	}
-	if tp.Location == "" || len(tp.Location) < 2 || len(tp.Location) > 500 {
-		return fmt.Errorf("location must be between 2 and 500 characters")
+	// Location: allow empty or 1-500 characters
+	if tp.Location != "" && len(tp.Location) > 500 {
+		return fmt.Errorf("location must be at most 500 characters")
 	}
+	// Visibility: must be valid enum or empty
 	if tp.Visibility != "" && tp.Visibility != "public" && tp.Visibility != "link_only" && tp.Visibility != "private" {
 		return fmt.Errorf("visibility must be one of: public, link_only, private")
 	}

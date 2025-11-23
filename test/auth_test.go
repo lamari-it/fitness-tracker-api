@@ -315,7 +315,7 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 				"specialty_ids": defaultSpecialtyIDs,
 				"hourly_rate":   50.00,
 				"location":      "Chicago, IL",
-				// No visibility specified - should default to "public"
+				// No visibility specified - should default to "private"
 			},
 		}
 
@@ -328,14 +328,53 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 
 		response.Value("success").Boolean().IsTrue()
 
-		// Verify default visibility is "public"
+		// Verify default visibility is "private"
 		trainerProfile := response.Value("data").Object().Value("trainer_profile").Object()
-		trainerProfile.Value("visibility").String().IsEqual("public")
+		trainerProfile.Value("visibility").String().IsEqual("private")
+	})
+
+	t.Run("Registration With Minimal Trainer Profile", func(t *testing.T) {
+		// Test that empty/zero values are now allowed
+		userData := map[string]interface{}{
+			"email":            "minimaltrainer@example.com",
+			"password":         "MinimalPass123!",
+			"password_confirm": "MinimalPass123!",
+			"first_name":       "Minimal",
+			"last_name":        "Trainer",
+			"trainer_profile": map[string]interface{}{
+				"bio":           "",   // Empty bio allowed
+				"specialty_ids": []string{}, // Empty array allowed
+				"hourly_rate":   0,    // Zero allowed
+				"location":      "",   // Empty location allowed
+				// No visibility - defaults to "private"
+			},
+		}
+
+		response := e.POST("/api/v1/auth/register").
+			WithJSON(userData).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		// Verify trainer profile with defaults
+		trainerProfile := response.Value("data").Object().Value("trainer_profile").Object()
+		trainerProfile.Value("id").String().NotEmpty()
+		trainerProfile.Value("bio").String().IsEqual("")
+		trainerProfile.Value("specialties").Array().Length().IsEqual(0)
+		trainerProfile.Value("hourly_rate").Number().IsEqual(0)
+		trainerProfile.Value("location").String().IsEqual("")
+		trainerProfile.Value("visibility").String().IsEqual("private")
 	})
 
 	t.Run("Registration With Invalid Trainer Profile", func(t *testing.T) {
-		// Get specialty IDs
-		invalidSpecialtyIDs := GetSpecialtyIDs(t, "Strength Training")
+		// Test that bio over 1000 characters fails
+		longBio := ""
+		for i := 0; i < 1001; i++ {
+			longBio += "a"
+		}
 
 		userData := map[string]interface{}{
 			"email":            "invalidprofile@example.com",
@@ -344,33 +383,7 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"first_name":       "Invalid",
 			"last_name":        "Profile",
 			"trainer_profile": map[string]interface{}{
-				"bio":           "Short", // Too short, should be at least 10 characters
-				"specialty_ids": invalidSpecialtyIDs,
-				"hourly_rate":   75.00,
-				"location":      "New York, NY",
-			},
-		}
-
-		response := e.POST("/api/v1/auth/register").
-			WithJSON(userData).
-			Expect().
-			Status(400).
-			JSON().
-			Object()
-
-		response.Value("success").Boolean().IsFalse()
-	})
-
-	t.Run("Registration With Missing Trainer Profile Fields", func(t *testing.T) {
-		userData := map[string]interface{}{
-			"email":            "missingfields@example.com",
-			"password":         "MissingPass123!",
-			"password_confirm": "MissingPass123!",
-			"first_name":       "Missing",
-			"last_name":        "Fields",
-			"trainer_profile": map[string]interface{}{
-				"bio": "This bio is long enough to pass validation.",
-				// Missing specialty_ids, hourly_rate, and location
+				"bio": longBio, // Over 1000 characters
 			},
 		}
 

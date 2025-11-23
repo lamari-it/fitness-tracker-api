@@ -11,10 +11,10 @@ import (
 )
 
 type TrainerProfileData struct {
-	Bio          string      `json:"bio" binding:"required,min=10,max=1000"`
-	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"required,min=0,max=20"`
-	HourlyRate   float64     `json:"hourly_rate" binding:"required,gt=0,lte=9999.99"`
-	Location     string      `json:"location" binding:"required,min=2,max=500"`
+	Bio          string      `json:"bio" binding:"omitempty,max=1000"`
+	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
+	HourlyRate   float64     `json:"hourly_rate" binding:"omitempty,gte=0,lte=9999.99"`
+	Location     string      `json:"location" binding:"omitempty,max=500"`
 	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
 }
 
@@ -91,7 +91,7 @@ func Register(c *gin.Context) {
 		// Validate trainer profile data
 		visibility := req.TrainerProfile.Visibility
 		if visibility == "" {
-			visibility = "public"
+			visibility = "private"
 		}
 
 		tp := models.TrainerProfile{

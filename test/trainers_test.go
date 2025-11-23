@@ -95,7 +95,7 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("specialties").Array().Length().IsEqual(3)
 		data.Value("hourly_rate").Number().IsEqual(75.00)
 		data.Value("location").String().IsEqual("New York, NY")
-		data.Value("visibility").String().IsEqual("public") // Default visibility
+		data.Value("visibility").String().IsEqual("private") // Default visibility
 		data.Value("created_at").String().NotEmpty()
 		data.Value("updated_at").String().NotEmpty()
 	})
@@ -151,30 +151,13 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		newToken := createTestUserAndGetToken(e, "newtrainer@example.com", "NewPass123!", "New", "Trainer")
 		strengthIDs := GetSpecialtyIDs(t, "Strength Training")
 
+		// Test cases that should fail validation
 		testCases := []struct {
 			name        string
 			profileData map[string]interface{}
 		}{
 			{
-				name: "Bio Too Short",
-				profileData: map[string]interface{}{
-					"bio":           "Short",
-					"specialty_ids": strengthIDs,
-					"hourly_rate":   75.00,
-					"location":      "New York, NY",
-				},
-			},
-			{
-				name: "Empty Specialties",
-				profileData: map[string]interface{}{
-					"bio":           "Certified personal trainer with experience.",
-					"specialty_ids": []string{},
-					"hourly_rate":   75.00,
-					"location":      "New York, NY",
-				},
-			},
-			{
-				name: "Invalid Hourly Rate",
+				name: "Negative Hourly Rate",
 				profileData: map[string]interface{}{
 					"bio":           "Certified personal trainer with experience.",
 					"specialty_ids": strengthIDs,
@@ -183,19 +166,20 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 				},
 			},
 			{
-				name: "Location Too Short",
+				name: "Bio Too Long",
 				profileData: map[string]interface{}{
-					"bio":           "Certified personal trainer with experience.",
+					"bio":           string(make([]byte, 1001)), // Over 1000 chars
 					"specialty_ids": strengthIDs,
 					"hourly_rate":   75.00,
-					"location":      "A",
+					"location":      "New York, NY",
 				},
 			},
 			{
-				name: "Missing Bio",
+				name: "Hourly Rate Too High",
 				profileData: map[string]interface{}{
+					"bio":           "Valid bio",
 					"specialty_ids": strengthIDs,
-					"hourly_rate":   75.00,
+					"hourly_rate":   10000.00, // Over 9999.99
 					"location":      "New York, NY",
 				},
 			},
@@ -728,13 +712,14 @@ func testGetTrainerPublicProfile(t *testing.T, e *httpexpect.Expect) {
 	trainerToken := createTestUserAndGetToken(e, "publictrainer@example.com", "PublicPass123!", "Public", "Trainer")
 	clientToken := createTestUserAndGetToken(e, "client@example.com", "ClientPass123!", "Client", "User")
 
-	// Create trainer profile
+	// Create trainer profile with public visibility
 	specialtyIDs := GetSpecialtyIDs(t, "Strength Training", "Cardio")
 	profileData := map[string]interface{}{
 		"bio":           "Public trainer profile for viewing.",
 		"specialty_ids": specialtyIDs,
 		"hourly_rate":   65.00,
 		"location":      "Chicago, IL",
+		"visibility":    "public",
 	}
 
 	createResponse := e.POST("/api/v1/trainers/profile").
