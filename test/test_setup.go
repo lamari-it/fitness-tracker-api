@@ -116,6 +116,7 @@ func CleanDatabase(t *testing.T) {
 		"workouts",
 		"workout_plans",
 		"user_roles",
+		"role_inheritance",
 		"role_permissions",
 		"roles",
 		"permissions",

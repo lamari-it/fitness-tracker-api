@@ -32,6 +32,65 @@ func SeedRoles(db *gorm.DB) error {
 		}
 	}
 
+	// Set up role inheritance
+	if err := seedRoleInheritance(db); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// seedRoleInheritance sets up the role inheritance hierarchy
+// trainer inherits from user
+// admin inherits from trainer
+func seedRoleInheritance(db *gorm.DB) error {
+	// Get roles
+	var userRole, trainerRole, adminRole models.Role
+	if err := db.Where("name = ?", "user").First(&userRole).Error; err != nil {
+		log.Printf("User role not found: %v", err)
+		return err
+	}
+	if err := db.Where("name = ?", "trainer").First(&trainerRole).Error; err != nil {
+		log.Printf("Trainer role not found: %v", err)
+		return err
+	}
+	if err := db.Where("name = ?", "admin").First(&adminRole).Error; err != nil {
+		log.Printf("Admin role not found: %v", err)
+		return err
+	}
+
+	// Define inheritance relationships
+	inheritanceMap := []struct {
+		childID  uint
+		parentID uint
+		childName string
+		parentName string
+	}{
+		{trainerRole.ID, userRole.ID, "trainer", "user"},
+		{adminRole.ID, trainerRole.ID, "admin", "trainer"},
+	}
+
+	for _, inheritance := range inheritanceMap {
+		var existing models.RoleInheritance
+		if err := db.Where("child_role_id = ? AND parent_role_id = ?", inheritance.childID, inheritance.parentID).First(&existing).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				roleInheritance := models.RoleInheritance{
+					ChildRoleID:  inheritance.childID,
+					ParentRoleID: inheritance.parentID,
+				}
+				if err := db.Create(&roleInheritance).Error; err != nil {
+					log.Printf("Error creating role inheritance %s -> %s: %v", inheritance.childName, inheritance.parentName, err)
+					return err
+				}
+				log.Printf("Created role inheritance: %s inherits from %s", inheritance.childName, inheritance.parentName)
+			} else {
+				return err
+			}
+		} else {
+			log.Printf("Role inheritance already exists: %s inherits from %s", inheritance.childName, inheritance.parentName)
+		}
+	}
+
 	return nil
 }
 
@@ -132,42 +191,27 @@ func SeedRBACData(db *gorm.DB) error {
 	}
 
 	// Define role-permission mappings
+	// With inheritance: trainer inherits from user, admin inherits from trainer
+	// Only assign permissions that are unique to each role (not inherited)
 	rolePermissionMappings := map[string][]string{
 		"admin": {
-			// Admin has all permissions
-			"auth.register", "auth.login", "auth.profile.read",
-			"dashboard.view",
-			"muscle_groups.create", "muscle_groups.read", "muscle_groups.update", "muscle_groups.delete",
-			"exercises.create", "exercises.read", "exercises.update", "exercises.delete",
-			"exercises.muscle_groups.manage", "exercises.equipment.manage",
-			"equipment.create", "equipment.read", "equipment.update", "equipment.delete",
-			"fitness_levels.create", "fitness_levels.read", "fitness_levels.update", "fitness_levels.delete",
-			"fitness_goals.create", "fitness_goals.read", "fitness_goals.update", "fitness_goals.delete",
-			"user_fitness.goals.read", "user_fitness.goals.update", "user_fitness.level.update",
-			"user_equipment.create", "user_equipment.read", "user_equipment.update", "user_equipment.delete",
-			"workout_plans.create", "workout_plans.read", "workout_plans.update", "workout_plans.delete",
-			"friends.request.send", "friends.request.view", "friends.request.respond", "friends.view", "friends.remove",
+			// Admin-specific permissions (inherits trainer + user permissions)
+			"auth.register",
+			"muscle_groups.create", "muscle_groups.update", "muscle_groups.delete",
+			"exercises.delete",
+			"equipment.create", "equipment.update", "equipment.delete",
+			"fitness_levels.create", "fitness_levels.update", "fitness_levels.delete",
+			"fitness_goals.create", "fitness_goals.update", "fitness_goals.delete",
 			"translations.create", "translations.read", "translations.update", "translations.delete",
-			"workouts.view", "nutrition.view",
 		},
 		"trainer": {
-			// Trainer permissions
-			"auth.login", "auth.profile.read",
-			"dashboard.view",
-			"muscle_groups.read",
-			"exercises.create", "exercises.read", "exercises.update",
+			// Trainer-specific permissions (inherits user permissions)
+			"exercises.create", "exercises.update",
 			"exercises.muscle_groups.manage", "exercises.equipment.manage",
-			"equipment.read",
-			"fitness_levels.read",
-			"fitness_goals.read",
-			"user_fitness.goals.read", "user_fitness.goals.update", "user_fitness.level.update",
-			"user_equipment.read",
-			"workout_plans.create", "workout_plans.read", "workout_plans.update", "workout_plans.delete",
-			"friends.request.send", "friends.request.view", "friends.request.respond", "friends.view", "friends.remove",
-			"workouts.view", "nutrition.view",
+			"workout_plans.create", "workout_plans.update", "workout_plans.delete",
 		},
 		"user": {
-			// Regular user permissions
+			// Base user permissions
 			"auth.login", "auth.profile.read",
 			"dashboard.view",
 			"muscle_groups.read",

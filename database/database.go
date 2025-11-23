@@ -65,6 +65,7 @@ func AutoMigrate() {
 		&models.Role{},
 		&models.Permission{},
 		&models.RolePermission{},
+		&models.RoleInheritance{},
 		&models.UserRole{},
 		&models.Specialty{},
 		&models.TrainerProfile{},
@@ -144,6 +145,7 @@ func DropAllData(db *gorm.DB) error {
 		&models.Workout{},
 		&models.WorkoutPlan{},
 		&models.UserRole{},
+		&models.RoleInheritance{},
 		&models.RolePermission{},
 		&models.Role{},
 		&models.Permission{},
@@ -221,6 +223,7 @@ func DropAllTables(db *gorm.DB) error {
 		&models.Specialty{},
 		// RBAC
 		&models.UserRole{},
+		&models.RoleInheritance{},
 		&models.RolePermission{},
 		&models.Role{},
 		&models.Permission{},
