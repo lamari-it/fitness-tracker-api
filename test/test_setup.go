@@ -115,6 +115,8 @@ func CleanDatabase(t *testing.T) {
 		"workout_plan_items",
 		"workouts",
 		"workout_plans",
+		"rpe_scale_values",
+		"rpe_scales",
 		"user_roles",
 		"role_inheritance",
 		"role_permissions",

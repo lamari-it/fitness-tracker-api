@@ -250,6 +250,18 @@ func SetupRoutes(r *gin.Engine) {
 				specialties.GET("/", controllers.ListSpecialties)
 			}
 
+			// RPE Scales
+			rpe := protected.Group("/rpe")
+			{
+				rpe.GET("/scales", controllers.ListRPEScales)
+				rpe.GET("/scales/global", controllers.GetGlobalRPEScale)
+				rpe.POST("/scales", controllers.CreateRPEScale)
+				rpe.GET("/scales/:id", controllers.GetRPEScale)
+				rpe.PUT("/scales/:id", controllers.UpdateRPEScale)
+				rpe.DELETE("/scales/:id", controllers.DeleteRPEScale)
+				rpe.POST("/scales/:id/values", controllers.AddRPEScaleValue)
+			}
+
 			// Translations (Admin only)
 			translations := protected.Group("/translations")
 			translations.Use(middleware.AdminMiddleware())

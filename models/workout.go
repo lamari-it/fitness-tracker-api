@@ -95,25 +95,27 @@ type Exercise struct {
 }
 
 type WorkoutExercise struct {
-	ID                uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	WorkoutID         uuid.UUID `gorm:"type:uuid;not null" json:"workout_id"`
-	SetGroupID        uuid.UUID `gorm:"type:uuid;not null" json:"set_group_id"`
-	ExerciseID        uuid.UUID `gorm:"type:uuid;not null" json:"exercise_id"`
-	OrderNumber       int       `gorm:"not null" json:"order_number"`
-	TargetSets        int       `json:"target_sets"`
-	TargetReps        int       `json:"target_reps"`
-	TargetWeight      float64   `gorm:"type:numeric(10,2)" json:"target_weight"`
-	TargetRestSec     int       `json:"target_rest_sec"`
-	Prescription      string    `gorm:"type:varchar(20);not null;default:'reps'" json:"prescription"` // reps | time
-	TargetDurationSec int       `gorm:"default:0" json:"target_duration_sec"`
+	ID                uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	WorkoutID         uuid.UUID  `gorm:"type:uuid;not null" json:"workout_id"`
+	SetGroupID        uuid.UUID  `gorm:"type:uuid;not null" json:"set_group_id"`
+	ExerciseID        uuid.UUID  `gorm:"type:uuid;not null" json:"exercise_id"`
+	OrderNumber       int        `gorm:"not null" json:"order_number"`
+	TargetSets        int        `json:"target_sets"`
+	TargetReps        int        `json:"target_reps"`
+	TargetWeight      float64    `gorm:"type:numeric(10,2)" json:"target_weight"`
+	TargetRestSec     int        `json:"target_rest_sec"`
+	Prescription      string     `gorm:"type:varchar(20);not null;default:'reps'" json:"prescription"` // reps | time
+	TargetDurationSec int        `gorm:"default:0" json:"target_duration_sec"`
+	TargetRPEValueID  *uuid.UUID `gorm:"type:uuid" json:"target_rpe_value_id,omitempty"`
 
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
-	Workout  Workout  `gorm:"foreignKey:WorkoutID;constraint:OnDelete:CASCADE" json:"workout,omitempty"`
-	SetGroup SetGroup `gorm:"foreignKey:SetGroupID;constraint:OnDelete:CASCADE" json:"set_group,omitempty"`
-	Exercise Exercise `gorm:"foreignKey:ExerciseID;constraint:OnDelete:CASCADE" json:"exercise,omitempty"`
+	Workout        Workout        `gorm:"foreignKey:WorkoutID;constraint:OnDelete:CASCADE" json:"workout,omitempty"`
+	SetGroup       SetGroup       `gorm:"foreignKey:SetGroupID;constraint:OnDelete:CASCADE" json:"set_group,omitempty"`
+	Exercise       Exercise       `gorm:"foreignKey:ExerciseID;constraint:OnDelete:CASCADE" json:"exercise,omitempty"`
+	TargetRPEValue *RPEScaleValue `gorm:"foreignKey:TargetRPEValueID;constraint:OnDelete:SET NULL" json:"target_rpe_value,omitempty"`
 }
 
 func (wp *WorkoutPlan) BeforeCreate(tx *gorm.DB) (err error) {

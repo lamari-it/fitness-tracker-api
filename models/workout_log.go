@@ -51,12 +51,14 @@ type SetLog struct {
 	Reps          int            `json:"reps"`
 	RestAfterSec  int            `json:"rest_after_sec"`
 	Tempo         string         `gorm:"type:varchar(10)" json:"tempo"`                             // e.g., "3-1-2-1"
-	RPE           float64        `gorm:"type:numeric(3,1);check:rpe >= 1 AND rpe <= 10" json:"rpe"` // Rate of Perceived Exertion
+	RPE           float64        `gorm:"type:numeric(3,1);check:rpe >= 1 AND rpe <= 10" json:"rpe"` // Rate of Perceived Exertion (legacy)
+	RPEValueID    *uuid.UUID     `gorm:"type:uuid" json:"rpe_value_id,omitempty"`                   // Reference to custom RPE scale value
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
-	ExerciseLog ExerciseLog `gorm:"foreignKey:ExerciseLogID;constraint:OnDelete:CASCADE" json:"exercise_log,omitempty"`
+	ExerciseLog ExerciseLog    `gorm:"foreignKey:ExerciseLogID;constraint:OnDelete:CASCADE" json:"exercise_log,omitempty"`
+	RPEValue    *RPEScaleValue `gorm:"foreignKey:RPEValueID;constraint:OnDelete:SET NULL" json:"rpe_value,omitempty"`
 }
 
 func (ws *WorkoutSession) BeforeCreate(tx *gorm.DB) (err error) {

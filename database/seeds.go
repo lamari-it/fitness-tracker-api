@@ -2479,6 +2479,54 @@ func SeedTrainerClientLinks() {
 	}
 }
 
+// SeedGlobalRPEScale creates the global standard RPE scale
+func SeedGlobalRPEScale() {
+	// Check if global scale already exists
+	var existing models.RPEScale
+	if err := DB.Where("is_global = ?", true).First(&existing).Error; err == nil {
+		log.Println("Global RPE scale already exists")
+		return
+	}
+
+	// Create the global RPE scale
+	scale := models.RPEScale{
+		Name:        "Standard RPE Scale",
+		Description: "Standard Rate of Perceived Exertion scale used globally for resistance training",
+		MinValue:    1,
+		MaxValue:    10,
+		IsGlobal:    true,
+		TrainerID:   nil,
+	}
+
+	if err := DB.Create(&scale).Error; err != nil {
+		log.Printf("Failed to create global RPE scale: %v", err)
+		return
+	}
+	log.Printf("Created global RPE scale: %s", scale.Name)
+
+	// Create scale values
+	values := []models.RPEScaleValue{
+		{ScaleID: scale.ID, Value: 1, Label: "Very Light", Description: "Minimal effort, easy breathing, could do this all day"},
+		{ScaleID: scale.ID, Value: 2, Label: "Light", Description: "Comfortable, could maintain for hours"},
+		{ScaleID: scale.ID, Value: 3, Label: "Moderate", Description: "Breathing harder but comfortable"},
+		{ScaleID: scale.ID, Value: 4, Label: "Somewhat Hard", Description: "Sweating lightly, can hold a conversation"},
+		{ScaleID: scale.ID, Value: 5, Label: "Hard", Description: "Deep breathing, short sentences only"},
+		{ScaleID: scale.ID, Value: 6, Label: "Harder", Description: "Can speak a few words at a time, 4+ reps in reserve"},
+		{ScaleID: scale.ID, Value: 7, Label: "Very Hard", Description: "3-4 reps left in tank, challenging"},
+		{ScaleID: scale.ID, Value: 8, Label: "Very Hard+", Description: "2 reps left in tank, definitely working hard"},
+		{ScaleID: scale.ID, Value: 9, Label: "Extremely Hard", Description: "1 rep left in tank, near maximum effort"},
+		{ScaleID: scale.ID, Value: 10, Label: "Maximum", Description: "Could not do another rep, absolute maximum effort"},
+	}
+
+	for _, value := range values {
+		if err := DB.Create(&value).Error; err != nil {
+			log.Printf("Failed to create RPE value %d: %v", value.Value, err)
+		} else {
+			log.Printf("Created RPE value: %d - %s", value.Value, value.Label)
+		}
+	}
+}
+
 func SeedDatabase() {
 	log.Println("Starting database seeding...")
 	SeedMuscleGroups()
@@ -2486,6 +2534,7 @@ func SeedDatabase() {
 	SeedExercises()
 	SeedFitnessLevels()
 	SeedFitnessGoals()
+	SeedGlobalRPEScale()
 
 	if err := SeedRoles(DB); err != nil {
 		log.Printf("Failed to seed Role data: %v", err)

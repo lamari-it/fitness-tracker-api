@@ -5037,6 +5037,474 @@
       "description": "Trainer specialty management. Run 'List Specialties' first to populate specialty IDs for use in trainer profile creation/update."
     },
     {
+      "name": "RPE Scales",
+      "item": [
+        {
+          "name": "Get Global RPE Scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Global RPE scale retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.name).to.eql('Standard RPE Scale');",
+                  "    pm.expect(jsonData.data.is_global).to.be.true;",
+                  "    pm.expect(jsonData.data.min_value).to.eql(1);",
+                  "    pm.expect(jsonData.data.max_value).to.eql(10);",
+                  "    pm.expect(jsonData.data.values).to.be.an('array').with.lengthOf(10);",
+                  "});",
+                  "",
+                  "// Store global scale ID",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('global_rpe_scale_id', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/rpe/scales/global",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rpe",
+                "scales",
+                "global"
+              ]
+            },
+            "description": "Get the global RPE scale (1-10). This is the standard scale used by default."
+          },
+          "response": []
+        },
+        {
+          "name": "List All RPE Scales",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RPE scales retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    // Should contain at least the global scale",
+                  "    pm.expect(jsonData.data.length).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/rpe/scales",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rpe",
+                "scales"
+              ]
+            },
+            "description": "Get all RPE scales (global + user's custom scales)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Custom RPE Scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Custom RPE scale created successfully', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.name).to.eql('My Custom Scale');",
+                  "    pm.expect(jsonData.data.is_global).to.be.false;",
+                  "    pm.expect(jsonData.data.min_value).to.eql(1);",
+                  "    pm.expect(jsonData.data.max_value).to.eql(5);",
+                  "    pm.expect(jsonData.data.values).to.be.an('array').with.lengthOf(5);",
+                  "});",
+                  "",
+                  "// Store custom scale ID",
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('custom_rpe_scale_id', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Custom Scale\",\n  \"description\": \"A 1-5 scale for beginners\",\n  \"min_value\": 1,\n  \"max_value\": 5,\n  \"values\": [\n    {\"value\": 1, \"label\": \"Easy\", \"description\": \"Minimal effort\"},\n    {\"value\": 2, \"label\": \"Light\", \"description\": \"Light effort\"},\n    {\"value\": 3, \"label\": \"Moderate\", \"description\": \"Medium effort\"},\n    {\"value\": 4, \"label\": \"Hard\", \"description\": \"Hard effort\"},\n    {\"value\": 5, \"label\": \"Maximum\", \"description\": \"Max effort\"}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/rpe/scales",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rpe",
+                "scales"
+              ]
+            },
+            "description": "Create a custom RPE scale with optional initial values"
+          },
+          "response": []
+        },
+        {
+          "name": "Create RPE Scale Without Values",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RPE scale without values created successfully', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.name).to.eql('Empty Scale');",
+                  "    pm.expect(jsonData.data.min_value).to.eql(1);",
+                  "    pm.expect(jsonData.data.max_value).to.eql(100);",
+                  "});",
+                  "",
+                  "// Store empty scale ID for adding values later",
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('empty_rpe_scale_id', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Empty Scale\",\n  \"description\": \"A scale to add values later\",\n  \"max_value\": 100\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/rpe/scales",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rpe",
+                "scales"
+              ]
+            },
+            "description": "Create a custom RPE scale without initial values (values can be added later)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get RPE Scale by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RPE scale retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "    pm.expect(jsonData.data).to.have.property('name');",
+                  "    pm.expect(jsonData.data).to.have.property('min_value');",
+                  "    pm.expect(jsonData.data).to.have.property('max_value');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/rpe/scales/{{custom_rpe_scale_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rpe",
+                "scales",
+                "{{custom_rpe_scale_id}}"
+              ]
+            },
+            "description": "Get a specific RPE scale by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update RPE Scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RPE scale updated successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.name).to.eql('Updated Custom Scale');",
+                  "    pm.expect(jsonData.data.description).to.eql('Updated description');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Custom Scale\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/rpe/scales/{{custom_rpe_scale_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rpe",
+                "scales",
+                "{{custom_rpe_scale_id}}"
+              ]
+            },
+            "description": "Update a custom RPE scale (cannot update global scales)"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Value to RPE Scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RPE scale value added successfully', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.value).to.eql(50);",
+                  "    pm.expect(jsonData.data.label).to.eql('Medium');",
+                  "});",
+                  "",
+                  "// Store value ID",
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('rpe_scale_value_id', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": 50,\n  \"label\": \"Medium\",\n  \"description\": \"Medium effort level\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/rpe/scales/{{empty_rpe_scale_id}}/values",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rpe",
+                "scales",
+                "{{empty_rpe_scale_id}}",
+                "values"
+              ]
+            },
+            "description": "Add a new value to a custom RPE scale (cannot add to global scales)"
+          },
+          "response": []
+        },
+        {
+          "name": "Cannot Update Global Scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Cannot update global RPE scale', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hacked Global Scale\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/rpe/scales/{{global_rpe_scale_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rpe",
+                "scales",
+                "{{global_rpe_scale_id}}"
+              ]
+            },
+            "description": "Test that global RPE scales cannot be modified"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete RPE Scale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RPE scale deleted successfully', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/rpe/scales/{{empty_rpe_scale_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "rpe",
+                "scales",
+                "{{empty_rpe_scale_id}}"
+              ]
+            },
+            "description": "Delete a custom RPE scale (cannot delete global scales)"
+          },
+          "response": []
+        }
+      ],
+      "description": "RPE (Rate of Perceived Exertion) scale management. Includes global 1-10 scale and ability to create custom scales."
+    },
+    {
       "name": "Legacy Routes",
       "item": [
         {

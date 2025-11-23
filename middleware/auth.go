@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"fit-flow-api/database"
+	"fit-flow-api/models"
 	"fit-flow-api/utils"
 	"strings"
 
@@ -25,6 +27,14 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		claims, err := utils.ValidateJWT(tokenString)
 		if err != nil {
+			utils.UnauthorizedResponse(c, "Invalid token")
+			c.Abort()
+			return
+		}
+
+		// Verify user exists in database and is not deleted
+		var user models.User
+		if err := database.DB.First(&user, "id = ?", claims.UserID).Error; err != nil {
 			utils.UnauthorizedResponse(c, "Invalid token")
 			c.Abort()
 			return

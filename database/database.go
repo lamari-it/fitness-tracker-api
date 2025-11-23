@@ -85,6 +85,8 @@ func AutoMigrate() {
 		&models.UserFitnessGoal{},
 		&models.UserFitnessProfile{},
 		&models.WeightLog{},
+		&models.RPEScale{},
+		&models.RPEScaleValue{},
 		&models.WorkoutPlan{},
 		&models.WorkoutPlanItem{},
 		&models.Workout{},
@@ -144,6 +146,8 @@ func DropAllData(db *gorm.DB) error {
 		&models.WorkoutPlanItem{},
 		&models.Workout{},
 		&models.WorkoutPlan{},
+		&models.RPEScaleValue{},
+		&models.RPEScale{},
 		&models.UserRole{},
 		&models.RoleInheritance{},
 		&models.RolePermission{},
@@ -197,6 +201,9 @@ func DropAllTables(db *gorm.DB) error {
 		&models.PlanEnrollment{},
 		&models.Workout{},
 		&models.WorkoutPlan{},
+		// RPE scales (after workout tables that reference them)
+		&models.RPEScaleValue{},
+		&models.RPEScale{},
 		// User fitness
 		&models.WeightLog{},
 		&models.UserFitnessGoal{},
