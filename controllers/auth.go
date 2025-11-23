@@ -12,7 +12,7 @@ import (
 
 type TrainerProfileData struct {
 	Bio          string      `json:"bio" binding:"required,min=10,max=1000"`
-	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"required,min=1,max=20"`
+	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"required,min=0,max=20"`
 	HourlyRate   float64     `json:"hourly_rate" binding:"required,gt=0,lte=9999.99"`
 	Location     string      `json:"location" binding:"required,min=2,max=500"`
 	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
@@ -122,11 +122,23 @@ func Register(c *gin.Context) {
 			return
 		}
 
-		// Associate specialties with the trainer profile
-		if err := tx.Model(&tp).Association("Specialties").Replace(&specialties); err != nil {
-			tx.Rollback()
-			utils.InternalServerErrorResponse(c, "Failed to associate specialties")
-			return
+		// Assign "user" and "trainer" roles
+		var userRole, trainerRole models.Role
+		if err := tx.Where("name = ?", "user").First(&userRole).Error; err == nil {
+			err := tx.Model(&user).Association("Roles").Append(&userRole)
+			if err != nil {
+				tx.Rollback()
+				utils.InternalServerErrorResponse(c, "Failed to assign user role.")
+				return
+			}
+		}
+		if err := tx.Where("name = ?", "trainer").First(&trainerRole).Error; err == nil {
+			err := tx.Model(&user).Association("Roles").Append(&trainerRole)
+			if err != nil {
+				tx.Rollback()
+				utils.InternalServerErrorResponse(c, "Failed to assign user role.")
+				return
+			}
 		}
 
 		if err := tx.Commit().Error; err != nil {
@@ -142,7 +154,16 @@ func Register(c *gin.Context) {
 			utils.InternalServerErrorResponse(c, "Failed to create user.")
 			return
 		}
+
+		// Assign "user" role
+		var userRole models.Role
+		if err := database.DB.Where("name = ?", "user").First(&userRole).Error; err == nil {
+			database.DB.Model(&user).Association("Roles").Append(&userRole)
+		}
 	}
+
+	// Preload roles for response
+	database.DB.Preload("Roles").First(&user, "id = ?", user.ID)
 
 	// Check for pending email invitations and create TrainerClientLinks
 	var pendingInvitations []models.TrainerInvitation
@@ -198,7 +219,7 @@ func Login(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := database.DB.Where("email = ?", strings.ToLower(req.Email)).First(&user).Error; err != nil {
+	if err := database.DB.Preload("Roles").Where("email = ?", strings.ToLower(req.Email)).First(&user).Error; err != nil {
 		utils.UnauthorizedResponse(c, "Invalid email or password.")
 		return
 	}
@@ -235,7 +256,7 @@ func GetProfile(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := database.DB.Where("id = ?", userID.(uuid.UUID)).First(&user).Error; err != nil {
+	if err := database.DB.Preload("Roles").Where("id = ?", userID.(uuid.UUID)).First(&user).Error; err != nil {
 		utils.NotFoundResponse(c, "User not found.")
 		return
 	}

@@ -73,12 +73,6 @@ func CreateTrainerProfile(c *gin.Context) {
 		return
 	}
 
-	// Associate specialties with the trainer profile
-	if err := database.DB.Model(&trainerProfile).Association("Specialties").Replace(&specialties); err != nil {
-		utils.InternalServerErrorResponse(c, "Failed to associate specialties")
-		return
-	}
-
 	// Preload user and specialties for response
 	database.DB.Preload("User").Preload("Specialties").First(&trainerProfile, "id = ?", trainerProfile.ID)
 
@@ -162,13 +156,15 @@ func UpdateTrainerProfile(c *gin.Context) {
 			return
 		}
 
-		// Replace the specialties association
-		if err := database.DB.Model(&trainerProfile).Association("Specialties").Replace(&specialties); err != nil {
+		// Clear existing and add new specialties
+		if err := database.DB.Model(&trainerProfile).Association("Specialties").Clear(); err != nil {
+			utils.InternalServerErrorResponse(c, "Failed to clear specialties")
+			return
+		}
+		if err := database.DB.Model(&trainerProfile).Association("Specialties").Append(&specialties); err != nil {
 			utils.InternalServerErrorResponse(c, "Failed to update specialties")
 			return
 		}
-
-		trainerProfile.Specialties = specialties
 	}
 	if req.HourlyRate > 0 {
 		trainerProfile.HourlyRate = req.HourlyRate
@@ -185,13 +181,16 @@ func UpdateTrainerProfile(c *gin.Context) {
 		return
 	}
 
-	if err := database.DB.Save(&trainerProfile).Error; err != nil {
+	// Save only the profile fields, not associations (those were handled by Replace)
+	if err := database.DB.Model(&trainerProfile).Select("bio", "hourly_rate", "location", "visibility", "updated_at").Updates(&trainerProfile).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to update trainer profile")
 		return
 	}
 
-	// Preload user and specialties for response
-	database.DB.Preload("User").Preload("Specialties").First(&trainerProfile, "id = ?", trainerProfile.ID)
+	// Fetch fresh data with preloaded associations for response
+	var updatedProfile models.TrainerProfile
+	database.DB.Preload("User").Preload("Specialties").First(&updatedProfile, "id = ?", trainerProfile.ID)
+	trainerProfile = updatedProfile
 
 	utils.SuccessResponse(c, "Trainer profile updated successfully", trainerProfile.ToResponse())
 }

@@ -289,6 +289,9 @@
                   "    pm.test('Registration successful', function () {",
                   "        pm.expect(jsonData.data.token).to.be.a('string');",
                   "        pm.expect(jsonData.data.user.email).to.be.a('string');",
+                  "        pm.expect(jsonData.data.user.roles).to.be.an('array');",
+                  "        pm.expect(jsonData.data.user.roles.length).to.equal(1);",
+                  "        pm.expect(jsonData.data.user.roles[0].name).to.equal('user');",
                   "    });",
                   "}"
                 ],
@@ -344,6 +347,11 @@
                   "        pm.expect(jsonData.data.user.email).to.be.a('string');",
                   "        pm.expect(jsonData.data.trainer_profile).to.be.an('object');",
                   "        pm.expect(jsonData.data.trainer_profile.visibility).to.be.a('string');",
+                  "        pm.expect(jsonData.data.user.roles).to.be.an('array');",
+                  "        pm.expect(jsonData.data.user.roles.length).to.equal(2);",
+                  "        var roleNames = jsonData.data.user.roles.map(r => r.name);",
+                  "        pm.expect(roleNames).to.include('user');",
+                  "        pm.expect(roleNames).to.include('trainer');",
                   "    });",
                   "}"
                 ],
@@ -394,6 +402,7 @@
                   "    pm.test('Login successful', function () {",
                   "        pm.expect(jsonData.data.token).to.be.a('string');",
                   "        pm.expect(jsonData.data.user.email).to.be.a('string');",
+                  "        pm.expect(jsonData.data.user.roles).to.be.an('array');",
                   "    });",
                   "}"
                 ],
@@ -442,6 +451,7 @@
                   "    pm.expect(jsonData.data.email).to.be.a('string');",
                   "    pm.expect(jsonData.data.first_name).to.be.a('string');",
                   "    pm.expect(jsonData.data.last_name).to.be.a('string');",
+                  "    pm.expect(jsonData.data.roles).to.be.an('array');",
                   "});"
                 ],
                 "type": "text/javascript"

@@ -235,3 +235,15 @@ func GetFitnessGoalIDs(t *testing.T, slugs ...string) []string {
 
 	return ids
 }
+
+// SeedTestRoles creates test roles for use in auth tests
+func SeedTestRoles(t *testing.T) {
+	if testDB == nil {
+		t.Fatal("Test database not initialized")
+	}
+
+	// Seed roles that auth tests will use
+	if err := database.SeedRoles(testDB); err != nil {
+		t.Logf("Note: SeedRoles returned: %v", err)
+	}
+}

@@ -12,16 +12,20 @@ func TestAuthEndpoints(t *testing.T) {
 
 	t.Run("Registration", func(t *testing.T) {
 		CleanDatabase(t) // Clean before registration tests
+		SeedTestRoles(t) // Seed roles for role assignment
 		testRegistration(t, e)
 	})
 
 	t.Run("Registration With Trainer Profile", func(t *testing.T) {
 		CleanDatabase(t) // Clean before registration with trainer profile tests
+		SeedTestRoles(t)       // Seed roles for role assignment
+		SeedTestSpecialties(t) // Seed specialties for trainer profile
 		testRegistrationWithTrainerProfile(t, e)
 	})
 
 	t.Run("Login", func(t *testing.T) {
 		CleanDatabase(t) // Clean before login tests
+		SeedTestRoles(t) // Seed roles for role assignment
 		testLogin(t, e)
 	})
 }
@@ -60,6 +64,11 @@ func testRegistration(t *testing.T, e *httpexpect.Expect) {
 		user.Value("first_name").String().IsEqual("John")
 		user.Value("last_name").String().IsEqual("Doe")
 		user.NotContainsKey("password") // Password should not be returned
+
+		// Verify user role is assigned
+		roles := user.Value("roles").Array()
+		roles.Length().IsEqual(1)
+		roles.Value(0).Object().Value("name").String().IsEqual("user")
 	})
 
 	// Test registration with existing email
@@ -180,6 +189,9 @@ func testRegistration(t *testing.T, e *httpexpect.Expect) {
 }
 
 func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
+	// Get specialty IDs for trainer profile
+	specialtyIDs := GetSpecialtyIDs(t, "Strength Training", "Weight Loss", "Cardio")
+
 	t.Run("Successful Registration With Trainer Profile", func(t *testing.T) {
 		userData := map[string]interface{}{
 			"email":            "traineruser@example.com",
@@ -188,11 +200,11 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"first_name":       "Trainer",
 			"last_name":        "User",
 			"trainer_profile": map[string]interface{}{
-				"bio":         "Experienced fitness trainer with focus on strength training and nutrition.",
-				"specialties": []string{"Strength Training", "Nutrition", "Weight Loss"},
-				"hourly_rate": 75.00,
-				"location":    "New York, NY",
-				"visibility":  "public",
+				"bio":           "Experienced fitness trainer with focus on strength training and nutrition.",
+				"specialty_ids": specialtyIDs,
+				"hourly_rate":   75.00,
+				"location":      "New York, NY",
+				"visibility":    "public",
 			},
 		}
 
@@ -221,6 +233,29 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		user.Value("last_name").String().IsEqual("User")
 		user.NotContainsKey("password")
 
+		// Verify user and trainer roles are assigned
+		roles := user.Value("roles").Array()
+		roles.Length().IsEqual(2)
+		// Check that both "user" and "trainer" roles are present
+		roleNames := []string{}
+		for i := 0; i < 2; i++ {
+			roleNames = append(roleNames, roles.Value(i).Object().Value("name").String().Raw())
+		}
+		// Verify both roles are present (order may vary)
+		hasUser := false
+		hasTrainer := false
+		for _, name := range roleNames {
+			if name == "user" {
+				hasUser = true
+			}
+			if name == "trainer" {
+				hasTrainer = true
+			}
+		}
+		if !hasUser || !hasTrainer {
+			t.Errorf("Expected both 'user' and 'trainer' roles, got: %v", roleNames)
+		}
+
 		// Verify trainer profile fields
 		trainerProfile := data.Value("trainer_profile").Object()
 		trainerProfile.Value("id").String().NotEmpty()
@@ -233,6 +268,9 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Registration With Trainer Profile Private Visibility", func(t *testing.T) {
+		// Get specialty IDs
+		privateSpecialtyIDs := GetSpecialtyIDs(t, "Functional Fitness", "HIIT")
+
 		userData := map[string]interface{}{
 			"email":            "privatetrainer@example.com",
 			"password":         "PrivatePass123!",
@@ -240,11 +278,11 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"first_name":       "Private",
 			"last_name":        "Trainer",
 			"trainer_profile": map[string]interface{}{
-				"bio":         "Private trainer with exclusive clientele.",
-				"specialties": []string{"VIP Training", "Executive Coaching"},
-				"hourly_rate": 200.00,
-				"location":    "Beverly Hills, CA",
-				"visibility":  "private",
+				"bio":           "Private trainer with exclusive clientele.",
+				"specialty_ids": privateSpecialtyIDs,
+				"hourly_rate":   200.00,
+				"location":      "Beverly Hills, CA",
+				"visibility":    "private",
 			},
 		}
 
@@ -263,6 +301,9 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Registration With Trainer Profile Default Visibility", func(t *testing.T) {
+		// Get specialty IDs
+		defaultSpecialtyIDs := GetSpecialtyIDs(t, "Yoga")
+
 		userData := map[string]interface{}{
 			"email":            "defaultvis@example.com",
 			"password":         "DefaultPass123!",
@@ -270,10 +311,10 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"first_name":       "Default",
 			"last_name":        "Visibility",
 			"trainer_profile": map[string]interface{}{
-				"bio":         "Trainer profile with default visibility setting.",
-				"specialties": []string{"General Fitness"},
-				"hourly_rate": 50.00,
-				"location":    "Chicago, IL",
+				"bio":           "Trainer profile with default visibility setting.",
+				"specialty_ids": defaultSpecialtyIDs,
+				"hourly_rate":   50.00,
+				"location":      "Chicago, IL",
 				// No visibility specified - should default to "public"
 			},
 		}
@@ -293,6 +334,9 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Registration With Invalid Trainer Profile", func(t *testing.T) {
+		// Get specialty IDs
+		invalidSpecialtyIDs := GetSpecialtyIDs(t, "Strength Training")
+
 		userData := map[string]interface{}{
 			"email":            "invalidprofile@example.com",
 			"password":         "InvalidPass123!",
@@ -300,10 +344,10 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"first_name":       "Invalid",
 			"last_name":        "Profile",
 			"trainer_profile": map[string]interface{}{
-				"bio":         "Short", // Too short, should be at least 10 characters
-				"specialties": []string{"Strength Training"},
-				"hourly_rate": 75.00,
-				"location":    "New York, NY",
+				"bio":           "Short", // Too short, should be at least 10 characters
+				"specialty_ids": invalidSpecialtyIDs,
+				"hourly_rate":   75.00,
+				"location":      "New York, NY",
 			},
 		}
 
@@ -326,7 +370,7 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"last_name":        "Fields",
 			"trainer_profile": map[string]interface{}{
 				"bio": "This bio is long enough to pass validation.",
-				// Missing specialties, hourly_rate, and location
+				// Missing specialty_ids, hourly_rate, and location
 			},
 		}
 
@@ -412,6 +456,11 @@ func testLogin(t *testing.T, e *httpexpect.Expect) {
 		user.Value("first_name").String().IsEqual("Login")
 		user.Value("last_name").String().IsEqual("Test")
 		user.NotContainsKey("password")
+
+		// Verify roles are returned
+		roles := user.Value("roles").Array()
+		roles.Length().IsEqual(1)
+		roles.Value(0).Object().Value("name").String().IsEqual("user")
 	})
 
 	// Test login with wrong password
