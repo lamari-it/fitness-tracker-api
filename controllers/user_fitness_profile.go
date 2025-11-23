@@ -66,10 +66,10 @@ func CreateUserFitnessProfile(c *gin.Context) {
 	}
 
 	// Set optional fields with defaults
-	if req.PreferredUnitSystem != "" {
-		profile.PreferredUnitSystem = req.PreferredUnitSystem
+	if req.PreferredWeightUnit != "" {
+		profile.PreferredWeightUnit = req.PreferredWeightUnit
 	} else {
-		profile.PreferredUnitSystem = "metric"
+		profile.PreferredWeightUnit = "kg"
 	}
 
 	if req.TargetWeightKg != nil {
@@ -214,8 +214,8 @@ func UpdateUserFitnessProfile(c *gin.Context) {
 		profile.CurrentWeightKg = req.CurrentWeightKg
 	}
 
-	if req.PreferredUnitSystem != "" {
-		profile.PreferredUnitSystem = req.PreferredUnitSystem
+	if req.PreferredWeightUnit != "" {
+		profile.PreferredWeightUnit = req.PreferredWeightUnit
 	}
 
 	if req.TargetWeightKg != nil {

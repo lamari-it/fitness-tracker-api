@@ -65,22 +65,31 @@ func CreateSetLog(c *gin.Context) {
 		return
 	}
 
-	// Set default weight unit if not provided
-	weightUnit := req.WeightUnit
-	if weightUnit == "" {
-		weightUnit = "kg"
+	// Determine the input weight unit
+	inputUnit := req.WeightUnit
+	if inputUnit == "" {
+		// Default to user's preferred unit if not specified
+		inputUnit = getUserPreferredWeightUnit(authUserID)
 	}
 
+	// Normalize the unit
+	normalizedUnit := utils.NormalizeWeightUnit(inputUnit)
+
+	// Convert to canonical kg for storage
+	weightInKg := utils.ConvertToKg(req.Weight, normalizedUnit)
+
 	setLog := models.SetLog{
-		ExerciseLogID: req.ExerciseLogID,
-		SetNumber:     req.SetNumber,
-		Weight:        req.Weight,
-		WeightUnit:    weightUnit,
-		Reps:          req.Reps,
-		RestAfterSec:  req.RestAfterSec,
-		Tempo:         req.Tempo,
-		RPE:           req.RPE,
-		RPEValueID:    req.RPEValueID,
+		ExerciseLogID:   req.ExerciseLogID,
+		SetNumber:       req.SetNumber,
+		Weight:          weightInKg,      // Canonical storage in kg
+		WeightUnit:      normalizedUnit,  // Keep for backward compatibility
+		InputWeight:     req.Weight,      // Original input value
+		InputWeightUnit: normalizedUnit,  // Original input unit
+		Reps:            req.Reps,
+		RestAfterSec:    req.RestAfterSec,
+		Tempo:           req.Tempo,
+		RPE:             req.RPE,
+		RPEValueID:      req.RPEValueID,
 	}
 
 	if err := database.DB.Create(&setLog).Error; err != nil {
@@ -88,17 +97,9 @@ func CreateSetLog(c *gin.Context) {
 		return
 	}
 
-	response := SetLogResponse{
-		ID:           setLog.ID,
-		SetNumber:    setLog.SetNumber,
-		Weight:       setLog.Weight,
-		WeightUnit:   setLog.WeightUnit,
-		Reps:         setLog.Reps,
-		RestAfterSec: setLog.RestAfterSec,
-		Tempo:        setLog.Tempo,
-		RPE:          setLog.RPE,
-		RPEValueID:   setLog.RPEValueID,
-	}
+	// Get user's preferred unit for response
+	preferredUnit := getUserPreferredWeightUnit(authUserID)
+	response := buildSetLogResponse(setLog, preferredUnit)
 
 	utils.CreatedResponse(c, "Set log created successfully", response)
 }
@@ -143,17 +144,9 @@ func GetSetLog(c *gin.Context) {
 		return
 	}
 
-	response := SetLogResponse{
-		ID:           setLog.ID,
-		SetNumber:    setLog.SetNumber,
-		Weight:       setLog.Weight,
-		WeightUnit:   setLog.WeightUnit,
-		Reps:         setLog.Reps,
-		RestAfterSec: setLog.RestAfterSec,
-		Tempo:        setLog.Tempo,
-		RPE:          setLog.RPE,
-		RPEValueID:   setLog.RPEValueID,
-	}
+	// Get user's preferred unit for response
+	preferredUnit := getUserPreferredWeightUnit(authUserID)
+	response := buildSetLogResponse(setLog, preferredUnit)
 
 	utils.SuccessResponse(c, "Set log retrieved successfully", response)
 }
@@ -204,10 +197,23 @@ func UpdateSetLog(c *gin.Context) {
 		return
 	}
 
-	setLog.Weight = req.Weight
-	if req.WeightUnit != "" {
-		setLog.WeightUnit = req.WeightUnit
+	// Determine the input weight unit
+	inputUnit := req.WeightUnit
+	if inputUnit == "" {
+		// Default to user's preferred unit if not specified
+		inputUnit = getUserPreferredWeightUnit(authUserID)
 	}
+
+	// Normalize the unit
+	normalizedUnit := utils.NormalizeWeightUnit(inputUnit)
+
+	// Convert to canonical kg for storage
+	weightInKg := utils.ConvertToKg(req.Weight, normalizedUnit)
+
+	setLog.Weight = weightInKg           // Canonical storage in kg
+	setLog.WeightUnit = normalizedUnit   // Keep for backward compatibility
+	setLog.InputWeight = req.Weight      // Original input value
+	setLog.InputWeightUnit = normalizedUnit // Original input unit
 	setLog.Reps = req.Reps
 	setLog.RestAfterSec = req.RestAfterSec
 	setLog.Tempo = req.Tempo
@@ -219,17 +225,9 @@ func UpdateSetLog(c *gin.Context) {
 		return
 	}
 
-	response := SetLogResponse{
-		ID:           setLog.ID,
-		SetNumber:    setLog.SetNumber,
-		Weight:       setLog.Weight,
-		WeightUnit:   setLog.WeightUnit,
-		Reps:         setLog.Reps,
-		RestAfterSec: setLog.RestAfterSec,
-		Tempo:        setLog.Tempo,
-		RPE:          setLog.RPE,
-		RPEValueID:   setLog.RPEValueID,
-	}
+	// Get user's preferred unit for response
+	preferredUnit := getUserPreferredWeightUnit(authUserID)
+	response := buildSetLogResponse(setLog, preferredUnit)
 
 	utils.SuccessResponse(c, "Set log updated successfully", response)
 }

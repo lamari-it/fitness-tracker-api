@@ -48,12 +48,14 @@ type SetLog struct {
 	ID            uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	ExerciseLogID uuid.UUID      `gorm:"type:uuid;not null" json:"exercise_log_id"`
 	SetNumber     int            `gorm:"not null" json:"set_number"`
-	Weight        float64        `gorm:"type:numeric(10,2)" json:"weight"`
-	WeightUnit    string         `gorm:"type:varchar(5);default:'kg'" json:"weight_unit"`
+	Weight        float64        `gorm:"type:numeric(10,2)" json:"weight"`                          // Canonical weight in kg
+	WeightUnit    string         `gorm:"type:varchar(5);default:'kg'" json:"weight_unit"`           // Display unit (deprecated, use InputWeightUnit)
+	InputWeight   float64        `gorm:"type:numeric(10,2)" json:"input_weight"`                    // Original weight value entered by user
+	InputWeightUnit string       `gorm:"type:varchar(5);default:'kg'" json:"input_weight_unit"`     // Unit of original input (kg/lb)
 	Reps          int            `json:"reps"`
 	RestAfterSec  int            `json:"rest_after_sec"`
 	Tempo         string         `gorm:"type:varchar(10)" json:"tempo"`                             // e.g., "3-1-2-1"
-	RPE           float64        `gorm:"type:numeric(3,1);check:rpe >= 1 AND rpe <= 10" json:"rpe"` // Rate of Perceived Exertion (legacy)
+	RPE           float64        `gorm:"type:numeric(3,1);check:rpe >= 0 AND rpe <= 10" json:"rpe"` // Rate of Perceived Exertion (legacy, 0 = not rated)
 	RPEValueID    *uuid.UUID     `gorm:"type:uuid" json:"rpe_value_id,omitempty"`                   // Reference to custom RPE scale value
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`

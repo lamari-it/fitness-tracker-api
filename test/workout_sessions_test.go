@@ -1,7 +1,9 @@
 package test
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/gavv/httpexpect/v2"
 )
@@ -27,6 +29,11 @@ func TestWorkoutSessionEndpoints(t *testing.T) {
 	t.Run("Authorization Checks", func(t *testing.T) {
 		CleanDatabase(t)
 		testWorkoutSessionAuthorization(t, e)
+	})
+
+	t.Run("Weight Conversion", func(t *testing.T) {
+		CleanDatabase(t)
+		testWeightConversion(t, e)
 	})
 }
 
@@ -376,7 +383,11 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 
 		data := response.Value("data").Object()
 		setLogID = data.Value("id").String().Raw()
-		data.Value("weight").Number().IsEqual(100.0)
+		data.Value("weight_kg").Number().IsEqual(100.0)
+		data.Value("weight_display").Number().IsEqual(100.0)
+		data.Value("weight_display_unit").String().IsEqual("kg")
+		data.Value("input_weight").Number().IsEqual(100.0)
+		data.Value("input_weight_unit").String().IsEqual("kg")
 		data.Value("reps").Number().IsEqual(8)
 		data.Value("rpe").Number().IsEqual(7.5)
 	})
@@ -437,7 +448,9 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 			Object()
 
 		response.Value("success").Boolean().IsTrue()
-		response.Value("data").Object().Value("weight").Number().IsEqual(105.0)
+		data := response.Value("data").Object()
+		data.Value("weight_kg").Number().IsEqual(105.0)
+		data.Value("input_weight").Number().IsEqual(105.0)
 	})
 
 	t.Run("Update Exercise Log", func(t *testing.T) {
@@ -677,5 +690,216 @@ func testWorkoutSessionAuthorization(t *testing.T, e *httpexpect.Expect) {
 			WithHeader("Authorization", "Bearer "+user1Token).
 			Expect().
 			Status(404)
+	})
+}
+
+func testWeightConversion(t *testing.T, e *httpexpect.Expect) {
+	// Create a user and get token
+	userEmail := fmt.Sprintf("weight_test_%d@example.com", time.Now().UnixNano())
+	userToken := createTestUserAndGetToken(e, userEmail, "TestPassword123!", "Weight", "Tester")
+
+	// Create exercise for testing
+	exerciseResponse := e.POST("/api/v1/exercises/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"name":        "Weight Test Squat",
+			"description": "Test exercise for weight conversion",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	exerciseID := exerciseResponse.Value("data").Object().Value("id").String().Raw()
+
+	// Create a session
+	sessionResponse := e.POST("/api/v1/workout-sessions").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"started_at": time.Now().Format(time.RFC3339),
+			"notes":      "Weight conversion test session",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	sessionID := sessionResponse.Value("data").Object().Value("id").String().Raw()
+
+	// Create an exercise log
+	exerciseLogResponse := e.POST("/api/v1/exercise-logs").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"session_id":   sessionID,
+			"exercise_id":  exerciseID,
+			"order_number": 1,
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	exerciseLogID := exerciseLogResponse.Value("data").Object().Value("id").String().Raw()
+
+	t.Run("Create Set Log With Kg", func(t *testing.T) {
+		response := e.POST("/api/v1/set-logs").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"exercise_log_id": exerciseLogID,
+				"set_number":      1,
+				"weight":          100.0,
+				"weight_unit":     "kg",
+				"reps":            8,
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		data := response.Value("data").Object()
+		// Weight should be stored as 100 kg
+		data.Value("weight_kg").Number().IsEqual(100.0)
+		data.Value("weight_display").Number().IsEqual(100.0)
+		data.Value("weight_display_unit").String().IsEqual("kg")
+		data.Value("input_weight").Number().IsEqual(100.0)
+		data.Value("input_weight_unit").String().IsEqual("kg")
+	})
+
+	t.Run("Create Set Log With Lbs", func(t *testing.T) {
+		response := e.POST("/api/v1/set-logs").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"exercise_log_id": exerciseLogID,
+				"set_number":      2,
+				"weight":          225.0,
+				"weight_unit":     "lb",
+				"reps":            5,
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		data := response.Value("data").Object()
+		// 225 lbs should be converted to ~102.06 kg
+		data.Value("weight_kg").Number().InDelta(102.06, 0.1)
+		data.Value("input_weight").Number().IsEqual(225.0)
+		data.Value("input_weight_unit").String().IsEqual("lb")
+	})
+
+	t.Run("Create Set Log With Lbs Alias", func(t *testing.T) {
+		response := e.POST("/api/v1/set-logs").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"exercise_log_id": exerciseLogID,
+				"set_number":      3,
+				"weight":          135.0,
+				"weight_unit":     "lbs",
+				"reps":            10,
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		data := response.Value("data").Object()
+		// 135 lbs should be converted to ~61.23 kg
+		data.Value("weight_kg").Number().InDelta(61.23, 0.1)
+		data.Value("input_weight").Number().IsEqual(135.0)
+		// lbs should be normalized to lb
+		data.Value("input_weight_unit").String().IsEqual("lb")
+	})
+
+	t.Run("Update Set Log With Different Unit", func(t *testing.T) {
+		// First create a set log
+		createResponse := e.POST("/api/v1/set-logs").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"exercise_log_id": exerciseLogID,
+				"set_number":      4,
+				"weight":          50.0,
+				"weight_unit":     "kg",
+				"reps":            12,
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		setLogID := createResponse.Value("data").Object().Value("id").String().Raw()
+
+		// Update it with lbs
+		updateResponse := e.PUT("/api/v1/set-logs/" + setLogID).
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"weight":      110.0,
+				"weight_unit": "lb",
+				"reps":        10,
+			}).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		data := updateResponse.Value("data").Object()
+		// 110 lbs should be converted to ~49.90 kg
+		data.Value("weight_kg").Number().InDelta(49.90, 0.1)
+		data.Value("input_weight").Number().IsEqual(110.0)
+		data.Value("input_weight_unit").String().IsEqual("lb")
+	})
+
+	t.Run("Get Set Log Returns Converted Values", func(t *testing.T) {
+		// Create a set with lbs
+		createResponse := e.POST("/api/v1/set-logs").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"exercise_log_id": exerciseLogID,
+				"set_number":      5,
+				"weight":          200.0,
+				"weight_unit":     "lb",
+				"reps":            3,
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		setLogID := createResponse.Value("data").Object().Value("id").String().Raw()
+
+		// Get the set log and verify conversion
+		getResponse := e.GET("/api/v1/set-logs/" + setLogID).
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		data := getResponse.Value("data").Object()
+		// 200 lbs = ~90.72 kg
+		data.Value("weight_kg").Number().InDelta(90.72, 0.1)
+		data.Value("input_weight").Number().IsEqual(200.0)
+		data.Value("input_weight_unit").String().IsEqual("lb")
+		// Default user preference is kg (no fitness profile), so display should be kg
+		data.Value("weight_display_unit").String().IsEqual("kg")
+	})
+
+	t.Run("Zero Weight Is Allowed", func(t *testing.T) {
+		response := e.POST("/api/v1/set-logs").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"exercise_log_id": exerciseLogID,
+				"set_number":      6,
+				"weight":          0,
+				"weight_unit":     "kg",
+				"reps":            20,
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		data := response.Value("data").Object()
+		data.Value("weight_kg").Number().IsEqual(0)
+		data.Value("input_weight").Number().IsEqual(0)
 	})
 }

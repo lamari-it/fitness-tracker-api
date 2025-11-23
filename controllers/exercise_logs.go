@@ -42,15 +42,36 @@ type ExerciseLogResponse struct {
 
 // SetLogResponse is the response DTO for set logs
 type SetLogResponse struct {
-	ID           uuid.UUID  `json:"id"`
-	SetNumber    int        `json:"set_number"`
-	Weight       float64    `json:"weight"`
-	WeightUnit   string     `json:"weight_unit"`
-	Reps         int        `json:"reps"`
-	RestAfterSec int        `json:"rest_after_sec"`
-	Tempo        string     `json:"tempo"`
-	RPE          float64    `json:"rpe"`
-	RPEValueID   *uuid.UUID `json:"rpe_value_id,omitempty"`
+	ID                uuid.UUID  `json:"id"`
+	SetNumber         int        `json:"set_number"`
+	WeightKg          float64    `json:"weight_kg"`                    // Canonical weight in kg
+	WeightDisplay     float64    `json:"weight_display"`               // Weight in user's preferred unit
+	WeightDisplayUnit string     `json:"weight_display_unit"`          // User's preferred unit (kg/lb)
+	InputWeight       float64    `json:"input_weight"`                 // Original input value
+	InputWeightUnit   string     `json:"input_weight_unit"`            // Original input unit
+	Reps              int        `json:"reps"`
+	RestAfterSec      int        `json:"rest_after_sec"`
+	Tempo             string     `json:"tempo"`
+	RPE               float64    `json:"rpe"`
+	RPEValueID        *uuid.UUID `json:"rpe_value_id,omitempty"`
+}
+
+// buildSetLogResponse creates a SetLogResponse with weight conversion
+func buildSetLogResponse(sl models.SetLog, preferredUnit string) SetLogResponse {
+	return SetLogResponse{
+		ID:                sl.ID,
+		SetNumber:         sl.SetNumber,
+		WeightKg:          sl.Weight,
+		WeightDisplay:     utils.ConvertFromKg(sl.Weight, preferredUnit),
+		WeightDisplayUnit: preferredUnit,
+		InputWeight:       sl.InputWeight,
+		InputWeightUnit:   sl.InputWeightUnit,
+		Reps:              sl.Reps,
+		RestAfterSec:      sl.RestAfterSec,
+		Tempo:             sl.Tempo,
+		RPE:               sl.RPE,
+		RPEValueID:        sl.RPEValueID,
+	}
 }
 
 // Helper to check if user can access a session
@@ -58,6 +79,16 @@ func canAccessSession(authUserID uuid.UUID, session *models.WorkoutSession) bool
 	isOwner := session.UserID == authUserID
 	isCreator := session.CreatedByID != nil && *session.CreatedByID == authUserID
 	return isOwner || isCreator
+}
+
+// getUserPreferredWeightUnit fetches the user's preferred weight unit from their fitness profile
+// Returns "kg" as default if profile not found
+func getUserPreferredWeightUnit(userID uuid.UUID) string {
+	var profile models.UserFitnessProfile
+	if err := database.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
+		return "kg" // Default to kg if no profile
+	}
+	return utils.GetUserPreferredWeightUnit(profile.PreferredWeightUnit)
 }
 
 // CreateExerciseLog creates a new exercise log in a session
@@ -176,19 +207,12 @@ func GetExerciseLog(c *gin.Context) {
 		return
 	}
 
+	// Get user's preferred weight unit
+	preferredUnit := getUserPreferredWeightUnit(authUserID)
+
 	setLogs := make([]SetLogResponse, len(exerciseLog.SetLogs))
 	for i, sl := range exerciseLog.SetLogs {
-		setLogs[i] = SetLogResponse{
-			ID:           sl.ID,
-			SetNumber:    sl.SetNumber,
-			Weight:       sl.Weight,
-			WeightUnit:   sl.WeightUnit,
-			Reps:         sl.Reps,
-			RestAfterSec: sl.RestAfterSec,
-			Tempo:        sl.Tempo,
-			RPE:          sl.RPE,
-			RPEValueID:   sl.RPEValueID,
-		}
+		setLogs[i] = buildSetLogResponse(sl, preferredUnit)
 	}
 
 	response := ExerciseLogResponse{
@@ -263,19 +287,12 @@ func UpdateExerciseLog(c *gin.Context) {
 	// Reload with relationships
 	database.DB.Preload("Exercise").Preload("SetGroup").Preload("SetLogs").First(&exerciseLog, "id = ?", exerciseLog.ID)
 
+	// Get user's preferred weight unit
+	preferredUnit := getUserPreferredWeightUnit(authUserID)
+
 	setLogs := make([]SetLogResponse, len(exerciseLog.SetLogs))
 	for i, sl := range exerciseLog.SetLogs {
-		setLogs[i] = SetLogResponse{
-			ID:           sl.ID,
-			SetNumber:    sl.SetNumber,
-			Weight:       sl.Weight,
-			WeightUnit:   sl.WeightUnit,
-			Reps:         sl.Reps,
-			RestAfterSec: sl.RestAfterSec,
-			Tempo:        sl.Tempo,
-			RPE:          sl.RPE,
-			RPEValueID:   sl.RPEValueID,
-		}
+		setLogs[i] = buildSetLogResponse(sl, preferredUnit)
 	}
 
 	response := ExerciseLogResponse{

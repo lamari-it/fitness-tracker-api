@@ -1904,7 +1904,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"date_of_birth\": \"1990-05-15\",\n  \"gender\": \"male\",\n  \"height_cm\": 180.5,\n  \"current_weight_kg\": 80,\n  \"fitness_goal_ids\": [\"{{fitness_goal_muscle_gain_id}}\", \"{{fitness_goal_strength_id}}\"],\n  \"preferred_unit_system\": \"metric\",\n  \"target_weight_kg\": 85,\n  \"target_weekly_workouts\": 4,\n  \"activity_level\": \"active\",\n  \"training_locations\": [\"gym\", \"home\"],\n  \"preferred_workout_duration_mins\": 60,\n  \"available_days\": [\"monday\", \"wednesday\", \"friday\", \"saturday\"],\n  \"health_conditions\": \"None\",\n  \"injuries_notes\": \"Minor shoulder strain - recovering\"\n}"
+              "raw": "{\n  \"date_of_birth\": \"1990-05-15\",\n  \"gender\": \"male\",\n  \"height_cm\": 180.5,\n  \"current_weight_kg\": 80,\n  \"fitness_goal_ids\": [\"{{fitness_goal_muscle_gain_id}}\", \"{{fitness_goal_strength_id}}\"],\n  \"preferred_weight_unit\": \"kg\",\n  \"target_weight_kg\": 85,\n  \"target_weekly_workouts\": 4,\n  \"activity_level\": \"active\",\n  \"training_locations\": [\"gym\", \"home\"],\n  \"preferred_workout_duration_mins\": 60,\n  \"available_days\": [\"monday\", \"wednesday\", \"friday\", \"saturday\"],\n  \"health_conditions\": \"None\",\n  \"injuries_notes\": \"Minor shoulder strain - recovering\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/user/fitness-profile",
@@ -6620,7 +6620,58 @@
                 "set-logs"
               ]
             },
-            "description": "Create a set log for an exercise"
+            "description": "Create a set log for an exercise. Weights are automatically converted to kg for storage."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Set Log (lbs)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Set log created with lbs converted to kg', function () {",
+                  "        pm.expect(jsonData.data.weight_kg).to.be.closeTo(102.06, 0.1);",
+                  "        pm.expect(jsonData.data.input_weight).to.equal(225);",
+                  "        pm.expect(jsonData.data.input_weight_unit).to.equal('lb');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercise_log_id\": \"{{exercise_log_id}}\",\n  \"set_number\": 2,\n  \"weight\": 225,\n  \"weight_unit\": \"lb\",\n  \"reps\": 5,\n  \"rpe\": 8.5,\n  \"rest_after_sec\": 180,\n  \"tempo\": \"2-0-1-0\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/set-logs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "set-logs"
+              ]
+            },
+            "description": "Create a set log using pounds (lbs). The weight will be converted to kg for storage. Response includes both canonical kg and converted display values."
           },
           "response": []
         },
@@ -6711,7 +6762,7 @@
           "response": []
         }
       ],
-      "description": "Set log endpoints for individual exercise sets"
+      "description": "Set log endpoints for individual exercise sets.\n\n## Weight Conversion\nAll weights are stored internally in kilograms (kg) as the canonical unit.\n\n### Request\n- `weight`: The numeric weight value\n- `weight_unit`: The unit of the input ('kg', 'lb', or 'lbs'). Defaults to user's preferred unit.\n\n### Response\n- `weight_kg`: Canonical weight in kilograms\n- `weight_display`: Weight converted to user's preferred unit\n- `weight_display_unit`: User's preferred unit ('kg' or 'lb')\n- `input_weight`: Original weight value entered\n- `input_weight_unit`: Original unit of input\n\n### Example\nIf user enters 225 lbs:\n- `weight_kg`: 102.06\n- `weight_display`: 225.0 (if user prefers imperial)\n- `input_weight`: 225.0\n- `input_weight_unit`: 'lb'"
     }
   ],
   "event": [

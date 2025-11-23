@@ -82,7 +82,7 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("height_ft_in").String().NotEmpty()
 		data.Value("current_weight_kg").Number().IsEqual(80.0)
 		data.Value("current_weight_lbs").Number().Gt(0)
-		data.Value("preferred_unit_system").String().IsEqual("metric")
+		data.Value("preferred_weight_unit").String().IsEqual("kg")
 		data.Value("target_weekly_workouts").Number().IsEqual(3)
 		data.Value("activity_level").String().IsEqual("moderate")
 		data.Value("training_locations").Array().Length().IsEqual(1)
@@ -128,7 +128,7 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 			"height_cm":                       165.0,
 			"current_weight_kg":               70.0,
 			"fitness_goal_ids":                multiGoalIDs,
-			"preferred_unit_system":           "imperial",
+			"preferred_weight_unit":           "lb",
 			"target_weight_kg":                60.0,
 			"target_weekly_workouts":          5,
 			"activity_level":                  "active",
@@ -150,7 +150,7 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		response.Value("success").Boolean().IsTrue()
 
 		data := response.Value("data").Object()
-		data.Value("preferred_unit_system").String().IsEqual("imperial")
+		data.Value("preferred_weight_unit").String().IsEqual("lb")
 		data.Value("target_weight_kg").Number().IsEqual(60.0)
 		data.Value("target_weight_lbs").Number().Gt(0)
 		data.Value("target_weekly_workouts").Number().IsEqual(5)
