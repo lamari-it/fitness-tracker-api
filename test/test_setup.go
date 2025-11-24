@@ -59,10 +59,7 @@ func SetupTestApp(t *testing.T) *httpexpect.Expect {
 	// Create httpexpect instance
 	return httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
-		Reporter: httpexpect.NewAssertReporter(t),
-		Printers: []httpexpect.Printer{
-			httpexpect.NewDebugPrinter(t, true),
-		},
+		Reporter: httpexpect.NewRequireReporter(t),
 	})
 }
 

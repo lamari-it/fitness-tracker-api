@@ -48,6 +48,11 @@ func TestWorkoutPrescriptionEndpoints(t *testing.T) {
 		CleanDatabase(t)
 		testPrescriptionValidation(t, e)
 	})
+
+	t.Run("Isometric Hold Support", func(t *testing.T) {
+		CleanDatabase(t)
+		testIsometricHoldSupport(t, e)
+	})
 }
 
 func testBasicWorkoutPrescriptionFlow(t *testing.T, e *httpexpect.Expect) {
@@ -493,9 +498,9 @@ func testPrescriptionTypes(t *testing.T, e *httpexpect.Expect) {
 				"group_notes": "As many rounds as possible in 10 minutes",
 				"exercises": []map[string]interface{}{
 					{
-						"exercise_id":      exercise3ID,
-						"exercise_order":   1,
-						"duration_seconds": 600,
+						"exercise_id":    exercise3ID,
+						"exercise_order": 1,
+						"reps":           10,
 					},
 				},
 			}).
@@ -1206,6 +1211,319 @@ func testPrescriptionValidation(t *testing.T, e *httpexpect.Expect) {
 			}).
 			Expect().
 			Status(404)
+	})
+}
+
+func testIsometricHoldSupport(t *testing.T, e *httpexpect.Expect) {
+	// Create user
+	userToken := createTestUserAndGetToken(e, "user@example.com", "UserPass123!", "Test", "User")
+
+	// Create exercises - one for reps, one for isometric holds
+	exercise1Response := e.POST("/api/v1/exercises/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"name":        "Plank",
+			"description": "Core isometric exercise",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	plankExerciseID := exercise1Response.Value("data").Object().Value("id").String().Raw()
+
+	exercise2Response := e.POST("/api/v1/exercises/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"name":        "Wall Sit",
+			"description": "Leg isometric exercise",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	wallSitExerciseID := exercise2Response.Value("data").Object().Value("id").String().Raw()
+
+	exercise3Response := e.POST("/api/v1/exercises/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"name":        "Squat",
+			"description": "Compound leg exercise with reps",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	squatExerciseID := exercise3Response.Value("data").Object().Value("id").String().Raw()
+
+	// Create workout
+	workoutResponse := e.POST("/api/v1/workouts/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"title":       "Core and Legs",
+			"description": "Mixed workout with isometric holds",
+			"visibility":  "private",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	workoutID := workoutResponse.Value("data").Object().Value("id").String().Raw()
+
+	t.Run("Create Prescription With Hold Seconds", func(t *testing.T) {
+		response := e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"type":        "straight",
+				"group_order": 1,
+				"exercises": []map[string]interface{}{
+					{
+						"exercise_id":    plankExerciseID,
+						"exercise_order": 1,
+						"sets":           3,
+						"hold_seconds":   60,
+					},
+				},
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		response.Value("message").String().Contains("successfully")
+
+		// Verify hold_seconds is returned in response
+		data := response.Value("data").Object()
+		exercises := data.Value("exercises").Array()
+		exercises.Length().IsEqual(1)
+		exercises.Value(0).Object().Value("hold_seconds").Number().IsEqual(60)
+		exercises.Value(0).Object().Value("sets").Number().IsEqual(3)
+	})
+
+	t.Run("Create Prescription With Reps", func(t *testing.T) {
+		response := e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"type":        "straight",
+				"group_order": 2,
+				"exercises": []map[string]interface{}{
+					{
+						"exercise_id":    squatExerciseID,
+						"exercise_order": 1,
+						"sets":           4,
+						"reps":           12,
+					},
+				},
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		// Verify reps is returned in response
+		data := response.Value("data").Object()
+		exercises := data.Value("exercises").Array()
+		exercises.Length().IsEqual(1)
+		exercises.Value(0).Object().Value("reps").Number().IsEqual(12)
+		exercises.Value(0).Object().Value("sets").Number().IsEqual(4)
+	})
+
+	t.Run("Create Mixed Prescription Group", func(t *testing.T) {
+		// A circuit with both rep-based and time-based exercises
+		response := e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"type":         "circuit",
+				"group_order":  3,
+				"group_rounds": 3,
+				"group_name":   "Core Circuit",
+				"exercises": []map[string]interface{}{
+					{
+						"exercise_id":    plankExerciseID,
+						"exercise_order": 1,
+						"sets":           1,
+						"hold_seconds":   30,
+					},
+					{
+						"exercise_id":    wallSitExerciseID,
+						"exercise_order": 2,
+						"sets":           1,
+						"hold_seconds":   45,
+					},
+					{
+						"exercise_id":    squatExerciseID,
+						"exercise_order": 3,
+						"sets":           1,
+						"reps":           15,
+					},
+				},
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		// Verify mixed exercises
+		data := response.Value("data").Object()
+		exercises := data.Value("exercises").Array()
+		exercises.Length().IsEqual(3)
+
+		// First exercise - plank with hold_seconds
+		exercises.Value(0).Object().Value("hold_seconds").Number().IsEqual(30)
+
+		// Second exercise - wall sit with hold_seconds
+		exercises.Value(1).Object().Value("hold_seconds").Number().IsEqual(45)
+
+		// Third exercise - squat with reps
+		exercises.Value(2).Object().Value("reps").Number().IsEqual(15)
+	})
+
+	t.Run("Reject Both Reps And Hold Seconds", func(t *testing.T) {
+		response := e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"type":        "straight",
+				"group_order": 4,
+				"exercises": []map[string]interface{}{
+					{
+						"exercise_id":    plankExerciseID,
+						"exercise_order": 1,
+						"sets":           3,
+						"reps":           10,
+						"hold_seconds":   30,
+					},
+				},
+			}).
+			Expect().
+			Status(400).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsFalse()
+	})
+
+	t.Run("Reject Neither Reps Nor Hold Seconds", func(t *testing.T) {
+		response := e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"type":        "straight",
+				"group_order": 4,
+				"exercises": []map[string]interface{}{
+					{
+						"exercise_id":    plankExerciseID,
+						"exercise_order": 1,
+						"sets":           3,
+					},
+				},
+			}).
+			Expect().
+			Status(400).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsFalse()
+	})
+
+	t.Run("Get Workout With Hold Seconds Prescriptions", func(t *testing.T) {
+		response := e.GET("/api/v1/workouts/"+workoutID+"/prescriptions").
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		// Verify prescription groups
+		groups := response.Value("data").Array()
+		groups.Length().IsEqual(3)
+
+		// First group - plank with hold_seconds
+		firstGroup := groups.Value(0).Object()
+		firstGroup.Value("type").String().IsEqual("straight")
+		firstExercises := firstGroup.Value("exercises").Array()
+		firstExercises.Value(0).Object().Value("hold_seconds").Number().IsEqual(60)
+
+		// Second group - squat with reps
+		secondGroup := groups.Value(1).Object()
+		secondExercises := secondGroup.Value("exercises").Array()
+		secondExercises.Value(0).Object().Value("reps").Number().IsEqual(12)
+
+		// Third group - circuit with mixed exercises
+		thirdGroup := groups.Value(2).Object()
+		thirdGroup.Value("type").String().IsEqual("circuit")
+		thirdExercises := thirdGroup.Value("exercises").Array()
+		thirdExercises.Length().IsEqual(3)
+	})
+
+	t.Run("Hold Seconds With Weight", func(t *testing.T) {
+		// Weighted plank or similar exercise
+		response := e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"type":        "straight",
+				"group_order": 4,
+				"exercises": []map[string]interface{}{
+					{
+						"exercise_id":    plankExerciseID,
+						"exercise_order": 1,
+						"sets":           3,
+						"hold_seconds":   45,
+						"weight_kg":      10.0,
+					},
+				},
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		// Verify both hold_seconds and weight_kg are returned
+		data := response.Value("data").Object()
+		exercises := data.Value("exercises").Array()
+		exercises.Value(0).Object().Value("hold_seconds").Number().IsEqual(45)
+		exercises.Value(0).Object().Value("weight_kg").Number().IsEqual(10.0)
+	})
+
+	t.Run("Duplicate Workout Preserves Hold Seconds", func(t *testing.T) {
+		// Duplicate the workout
+		response := e.POST("/api/v1/workouts/"+workoutID+"/duplicate").
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		// Get the duplicated workout ID
+		duplicatedWorkoutID := response.Value("data").Object().Value("id").String().Raw()
+
+		// Get prescriptions from duplicated workout
+		prescriptionsResponse := e.GET("/api/v1/workouts/"+duplicatedWorkoutID+"/prescriptions").
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		// Verify hold_seconds preserved
+		groups := prescriptionsResponse.Value("data").Array()
+		groups.Length().IsEqual(4)
+
+		// Check first group has hold_seconds preserved
+		firstGroupExercises := groups.Value(0).Object().Value("exercises").Array()
+		firstGroupExercises.Value(0).Object().Value("hold_seconds").Number().IsEqual(60)
 	})
 }
 

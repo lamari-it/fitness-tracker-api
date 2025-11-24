@@ -75,13 +75,13 @@ type WorkoutPrescription struct {
 	GroupNotes      *string          `gorm:"type:text" json:"group_notes,omitempty"`
 
 	// Exercise-level fields (individual prescription row inside a group)
-	ExerciseOrder   int      `gorm:"not null" json:"exercise_order"`
-	Sets            *int     `gorm:"" json:"sets,omitempty"`
-	Reps            *int     `gorm:"" json:"reps,omitempty"`
-	DurationSeconds *int     `gorm:"" json:"duration_seconds,omitempty"`
-	WeightKg        *float64 `gorm:"type:decimal(10,2)" json:"weight_kg,omitempty"`
-	TargetWeightKg  *float64 `gorm:"type:decimal(10,2)" json:"target_weight_kg,omitempty"`
-	Notes           *string  `gorm:"type:text" json:"notes,omitempty"`
+	ExerciseOrder  int      `gorm:"not null" json:"exercise_order"`
+	Sets           *int     `gorm:"" json:"sets,omitempty"`
+	Reps           *int     `gorm:"" json:"reps,omitempty"`
+	HoldSeconds    *int     `gorm:"" json:"hold_seconds,omitempty"`
+	WeightKg       *float64 `gorm:"type:decimal(10,2)" json:"weight_kg,omitempty"`
+	TargetWeightKg *float64 `gorm:"type:decimal(10,2)" json:"target_weight_kg,omitempty"`
+	Notes          *string  `gorm:"type:text" json:"notes,omitempty"`
 
 	// Relationships
 	Workout  Workout        `gorm:"foreignKey:WorkoutID" json:"-"`
@@ -94,19 +94,31 @@ func (WorkoutPrescription) TableName() string {
 	return "workout_prescriptions"
 }
 
-// BeforeSave validates the prescription before saving
-func (wp *WorkoutPrescription) BeforeSave(tx *gorm.DB) error {
+// BeforeCreate validates and generates UUIDs before creating
+func (wp *WorkoutPrescription) BeforeCreate(tx *gorm.DB) error {
+	// Generate UUIDs if not set
+	if wp.ID == uuid.Nil {
+		wp.ID = uuid.New()
+	}
+	if wp.GroupID == uuid.Nil {
+		wp.GroupID = uuid.New()
+	}
+
 	// Validate prescription type
 	if !IsValidPrescriptionType(wp.Type) {
 		return errors.New("invalid prescription type")
 	}
 
-	// Validate mutual exclusivity of reps and duration
+	// Validate mutual exclusivity of reps and hold_seconds
 	hasReps := wp.Reps != nil && *wp.Reps > 0
-	hasDuration := wp.DurationSeconds != nil && *wp.DurationSeconds > 0
+	hasHold := wp.HoldSeconds != nil && *wp.HoldSeconds > 0
 
-	if hasReps && hasDuration {
-		return errors.New("prescription cannot have both reps and duration_seconds")
+	if hasReps && hasHold {
+		return errors.New("prescription cannot have both reps and hold_seconds")
+	}
+
+	if !hasReps && !hasHold {
+		return errors.New("prescription must have either reps or hold_seconds")
 	}
 
 	// Validate group_order is positive
@@ -122,30 +134,19 @@ func (wp *WorkoutPrescription) BeforeSave(tx *gorm.DB) error {
 	return nil
 }
 
-// BeforeCreate generates a new UUID if not set
-func (wp *WorkoutPrescription) BeforeCreate(tx *gorm.DB) error {
-	if wp.ID == uuid.Nil {
-		wp.ID = uuid.New()
-	}
-	if wp.GroupID == uuid.Nil {
-		wp.GroupID = uuid.New()
-	}
-	return nil
-}
-
 // ===== Request DTOs =====
 
 // PrescriptionExerciseRequest represents a single exercise within a prescription group
 type PrescriptionExerciseRequest struct {
-	ExerciseID      uuid.UUID  `json:"exercise_id" binding:"required"`
-	ExerciseOrder   int        `json:"exercise_order" binding:"required,min=1"`
-	Sets            *int       `json:"sets,omitempty"`
-	Reps            *int       `json:"reps,omitempty"`
-	DurationSeconds *int       `json:"duration_seconds,omitempty"`
-	WeightKg        *float64   `json:"weight_kg,omitempty"`
-	TargetWeightKg  *float64   `json:"target_weight_kg,omitempty"`
-	RPEValueID      *uuid.UUID `json:"rpe_value_id,omitempty"`
-	Notes           *string    `json:"notes,omitempty"`
+	ExerciseID     uuid.UUID  `json:"exercise_id" binding:"required"`
+	ExerciseOrder  int        `json:"exercise_order" binding:"required,min=1"`
+	Sets           *int       `json:"sets,omitempty"`
+	Reps           *int       `json:"reps,omitempty"`
+	HoldSeconds    *int       `json:"hold_seconds,omitempty"`
+	WeightKg       *float64   `json:"weight_kg,omitempty"`
+	TargetWeightKg *float64   `json:"target_weight_kg,omitempty"`
+	RPEValueID     *uuid.UUID `json:"rpe_value_id,omitempty"`
+	Notes          *string    `json:"notes,omitempty"`
 }
 
 // CreatePrescriptionGroupRequest represents the request to create a prescription group
@@ -184,32 +185,32 @@ type GroupOrderItem struct {
 
 // AddExerciseToPrescriptionRequest represents adding an exercise to an existing group
 type AddExerciseToPrescriptionRequest struct {
-	ExerciseID      uuid.UUID  `json:"exercise_id" binding:"required"`
-	Sets            *int       `json:"sets,omitempty"`
-	Reps            *int       `json:"reps,omitempty"`
-	DurationSeconds *int       `json:"duration_seconds,omitempty"`
-	WeightKg        *float64   `json:"weight_kg,omitempty"`
-	TargetWeightKg  *float64   `json:"target_weight_kg,omitempty"`
-	RPEValueID      *uuid.UUID `json:"rpe_value_id,omitempty"`
-	Notes           *string    `json:"notes,omitempty"`
+	ExerciseID     uuid.UUID  `json:"exercise_id" binding:"required"`
+	Sets           *int       `json:"sets,omitempty"`
+	Reps           *int       `json:"reps,omitempty"`
+	HoldSeconds    *int       `json:"hold_seconds,omitempty"`
+	WeightKg       *float64   `json:"weight_kg,omitempty"`
+	TargetWeightKg *float64   `json:"target_weight_kg,omitempty"`
+	RPEValueID     *uuid.UUID `json:"rpe_value_id,omitempty"`
+	Notes          *string    `json:"notes,omitempty"`
 }
 
 // ===== Response DTOs =====
 
 // PrescriptionExerciseResponse represents a single exercise in the response
 type PrescriptionExerciseResponse struct {
-	ID              uuid.UUID      `json:"id"`
-	ExerciseID      uuid.UUID      `json:"exercise_id"`
-	ExerciseOrder   int            `json:"exercise_order"`
-	Sets            *int           `json:"sets,omitempty"`
-	Reps            *int           `json:"reps,omitempty"`
-	DurationSeconds *int           `json:"duration_seconds,omitempty"`
-	WeightKg        *float64       `json:"weight_kg,omitempty"`
-	TargetWeightKg  *float64       `json:"target_weight_kg,omitempty"`
-	RPEValueID      *uuid.UUID     `json:"rpe_value_id,omitempty"`
-	Notes           *string        `json:"notes,omitempty"`
-	Exercise        *ExerciseBrief `json:"exercise,omitempty"`
-	RPEValue        *RPEValueBrief `json:"rpe_value,omitempty"`
+	ID             uuid.UUID      `json:"id"`
+	ExerciseID     uuid.UUID      `json:"exercise_id"`
+	ExerciseOrder  int            `json:"exercise_order"`
+	Sets           *int           `json:"sets,omitempty"`
+	Reps           *int           `json:"reps,omitempty"`
+	HoldSeconds    *int           `json:"hold_seconds,omitempty"`
+	WeightKg       *float64       `json:"weight_kg,omitempty"`
+	TargetWeightKg *float64       `json:"target_weight_kg,omitempty"`
+	RPEValueID     *uuid.UUID     `json:"rpe_value_id,omitempty"`
+	Notes          *string        `json:"notes,omitempty"`
+	Exercise       *ExerciseBrief `json:"exercise,omitempty"`
+	RPEValue       *RPEValueBrief `json:"rpe_value,omitempty"`
 }
 
 // PrescriptionGroupResponse represents a group of prescriptions in the response
@@ -267,16 +268,16 @@ func GroupPrescriptionsByGroupID(prescriptions []WorkoutPrescription) []Prescrip
 		}
 
 		exerciseResp := PrescriptionExerciseResponse{
-			ID:              p.ID,
-			ExerciseID:      p.ExerciseID,
-			ExerciseOrder:   p.ExerciseOrder,
-			Sets:            p.Sets,
-			Reps:            p.Reps,
-			DurationSeconds: p.DurationSeconds,
-			WeightKg:        p.WeightKg,
-			TargetWeightKg:  p.TargetWeightKg,
-			RPEValueID:      p.RPEValueID,
-			Notes:           p.Notes,
+			ID:             p.ID,
+			ExerciseID:     p.ExerciseID,
+			ExerciseOrder:  p.ExerciseOrder,
+			Sets:           p.Sets,
+			Reps:           p.Reps,
+			HoldSeconds:    p.HoldSeconds,
+			WeightKg:       p.WeightKg,
+			TargetWeightKg: p.TargetWeightKg,
+			RPEValueID:     p.RPEValueID,
+			Notes:          p.Notes,
 		}
 
 		// Add exercise brief if loaded

@@ -332,19 +332,20 @@ func CreatePrescriptionGroup(c *gin.Context) {
 				RestBetweenSets: req.RestBetweenSets,
 				GroupName:       req.GroupName,
 				GroupNotes:      req.GroupNotes,
-				ExerciseOrder:   exerciseReq.ExerciseOrder,
-				Sets:            exerciseReq.Sets,
-				Reps:            exerciseReq.Reps,
-				DurationSeconds: exerciseReq.DurationSeconds,
-				WeightKg:        exerciseReq.WeightKg,
-				TargetWeightKg:  exerciseReq.TargetWeightKg,
-				RPEValueID:      exerciseReq.RPEValueID,
-				Notes:           exerciseReq.Notes,
+				ExerciseOrder:  exerciseReq.ExerciseOrder,
+				Sets:           exerciseReq.Sets,
+				Reps:           exerciseReq.Reps,
+				HoldSeconds:    exerciseReq.HoldSeconds,
+				WeightKg:       exerciseReq.WeightKg,
+				TargetWeightKg: exerciseReq.TargetWeightKg,
+				RPEValueID:     exerciseReq.RPEValueID,
+				Notes:          exerciseReq.Notes,
 			}
 
 			if err := tx.Create(&prescription).Error; err != nil {
 				// Check for validation errors from BeforeSave hook
-				if err.Error() == "prescription cannot have both reps and duration_seconds" ||
+				if err.Error() == "prescription cannot have both reps and hold_seconds" ||
+					err.Error() == "prescription must have either reps or hold_seconds" ||
 					err.Error() == "group_order must be at least 1" ||
 					err.Error() == "exercise_order must be at least 1" ||
 					err.Error() == "invalid prescription type" {
@@ -536,14 +537,14 @@ func UpdatePrescriptionGroup(c *gin.Context) {
 					RestBetweenSets: restBetweenSets,
 					GroupName:       groupName,
 					GroupNotes:      groupNotes,
-					ExerciseOrder:   exerciseReq.ExerciseOrder,
-					Sets:            exerciseReq.Sets,
-					Reps:            exerciseReq.Reps,
-					DurationSeconds: exerciseReq.DurationSeconds,
-					WeightKg:        exerciseReq.WeightKg,
-					TargetWeightKg:  exerciseReq.TargetWeightKg,
-					RPEValueID:      exerciseReq.RPEValueID,
-					Notes:           exerciseReq.Notes,
+					ExerciseOrder:  exerciseReq.ExerciseOrder,
+					Sets:           exerciseReq.Sets,
+					Reps:           exerciseReq.Reps,
+					HoldSeconds:    exerciseReq.HoldSeconds,
+					WeightKg:       exerciseReq.WeightKg,
+					TargetWeightKg: exerciseReq.TargetWeightKg,
+					RPEValueID:     exerciseReq.RPEValueID,
+					Notes:          exerciseReq.Notes,
 				}
 
 				if err := tx.Create(&prescription).Error; err != nil {
@@ -566,6 +567,19 @@ func UpdatePrescriptionGroup(c *gin.Context) {
 		if errors.Is(err, gorm.ErrInvalidValue) {
 			validationErrors := utils.ValidationErrors{
 				"type": []string{"Invalid prescription type."},
+			}
+			utils.ValidationErrorResponse(c, validationErrors)
+			return
+		}
+		// Check for validation errors from BeforeSave hook
+		errMsg := err.Error()
+		if errMsg == "prescription cannot have both reps and hold_seconds" ||
+			errMsg == "prescription must have either reps or hold_seconds" ||
+			errMsg == "group_order must be at least 1" ||
+			errMsg == "exercise_order must be at least 1" ||
+			errMsg == "invalid prescription type" {
+			validationErrors := utils.ValidationErrors{
+				"validation": []string{errMsg},
 			}
 			utils.ValidationErrorResponse(c, validationErrors)
 			return
@@ -834,14 +848,14 @@ func AddExerciseToPrescriptionGroup(c *gin.Context) {
 		RestBetweenSets: firstPrescription.RestBetweenSets,
 		GroupName:       firstPrescription.GroupName,
 		GroupNotes:      firstPrescription.GroupNotes,
-		ExerciseOrder:   nextOrder,
-		Sets:            req.Sets,
-		Reps:            req.Reps,
-		DurationSeconds: req.DurationSeconds,
-		WeightKg:        req.WeightKg,
-		TargetWeightKg:  req.TargetWeightKg,
-		RPEValueID:      req.RPEValueID,
-		Notes:           req.Notes,
+		ExerciseOrder:  nextOrder,
+		Sets:           req.Sets,
+		Reps:           req.Reps,
+		HoldSeconds:    req.HoldSeconds,
+		WeightKg:       req.WeightKg,
+		TargetWeightKg: req.TargetWeightKg,
+		RPEValueID:     req.RPEValueID,
+		Notes:          req.Notes,
 	}
 
 	if err := database.DB.Create(&prescription).Error; err != nil {
@@ -926,13 +940,13 @@ func DuplicateWorkout(c *gin.Context) {
 				RestBetweenSets: prescription.RestBetweenSets,
 				GroupName:       prescription.GroupName,
 				GroupNotes:      prescription.GroupNotes,
-				ExerciseOrder:   prescription.ExerciseOrder,
-				Sets:            prescription.Sets,
-				Reps:            prescription.Reps,
-				DurationSeconds: prescription.DurationSeconds,
-				WeightKg:        prescription.WeightKg,
-				TargetWeightKg:  prescription.TargetWeightKg,
-				Notes:           prescription.Notes,
+				ExerciseOrder:  prescription.ExerciseOrder,
+				Sets:           prescription.Sets,
+				Reps:           prescription.Reps,
+				HoldSeconds:    prescription.HoldSeconds,
+				WeightKg:       prescription.WeightKg,
+				TargetWeightKg: prescription.TargetWeightKg,
+				Notes:          prescription.Notes,
 			}
 
 			if err := tx.Create(&newPrescription).Error; err != nil {

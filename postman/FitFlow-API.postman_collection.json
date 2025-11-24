@@ -3701,6 +3701,110 @@
             "description": "Delete a prescription group from a workout"
           },
           "response": []
+        },
+        {
+          "name": "Create Isometric Hold Prescription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Isometric prescription created successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "        pm.expect(jsonData.data[0].hold_seconds).to.equal(60);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"straight\",\n  \"group_order\": 2,\n  \"group_name\": \"Core Holds\",\n  \"rest_between_sets\": 60,\n  \"group_notes\": \"Focus on maintaining proper form\",\n  \"exercises\": [\n    {\n      \"exercise_id\": \"{{exercise_id}}\",\n      \"exercise_order\": 1,\n      \"sets\": 3,\n      \"hold_seconds\": 60,\n      \"weight_kg\": 0,\n      \"notes\": \"Keep core tight\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workouts",
+                "{{workout_id}}",
+                "prescriptions"
+              ]
+            },
+            "description": "Create a prescription for isometric exercises using hold_seconds instead of reps. Used for exercises like planks, wall sits, etc. Note: Each exercise must have either reps OR hold_seconds, not both."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Mixed Circuit (Reps and Holds)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Mixed circuit created successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "        pm.expect(jsonData.data).to.have.lengthOf(2);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"circuit\",\n  \"group_order\": 3,\n  \"group_name\": \"Core Circuit\",\n  \"group_rounds\": 3,\n  \"rest_between_sets\": 30,\n  \"exercises\": [\n    {\n      \"exercise_id\": \"{{exercise_id}}\",\n      \"exercise_order\": 1,\n      \"sets\": 1,\n      \"hold_seconds\": 45,\n      \"notes\": \"Plank hold\"\n    },\n    {\n      \"exercise_id\": \"{{exercise_id}}\",\n      \"exercise_order\": 2,\n      \"sets\": 1,\n      \"reps\": 20,\n      \"notes\": \"Crunches\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workouts",
+                "{{workout_id}}",
+                "prescriptions"
+              ]
+            },
+            "description": "Create a circuit with mixed exercise types - some with hold_seconds (isometric) and some with reps. Demonstrates how a single group can contain both types."
+          },
+          "response": []
         }
       ],
       "description": "Standalone workout management endpoints"
