@@ -136,7 +136,7 @@ func TestRPEScaleEndpoints(t *testing.T) {
 		scaleID := createResp.Value("data").Object().Value("id").String().Raw()
 
 		// Get the scale
-		resp := e.GET("/api/v1/rpe/scales/" + scaleID).
+		resp := e.GET("/api/v1/rpe/scales/"+scaleID).
 			WithHeader("Authorization", "Bearer "+token).
 			Expect().
 			Status(200).
@@ -163,7 +163,7 @@ func TestRPEScaleEndpoints(t *testing.T) {
 		scaleID := createResp.Value("data").Object().Value("id").String().Raw()
 
 		// Update the scale
-		resp := e.PUT("/api/v1/rpe/scales/" + scaleID).
+		resp := e.PUT("/api/v1/rpe/scales/"+scaleID).
 			WithHeader("Authorization", "Bearer "+token).
 			WithJSON(map[string]interface{}{
 				"name":        "Updated Scale Name",
@@ -196,7 +196,7 @@ func TestRPEScaleEndpoints(t *testing.T) {
 		scaleID := createResp.Value("data").Object().Value("id").String().Raw()
 
 		// Add a value
-		resp := e.POST("/api/v1/rpe/scales/" + scaleID + "/values").
+		resp := e.POST("/api/v1/rpe/scales/"+scaleID+"/values").
 			WithHeader("Authorization", "Bearer "+token).
 			WithJSON(map[string]interface{}{
 				"value":       3,
@@ -228,13 +228,13 @@ func TestRPEScaleEndpoints(t *testing.T) {
 		scaleID := createResp.Value("data").Object().Value("id").String().Raw()
 
 		// Delete the scale
-		e.DELETE("/api/v1/rpe/scales/" + scaleID).
+		e.DELETE("/api/v1/rpe/scales/"+scaleID).
 			WithHeader("Authorization", "Bearer "+token).
 			Expect().
 			Status(204)
 
 		// Verify it's deleted
-		e.GET("/api/v1/rpe/scales/" + scaleID).
+		e.GET("/api/v1/rpe/scales/"+scaleID).
 			WithHeader("Authorization", "Bearer "+token).
 			Expect().
 			Status(404)
@@ -252,7 +252,7 @@ func TestRPEScaleEndpoints(t *testing.T) {
 		globalID := globalResp.Value("data").Object().Value("id").String().Raw()
 
 		t.Run("Cannot Update Global Scale", func(t *testing.T) {
-			e.PUT("/api/v1/rpe/scales/" + globalID).
+			e.PUT("/api/v1/rpe/scales/"+globalID).
 				WithHeader("Authorization", "Bearer "+token).
 				WithJSON(map[string]interface{}{
 					"name": "Hacked Global Scale",
@@ -262,14 +262,14 @@ func TestRPEScaleEndpoints(t *testing.T) {
 		})
 
 		t.Run("Cannot Delete Global Scale", func(t *testing.T) {
-			e.DELETE("/api/v1/rpe/scales/" + globalID).
+			e.DELETE("/api/v1/rpe/scales/"+globalID).
 				WithHeader("Authorization", "Bearer "+token).
 				Expect().
 				Status(403)
 		})
 
 		t.Run("Cannot Add Value to Global Scale", func(t *testing.T) {
-			e.POST("/api/v1/rpe/scales/" + globalID + "/values").
+			e.POST("/api/v1/rpe/scales/"+globalID+"/values").
 				WithHeader("Authorization", "Bearer "+token).
 				WithJSON(map[string]interface{}{
 					"value": 11,
@@ -297,7 +297,7 @@ func TestRPEScaleEndpoints(t *testing.T) {
 		scaleID := createResp.Value("data").Object().Value("id").String().Raw()
 
 		t.Run("Value Out of Range", func(t *testing.T) {
-			e.POST("/api/v1/rpe/scales/" + scaleID + "/values").
+			e.POST("/api/v1/rpe/scales/"+scaleID+"/values").
 				WithHeader("Authorization", "Bearer "+token).
 				WithJSON(map[string]interface{}{
 					"value": 10, // Max is 5
@@ -397,7 +397,7 @@ func TestTrainerClientRPEScaleAccess(t *testing.T) {
 
 	t.Run("Client Cannot Access Trainer Scale Before Relationship", func(t *testing.T) {
 		// Client tries to get the scale - should fail
-		e.GET("/api/v1/rpe/scales/" + scaleID).
+		e.GET("/api/v1/rpe/scales/"+scaleID).
 			WithHeader("Authorization", "Bearer "+clientToken).
 			Expect().
 			Status(404)
@@ -433,7 +433,7 @@ func TestTrainerClientRPEScaleAccess(t *testing.T) {
 	invitationID := inviteResp.Value("data").Object().Value("id").String().Raw()
 
 	// Client accepts invitation
-	e.PUT("/api/v1/me/trainer-invitations/" + invitationID).
+	e.PUT("/api/v1/me/trainer-invitations/"+invitationID).
 		WithHeader("Authorization", "Bearer "+clientToken).
 		WithJSON(map[string]interface{}{
 			"action": "accept",
@@ -443,7 +443,7 @@ func TestTrainerClientRPEScaleAccess(t *testing.T) {
 
 	t.Run("Client Can Access Trainer Scale After Relationship", func(t *testing.T) {
 		// Client can now get the scale
-		resp := e.GET("/api/v1/rpe/scales/" + scaleID).
+		resp := e.GET("/api/v1/rpe/scales/"+scaleID).
 			WithHeader("Authorization", "Bearer "+clientToken).
 			Expect().
 			Status(200).
@@ -479,7 +479,7 @@ func TestTrainerClientRPEScaleAccess(t *testing.T) {
 
 	t.Run("Client Cannot Modify Trainer Scale", func(t *testing.T) {
 		// Client cannot update trainer's scale
-		e.PUT("/api/v1/rpe/scales/" + scaleID).
+		e.PUT("/api/v1/rpe/scales/"+scaleID).
 			WithHeader("Authorization", "Bearer "+clientToken).
 			WithJSON(map[string]interface{}{
 				"name": "Hacked Scale Name",
@@ -488,13 +488,13 @@ func TestTrainerClientRPEScaleAccess(t *testing.T) {
 			Status(403)
 
 		// Client cannot delete trainer's scale
-		e.DELETE("/api/v1/rpe/scales/" + scaleID).
+		e.DELETE("/api/v1/rpe/scales/"+scaleID).
 			WithHeader("Authorization", "Bearer "+clientToken).
 			Expect().
 			Status(403)
 
 		// Client cannot add values to trainer's scale
-		e.POST("/api/v1/rpe/scales/" + scaleID + "/values").
+		e.POST("/api/v1/rpe/scales/"+scaleID+"/values").
 			WithHeader("Authorization", "Bearer "+clientToken).
 			WithJSON(map[string]interface{}{
 				"value": 7,
@@ -506,7 +506,7 @@ func TestTrainerClientRPEScaleAccess(t *testing.T) {
 
 	t.Run("Trainer Still Has Full Access", func(t *testing.T) {
 		// Trainer can still update their scale
-		e.PUT("/api/v1/rpe/scales/" + scaleID).
+		e.PUT("/api/v1/rpe/scales/"+scaleID).
 			WithHeader("Authorization", "Bearer "+trainerToken).
 			WithJSON(map[string]interface{}{
 				"description": "Updated description",
@@ -515,7 +515,7 @@ func TestTrainerClientRPEScaleAccess(t *testing.T) {
 			Status(200)
 
 		// Trainer can add values
-		e.POST("/api/v1/rpe/scales/" + scaleID + "/values").
+		e.POST("/api/v1/rpe/scales/"+scaleID+"/values").
 			WithHeader("Authorization", "Bearer "+trainerToken).
 			WithJSON(map[string]interface{}{
 				"value": 7,

@@ -17,7 +17,7 @@ func TestAuthEndpoints(t *testing.T) {
 	})
 
 	t.Run("Registration With Trainer Profile", func(t *testing.T) {
-		CleanDatabase(t) // Clean before registration with trainer profile tests
+		CleanDatabase(t)       // Clean before registration with trainer profile tests
 		SeedTestRoles(t)       // Seed roles for role assignment
 		SeedTestSpecialties(t) // Seed specialties for trainer profile
 		testRegistrationWithTrainerProfile(t, e)
@@ -342,10 +342,10 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"first_name":       "Minimal",
 			"last_name":        "Trainer",
 			"trainer_profile": map[string]interface{}{
-				"bio":           "",   // Empty bio allowed
+				"bio":           "",         // Empty bio allowed
 				"specialty_ids": []string{}, // Empty array allowed
-				"hourly_rate":   0,    // Zero allowed
-				"location":      "",   // Empty location allowed
+				"hourly_rate":   0,          // Zero allowed
+				"location":      "",         // Empty location allowed
 				// No visibility - defaults to "private"
 			},
 		}

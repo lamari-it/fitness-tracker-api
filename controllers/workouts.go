@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
@@ -23,18 +24,6 @@ type UpdateWorkoutRequest struct {
 	Visibility  string `json:"visibility" binding:"omitempty,oneof=public private friends"`
 }
 
-type AddWorkoutExerciseRequest struct {
-	ExerciseID        uuid.UUID `json:"exercise_id" binding:"required"`
-	SetGroupID        uuid.UUID `json:"set_group_id" binding:"required"`
-	OrderNumber       int       `json:"order_number" binding:"required,min=1"`
-	TargetSets        int       `json:"target_sets" binding:"omitempty,min=1,max=20"`
-	TargetReps        int       `json:"target_reps" binding:"omitempty,min=1,max=100"`
-	TargetWeight      float64   `json:"target_weight" binding:"omitempty,min=0,max=1000"`
-	TargetRestSec     int       `json:"target_rest_sec" binding:"omitempty,min=0,max=600"`
-	Prescription      string    `json:"prescription" binding:"omitempty,oneof=reps time"` // reps or time
-	TargetDurationSec int       `json:"target_duration_sec" binding:"omitempty,min=0,max=3600"`
-}
-
 func CreateWorkout(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -42,7 +31,6 @@ func CreateWorkout(c *gin.Context) {
 		return
 	}
 
-	// Ensure userID is properly typed as UUID
 	userUUID, ok := userID.(uuid.UUID)
 	if !ok {
 		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
@@ -81,7 +69,6 @@ func GetUserWorkouts(c *gin.Context) {
 		return
 	}
 
-	// Ensure userID is properly typed as UUID
 	userUUID, ok := userID.(uuid.UUID)
 	if !ok {
 		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
@@ -109,8 +96,10 @@ func GetUserWorkouts(c *gin.Context) {
 	}
 
 	if err := database.DB.Where("user_id = ?", userUUID).
-		Preload("SetGroups").
-		Preload("WorkoutExercises.Exercise").
+		Preload("Prescriptions", func(db *gorm.DB) *gorm.DB {
+			return db.Order("group_order ASC, exercise_order ASC")
+		}).
+		Preload("Prescriptions.Exercise").
 		Offset(offset).
 		Limit(limit).
 		Order("created_at DESC").
@@ -129,7 +118,6 @@ func GetWorkout(c *gin.Context) {
 		return
 	}
 
-	// Ensure userID is properly typed as UUID
 	userUUID, ok := userID.(uuid.UUID)
 	if !ok {
 		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
@@ -147,15 +135,31 @@ func GetWorkout(c *gin.Context) {
 
 	var workout models.Workout
 	if err := database.DB.Where("id = ? AND user_id = ?", workoutID, userUUID).
-		Preload("SetGroups").
-		Preload("WorkoutExercises.Exercise").
-		Preload("WorkoutExercises.SetGroup").
+		Preload("Prescriptions", func(db *gorm.DB) *gorm.DB {
+			return db.Order("group_order ASC, exercise_order ASC")
+		}).
+		Preload("Prescriptions.Exercise").
+		Preload("Prescriptions.RPEValue").
 		First(&workout).Error; err != nil {
 		utils.NotFoundResponse(c, "Workout not found.")
 		return
 	}
 
-	utils.SuccessResponse(c, "Workout fetched successfully.", workout)
+	// Group prescriptions by group_id for response
+	groupedPrescriptions := models.GroupPrescriptionsByGroupID(workout.Prescriptions)
+
+	response := map[string]interface{}{
+		"id":            workout.ID,
+		"user_id":       workout.UserID,
+		"title":         workout.Title,
+		"description":   workout.Description,
+		"visibility":    workout.Visibility,
+		"created_at":    workout.CreatedAt,
+		"updated_at":    workout.UpdatedAt,
+		"prescriptions": groupedPrescriptions,
+	}
+
+	utils.SuccessResponse(c, "Workout fetched successfully.", response)
 }
 
 func UpdateWorkout(c *gin.Context) {
@@ -165,7 +169,6 @@ func UpdateWorkout(c *gin.Context) {
 		return
 	}
 
-	// Ensure userID is properly typed as UUID
 	userUUID, ok := userID.(uuid.UUID)
 	if !ok {
 		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
@@ -223,7 +226,6 @@ func DeleteWorkout(c *gin.Context) {
 		return
 	}
 
-	// Ensure userID is properly typed as UUID
 	userUUID, ok := userID.(uuid.UUID)
 	if !ok {
 		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
@@ -253,10 +255,17 @@ func DeleteWorkout(c *gin.Context) {
 	utils.DeletedResponse(c, "Workout deleted successfully.")
 }
 
-func AddExerciseToWorkout(c *gin.Context) {
+// CreatePrescriptionGroup creates a new prescription group for a workout
+func CreatePrescriptionGroup(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	userUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
@@ -269,16 +278,18 @@ func AddExerciseToWorkout(c *gin.Context) {
 		return
 	}
 
-	var req AddWorkoutExerciseRequest
+	var req models.CreatePrescriptionGroupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.HandleBindingError(c, err)
 		return
 	}
 
-	// Ensure userID is properly typed as UUID
-	userUUID, ok := userID.(uuid.UUID)
-	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
+	// Validate prescription type
+	if !models.IsValidPrescriptionType(req.Type) {
+		validationErrors := utils.ValidationErrors{
+			"type": []string{"Invalid prescription type."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
 		return
 	}
 
@@ -289,148 +300,562 @@ func AddExerciseToWorkout(c *gin.Context) {
 		return
 	}
 
-	// Check if exercise exists
+	// Generate group_id if not provided
+	groupID := uuid.New()
+	if req.GroupID != nil {
+		groupID = *req.GroupID
+	}
+
+	// Start a transaction
+	var createdPrescriptions []models.WorkoutPrescription
+	var exerciseNotFound bool
+	var validationError string
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
+		// Create prescription rows for each exercise
+		for _, exerciseReq := range req.Exercises {
+			// Verify exercise exists
+			var exercise models.Exercise
+			if err := tx.Where("id = ?", exerciseReq.ExerciseID).First(&exercise).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					exerciseNotFound = true
+				}
+				return err
+			}
+
+			prescription := models.WorkoutPrescription{
+				WorkoutID:       workoutID,
+				ExerciseID:      exerciseReq.ExerciseID,
+				GroupID:         groupID,
+				Type:            req.Type,
+				GroupOrder:      req.GroupOrder,
+				GroupRounds:     req.GroupRounds,
+				RestBetweenSets: req.RestBetweenSets,
+				GroupName:       req.GroupName,
+				GroupNotes:      req.GroupNotes,
+				ExerciseOrder:   exerciseReq.ExerciseOrder,
+				Sets:            exerciseReq.Sets,
+				Reps:            exerciseReq.Reps,
+				DurationSeconds: exerciseReq.DurationSeconds,
+				WeightKg:        exerciseReq.WeightKg,
+				TargetWeightKg:  exerciseReq.TargetWeightKg,
+				RPEValueID:      exerciseReq.RPEValueID,
+				Notes:           exerciseReq.Notes,
+			}
+
+			if err := tx.Create(&prescription).Error; err != nil {
+				// Check for validation errors from BeforeSave hook
+				if err.Error() == "prescription cannot have both reps and duration_seconds" ||
+					err.Error() == "group_order must be at least 1" ||
+					err.Error() == "exercise_order must be at least 1" ||
+					err.Error() == "invalid prescription type" {
+					validationError = err.Error()
+				}
+				return err
+			}
+
+			// Load the exercise details
+			prescription.Exercise = exercise
+			createdPrescriptions = append(createdPrescriptions, prescription)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		if exerciseNotFound {
+			validationErrors := utils.ValidationErrors{
+				"exercise_id": []string{"Exercise not found."},
+			}
+			utils.ValidationErrorResponse(c, validationErrors)
+			return
+		}
+		if validationError != "" {
+			validationErrors := utils.ValidationErrors{
+				"prescription": []string{validationError},
+			}
+			utils.ValidationErrorResponse(c, validationErrors)
+			return
+		}
+		utils.InternalServerErrorResponse(c, "Failed to create prescription group.")
+		return
+	}
+
+	// Format response as grouped prescriptions
+	groupedResponse := models.GroupPrescriptionsByGroupID(createdPrescriptions)
+	if len(groupedResponse) > 0 {
+		utils.CreatedResponse(c, "Prescription group created successfully.", groupedResponse[0])
+	} else {
+		utils.CreatedResponse(c, "Prescription group created successfully.", nil)
+	}
+}
+
+// UpdatePrescriptionGroup updates an existing prescription group
+func UpdatePrescriptionGroup(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	userUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
+		return
+	}
+
+	workoutID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	groupID, err := uuid.Parse(c.Param("group_id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"group_id": []string{"Invalid group ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	var req models.UpdatePrescriptionGroupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	// Check if workout exists and belongs to user
+	var workout models.Workout
+	if err := database.DB.Where("id = ? AND user_id = ?", workoutID, userUUID).First(&workout).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout not found.")
+		return
+	}
+
+	// Check if group exists in this workout
+	var existingPrescriptions []models.WorkoutPrescription
+	if err := database.DB.Where("workout_id = ? AND group_id = ?", workoutID, groupID).
+		Order("exercise_order ASC").
+		Find(&existingPrescriptions).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to fetch prescription group.")
+		return
+	}
+
+	if len(existingPrescriptions) == 0 {
+		utils.NotFoundResponse(c, "Prescription group not found.")
+		return
+	}
+
+	// Start a transaction
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
+		// Build updates for group-level fields
+		groupUpdates := map[string]interface{}{}
+		if req.Type != nil {
+			if !models.IsValidPrescriptionType(*req.Type) {
+				return gorm.ErrInvalidValue
+			}
+			groupUpdates["type"] = *req.Type
+		}
+		if req.GroupOrder != nil {
+			groupUpdates["group_order"] = *req.GroupOrder
+		}
+		if req.GroupRounds != nil {
+			groupUpdates["group_rounds"] = *req.GroupRounds
+		}
+		if req.RestBetweenSets != nil {
+			groupUpdates["rest_between_sets"] = *req.RestBetweenSets
+		}
+		if req.GroupName != nil {
+			groupUpdates["group_name"] = *req.GroupName
+		}
+		if req.GroupNotes != nil {
+			groupUpdates["group_notes"] = *req.GroupNotes
+		}
+
+		// Update group-level fields on all rows
+		if len(groupUpdates) > 0 {
+			if err := tx.Model(&models.WorkoutPrescription{}).
+				Where("workout_id = ? AND group_id = ?", workoutID, groupID).
+				Updates(groupUpdates).Error; err != nil {
+				return err
+			}
+		}
+
+		// If exercises are provided, replace them
+		if len(req.Exercises) > 0 {
+			// Delete existing prescriptions
+			if err := tx.Where("workout_id = ? AND group_id = ?", workoutID, groupID).
+				Delete(&models.WorkoutPrescription{}).Error; err != nil {
+				return err
+			}
+
+			// Get the current group-level values (use first existing or updated values)
+			groupType := existingPrescriptions[0].Type
+			groupOrder := existingPrescriptions[0].GroupOrder
+			groupRounds := existingPrescriptions[0].GroupRounds
+			restBetweenSets := existingPrescriptions[0].RestBetweenSets
+			groupName := existingPrescriptions[0].GroupName
+			groupNotes := existingPrescriptions[0].GroupNotes
+
+			if req.Type != nil {
+				groupType = *req.Type
+			}
+			if req.GroupOrder != nil {
+				groupOrder = *req.GroupOrder
+			}
+			if req.GroupRounds != nil {
+				groupRounds = req.GroupRounds
+			}
+			if req.RestBetweenSets != nil {
+				restBetweenSets = req.RestBetweenSets
+			}
+			if req.GroupName != nil {
+				groupName = req.GroupName
+			}
+			if req.GroupNotes != nil {
+				groupNotes = req.GroupNotes
+			}
+
+			// Create new prescriptions
+			for _, exerciseReq := range req.Exercises {
+				// Verify exercise exists
+				var exercise models.Exercise
+				if err := tx.Where("id = ?", exerciseReq.ExerciseID).First(&exercise).Error; err != nil {
+					return err
+				}
+
+				prescription := models.WorkoutPrescription{
+					WorkoutID:       workoutID,
+					ExerciseID:      exerciseReq.ExerciseID,
+					GroupID:         groupID,
+					Type:            groupType,
+					GroupOrder:      groupOrder,
+					GroupRounds:     groupRounds,
+					RestBetweenSets: restBetweenSets,
+					GroupName:       groupName,
+					GroupNotes:      groupNotes,
+					ExerciseOrder:   exerciseReq.ExerciseOrder,
+					Sets:            exerciseReq.Sets,
+					Reps:            exerciseReq.Reps,
+					DurationSeconds: exerciseReq.DurationSeconds,
+					WeightKg:        exerciseReq.WeightKg,
+					TargetWeightKg:  exerciseReq.TargetWeightKg,
+					RPEValueID:      exerciseReq.RPEValueID,
+					Notes:           exerciseReq.Notes,
+				}
+
+				if err := tx.Create(&prescription).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			validationErrors := utils.ValidationErrors{
+				"exercise_id": []string{"Exercise not found."},
+			}
+			utils.ValidationErrorResponse(c, validationErrors)
+			return
+		}
+		if errors.Is(err, gorm.ErrInvalidValue) {
+			validationErrors := utils.ValidationErrors{
+				"type": []string{"Invalid prescription type."},
+			}
+			utils.ValidationErrorResponse(c, validationErrors)
+			return
+		}
+		utils.InternalServerErrorResponse(c, "Failed to update prescription group.")
+		return
+	}
+
+	// Fetch updated prescriptions
+	var updatedPrescriptions []models.WorkoutPrescription
+	if err := database.DB.Where("workout_id = ? AND group_id = ?", workoutID, groupID).
+		Preload("Exercise").
+		Preload("RPEValue").
+		Order("exercise_order ASC").
+		Find(&updatedPrescriptions).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to fetch updated prescription group.")
+		return
+	}
+
+	groupedResponse := models.GroupPrescriptionsByGroupID(updatedPrescriptions)
+	if len(groupedResponse) > 0 {
+		utils.SuccessResponse(c, "Prescription group updated successfully.", groupedResponse[0])
+	} else {
+		utils.SuccessResponse(c, "Prescription group updated successfully.", nil)
+	}
+}
+
+// DeletePrescriptionGroup deletes a prescription group from a workout
+func DeletePrescriptionGroup(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	userUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
+		return
+	}
+
+	workoutID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	groupID, err := uuid.Parse(c.Param("group_id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"group_id": []string{"Invalid group ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	// Check if workout exists and belongs to user
+	var workout models.Workout
+	if err := database.DB.Where("id = ? AND user_id = ?", workoutID, userUUID).First(&workout).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout not found.")
+		return
+	}
+
+	// Delete all prescriptions in the group
+	result := database.DB.Where("workout_id = ? AND group_id = ?", workoutID, groupID).
+		Delete(&models.WorkoutPrescription{})
+	if result.Error != nil {
+		utils.InternalServerErrorResponse(c, "Failed to delete prescription group.")
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		utils.NotFoundResponse(c, "Prescription group not found.")
+		return
+	}
+
+	utils.DeletedResponse(c, "Prescription group deleted successfully.")
+}
+
+// ReorderPrescriptionGroups reorders the groups within a workout
+func ReorderPrescriptionGroups(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	userUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
+		return
+	}
+
+	workoutID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	var req models.ReorderPrescriptionGroupsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	// Check if workout exists and belongs to user
+	var workout models.Workout
+	if err := database.DB.Where("id = ? AND user_id = ?", workoutID, userUUID).First(&workout).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout not found.")
+		return
+	}
+
+	// Start a transaction
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
+		for _, groupOrder := range req.GroupOrders {
+			if err := tx.Model(&models.WorkoutPrescription{}).
+				Where("workout_id = ? AND group_id = ?", workoutID, groupOrder.GroupID).
+				Update("group_order", groupOrder.GroupOrder).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to reorder prescription groups.")
+		return
+	}
+
+	utils.SuccessResponse(c, "Prescription groups reordered successfully.", nil)
+}
+
+// GetWorkoutPrescriptions returns all prescriptions for a workout grouped by group_id
+func GetWorkoutPrescriptions(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	userUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
+		return
+	}
+
+	workoutID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	// Check if workout exists and belongs to user
+	var workout models.Workout
+	if err := database.DB.Where("id = ? AND user_id = ?", workoutID, userUUID).First(&workout).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout not found.")
+		return
+	}
+
+	var prescriptions []models.WorkoutPrescription
+	if err := database.DB.Where("workout_id = ?", workoutID).
+		Preload("Exercise").
+		Preload("RPEValue").
+		Order("group_order ASC, exercise_order ASC").
+		Find(&prescriptions).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to fetch workout prescriptions.")
+		return
+	}
+
+	groupedResponse := models.GroupPrescriptionsByGroupID(prescriptions)
+	utils.SuccessResponse(c, "Workout prescriptions fetched successfully.", groupedResponse)
+}
+
+// AddExerciseToPrescriptionGroup adds an exercise to an existing prescription group
+func AddExerciseToPrescriptionGroup(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	userUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
+		return
+	}
+
+	workoutID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"id": []string{"Invalid workout ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	groupID, err := uuid.Parse(c.Param("group_id"))
+	if err != nil {
+		validationErrors := utils.ValidationErrors{
+			"group_id": []string{"Invalid group ID format."},
+		}
+		utils.ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	var req models.AddExerciseToPrescriptionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	// Check if workout exists and belongs to user
+	var workout models.Workout
+	if err := database.DB.Where("id = ? AND user_id = ?", workoutID, userUUID).First(&workout).Error; err != nil {
+		utils.NotFoundResponse(c, "Workout not found.")
+		return
+	}
+
+	// Get existing prescriptions in the group
+	var existingPrescriptions []models.WorkoutPrescription
+	if err := database.DB.Where("workout_id = ? AND group_id = ?", workoutID, groupID).
+		Order("exercise_order ASC").
+		Find(&existingPrescriptions).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to fetch prescription group.")
+		return
+	}
+
+	if len(existingPrescriptions) == 0 {
+		utils.NotFoundResponse(c, "Prescription group not found.")
+		return
+	}
+
+	// Verify exercise exists
 	var exercise models.Exercise
 	if err := database.DB.Where("id = ?", req.ExerciseID).First(&exercise).Error; err != nil {
 		utils.NotFoundResponse(c, "Exercise not found.")
 		return
 	}
 
-	// Verify set group exists and belongs to this workout
-	var setGroup models.SetGroup
-	if err := database.DB.Where("id = ? AND workout_id = ?", req.SetGroupID, workoutID).First(&setGroup).Error; err != nil {
-		utils.NotFoundResponse(c, "Set group not found in this workout.")
+	// Get next exercise order
+	nextOrder, err := models.GetNextExerciseOrder(database.DB, groupID)
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to determine exercise order.")
 		return
 	}
 
-	// Set default prescription if not provided
-	prescription := req.Prescription
-	if prescription == "" {
-		prescription = "reps"
+	// Use group-level values from existing prescription
+	firstPrescription := existingPrescriptions[0]
+
+	prescription := models.WorkoutPrescription{
+		WorkoutID:       workoutID,
+		ExerciseID:      req.ExerciseID,
+		GroupID:         groupID,
+		Type:            firstPrescription.Type,
+		GroupOrder:      firstPrescription.GroupOrder,
+		GroupRounds:     firstPrescription.GroupRounds,
+		RestBetweenSets: firstPrescription.RestBetweenSets,
+		GroupName:       firstPrescription.GroupName,
+		GroupNotes:      firstPrescription.GroupNotes,
+		ExerciseOrder:   nextOrder,
+		Sets:            req.Sets,
+		Reps:            req.Reps,
+		DurationSeconds: req.DurationSeconds,
+		WeightKg:        req.WeightKg,
+		TargetWeightKg:  req.TargetWeightKg,
+		RPEValueID:      req.RPEValueID,
+		Notes:           req.Notes,
 	}
 
-	// Create workout exercise
-	workoutExercise := models.WorkoutExercise{
-		WorkoutID:         workoutID,
-		ExerciseID:        req.ExerciseID,
-		SetGroupID:        req.SetGroupID,
-		OrderNumber:       req.OrderNumber,
-		TargetSets:        req.TargetSets,
-		TargetReps:        req.TargetReps,
-		TargetWeight:      req.TargetWeight,
-		TargetRestSec:     req.TargetRestSec,
-		Prescription:      prescription,
-		TargetDurationSec: req.TargetDurationSec,
-	}
-
-	if err := database.DB.Create(&workoutExercise).Error; err != nil {
-		utils.InternalServerErrorResponse(c, "Failed to add exercise to workout.")
+	if err := database.DB.Create(&prescription).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to add exercise to prescription group.")
 		return
 	}
 
-	// Load the exercise details
-	database.DB.Preload("Exercise").First(&workoutExercise, workoutExercise.ID)
+	// Load exercise details
+	prescription.Exercise = exercise
 
-	utils.CreatedResponse(c, "Exercise added to workout successfully.", workoutExercise)
+	utils.CreatedResponse(c, "Exercise added to prescription group successfully.", prescription)
 }
 
-func RemoveExerciseFromWorkout(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
-		return
-	}
-
-	exerciseID, err := uuid.Parse(c.Param("exercise_id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"exercise_id": []string{"Invalid exercise ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
-		return
-	}
-
-	// Ensure userID is properly typed as UUID
-	userUUID, ok := userID.(uuid.UUID)
-	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
-		return
-	}
-
-	// Check if workout exists and belongs to user
-	var workout models.Workout
-	if err := database.DB.Where("id = ? AND user_id = ?", workoutID, userUUID).First(&workout).Error; err != nil {
-		utils.NotFoundResponse(c, "Workout not found.")
-		return
-	}
-
-	// Delete the workout exercise
-	result := database.DB.Where("workout_id = ? AND id = ?", workoutID, exerciseID).Delete(&models.WorkoutExercise{})
-	if result.Error != nil {
-		utils.InternalServerErrorResponse(c, "Failed to remove exercise from workout.")
-		return
-	}
-
-	if result.RowsAffected == 0 {
-		utils.NotFoundResponse(c, "Exercise not found in this workout.")
-		return
-	}
-
-	utils.DeletedResponse(c, "Exercise removed from workout successfully.")
-}
-
-func GetWorkoutExercises(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
-		return
-	}
-
-	// Ensure userID is properly typed as UUID
-	userUUID, ok := userID.(uuid.UUID)
-	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
-		return
-	}
-
-	// Check if workout exists and belongs to user
-	var workout models.Workout
-	if err := database.DB.Where("id = ? AND user_id = ?", workoutID, userUUID).First(&workout).Error; err != nil {
-		utils.NotFoundResponse(c, "Workout not found.")
-		return
-	}
-
-	var exercises []models.WorkoutExercise
-	if err := database.DB.Where("workout_id = ?", workoutID).
-		Preload("Exercise").
-		Preload("SetGroup").
-		Order("order_number").
-		Find(&exercises).Error; err != nil {
-		utils.InternalServerErrorResponse(c, "Failed to fetch workout exercises.")
-		return
-	}
-
-	utils.SuccessResponse(c, "Workout exercises fetched successfully.", exercises)
-}
-
+// DuplicateWorkout creates a copy of an existing workout with all its prescriptions
 func DuplicateWorkout(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -438,6 +863,12 @@ func DuplicateWorkout(c *gin.Context) {
 		return
 	}
 
+	userUUID, ok := userID.(uuid.UUID)
+	if !ok {
+		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
+		return
+	}
+
 	workoutID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		validationErrors := utils.ValidationErrors{
@@ -447,27 +878,21 @@ func DuplicateWorkout(c *gin.Context) {
 		return
 	}
 
-	// Ensure userID is properly typed as UUID
-	userUUID, ok := userID.(uuid.UUID)
-	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
-		return
-	}
-
-	// Fetch the original workout with all related data
+	// Fetch the original workout with all prescriptions
 	var originalWorkout models.Workout
 	if err := database.DB.Where("id = ? AND user_id = ?", workoutID, userUUID).
-		Preload("SetGroups").
-		Preload("WorkoutExercises").
+		Preload("Prescriptions").
 		First(&originalWorkout).Error; err != nil {
 		utils.NotFoundResponse(c, "Workout not found.")
 		return
 	}
 
+	var newWorkout models.Workout
+
 	// Start a transaction
 	err = database.DB.Transaction(func(tx *gorm.DB) error {
 		// Create a new workout
-		newWorkout := models.Workout{
+		newWorkout = models.Workout{
 			UserID:      userUUID,
 			Title:       originalWorkout.Title + " (Copy)",
 			Description: originalWorkout.Description,
@@ -478,61 +903,43 @@ func DuplicateWorkout(c *gin.Context) {
 			return err
 		}
 
-		// Duplicate set groups if any
-		setGroupMapping := make(map[uuid.UUID]uuid.UUID) // Map old set group IDs to new ones
-		for _, setGroup := range originalWorkout.SetGroups {
-			newSetGroup := models.SetGroup{
+		// Map old group IDs to new group IDs
+		groupIDMapping := make(map[uuid.UUID]uuid.UUID)
+
+		// Duplicate prescriptions
+		for _, prescription := range originalWorkout.Prescriptions {
+			// Get or create new group ID
+			newGroupID, exists := groupIDMapping[prescription.GroupID]
+			if !exists {
+				newGroupID = uuid.New()
+				groupIDMapping[prescription.GroupID] = newGroupID
+			}
+
+			newPrescription := models.WorkoutPrescription{
 				WorkoutID:       newWorkout.ID,
-				GroupType:       setGroup.GroupType,
-				Name:            setGroup.Name,
-				Notes:           setGroup.Notes,
-				OrderNumber:     setGroup.OrderNumber,
-				RestBetweenSets: setGroup.RestBetweenSets,
-				Rounds:          setGroup.Rounds,
-			}
-			if err := tx.Create(&newSetGroup).Error; err != nil {
-				return err
-			}
-			setGroupMapping[setGroup.ID] = newSetGroup.ID
-		}
-
-		// Duplicate workout exercises
-		for _, exercise := range originalWorkout.WorkoutExercises {
-			newExercise := models.WorkoutExercise{
-				WorkoutID:         newWorkout.ID,
-				ExerciseID:        exercise.ExerciseID,
-				OrderNumber:       exercise.OrderNumber,
-				TargetSets:        exercise.TargetSets,
-				TargetReps:        exercise.TargetReps,
-				TargetWeight:      exercise.TargetWeight,
-				TargetRestSec:     exercise.TargetRestSec,
-				Prescription:      exercise.Prescription,
-				TargetDurationSec: exercise.TargetDurationSec,
+				ExerciseID:      prescription.ExerciseID,
+				RPEValueID:      prescription.RPEValueID,
+				GroupID:         newGroupID,
+				Type:            prescription.Type,
+				GroupOrder:      prescription.GroupOrder,
+				GroupRounds:     prescription.GroupRounds,
+				RestBetweenSets: prescription.RestBetweenSets,
+				GroupName:       prescription.GroupName,
+				GroupNotes:      prescription.GroupNotes,
+				ExerciseOrder:   prescription.ExerciseOrder,
+				Sets:            prescription.Sets,
+				Reps:            prescription.Reps,
+				DurationSeconds: prescription.DurationSeconds,
+				WeightKg:        prescription.WeightKg,
+				TargetWeightKg:  prescription.TargetWeightKg,
+				Notes:           prescription.Notes,
 			}
 
-			// Map the set group ID
-			if newSetGroupID, ok := setGroupMapping[exercise.SetGroupID]; ok {
-				newExercise.SetGroupID = newSetGroupID
-			} else {
-				// If mapping doesn't exist, use the original (this shouldn't happen normally)
-				newExercise.SetGroupID = exercise.SetGroupID
-			}
-
-			if err := tx.Create(&newExercise).Error; err != nil {
+			if err := tx.Create(&newPrescription).Error; err != nil {
 				return err
 			}
 		}
 
-		// Load the new workout with all relations
-		if err := tx.Where("id = ?", newWorkout.ID).
-			Preload("SetGroups").
-			Preload("WorkoutExercises.Exercise").
-			First(&newWorkout).Error; err != nil {
-			return err
-		}
-
-		// Store the new workout for response
-		originalWorkout = newWorkout
 		return nil
 	})
 
@@ -541,5 +948,30 @@ func DuplicateWorkout(c *gin.Context) {
 		return
 	}
 
-	utils.CreatedResponse(c, "Workout duplicated successfully.", originalWorkout)
+	// Load the new workout with all relations
+	if err := database.DB.Where("id = ?", newWorkout.ID).
+		Preload("Prescriptions", func(db *gorm.DB) *gorm.DB {
+			return db.Order("group_order ASC, exercise_order ASC")
+		}).
+		Preload("Prescriptions.Exercise").
+		First(&newWorkout).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to load duplicated workout.")
+		return
+	}
+
+	// Group prescriptions for response
+	groupedPrescriptions := models.GroupPrescriptionsByGroupID(newWorkout.Prescriptions)
+
+	response := map[string]interface{}{
+		"id":            newWorkout.ID,
+		"user_id":       newWorkout.UserID,
+		"title":         newWorkout.Title,
+		"description":   newWorkout.Description,
+		"visibility":    newWorkout.Visibility,
+		"created_at":    newWorkout.CreatedAt,
+		"updated_at":    newWorkout.UpdatedAt,
+		"prescriptions": groupedPrescriptions,
+	}
+
+	utils.CreatedResponse(c, "Workout duplicated successfully.", response)
 }

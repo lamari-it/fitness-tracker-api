@@ -127,7 +127,7 @@ func testEmailInvitationFlow(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Cancel Email Invitation", func(t *testing.T) {
-		response := e.DELETE("/api/v1/trainers/email-invitations/" + invitationID).
+		response := e.DELETE("/api/v1/trainers/email-invitations/"+invitationID).
 			WithHeader("Authorization", "Bearer "+trainerToken).
 			Expect().
 			Status(204)
@@ -264,7 +264,7 @@ func testEmailInvitationValidation(t *testing.T, e *httpexpect.Expect) {
 		testDB.Exec("UPDATE trainer_invitations SET status = 'accepted' WHERE id = ?", invitationID)
 
 		// Try to cancel
-		response := e.DELETE("/api/v1/trainers/email-invitations/" + invitationID).
+		response := e.DELETE("/api/v1/trainers/email-invitations/"+invitationID).
 			WithHeader("Authorization", "Bearer "+trainerToken).
 			Expect().
 			Status(400).
@@ -579,7 +579,7 @@ func testResendInvitation(t *testing.T, e *httpexpect.Expect) {
 	originalExpiry := originalInv.ExpiresAt
 
 	t.Run("Resend Invitation Successfully", func(t *testing.T) {
-		response := e.POST("/api/v1/trainers/email-invitations/" + invitationID + "/resend").
+		response := e.POST("/api/v1/trainers/email-invitations/"+invitationID+"/resend").
 			WithHeader("Authorization", "Bearer "+trainerToken).
 			Expect().
 			Status(200).
@@ -610,7 +610,7 @@ func testResendInvitation(t *testing.T, e *httpexpect.Expect) {
 		// Mark as accepted
 		testDB.Exec("UPDATE trainer_invitations SET status = 'accepted' WHERE id = ?", invitationID)
 
-		response := e.POST("/api/v1/trainers/email-invitations/" + invitationID + "/resend").
+		response := e.POST("/api/v1/trainers/email-invitations/"+invitationID+"/resend").
 			WithHeader("Authorization", "Bearer "+trainerToken).
 			Expect().
 			Status(400).
@@ -650,7 +650,7 @@ func testResendInvitation(t *testing.T, e *httpexpect.Expect) {
 			Expect().
 			Status(201)
 
-		response := e.POST("/api/v1/trainers/email-invitations/" + invitationID + "/resend").
+		response := e.POST("/api/v1/trainers/email-invitations/"+invitationID+"/resend").
 			WithHeader("Authorization", "Bearer "+trainer2Token).
 			Expect().
 			Status(404).

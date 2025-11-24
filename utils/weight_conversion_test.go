@@ -127,9 +127,9 @@ func TestNormalizeWeightUnit(t *testing.T) {
 
 func TestGetUserPreferredWeightUnit(t *testing.T) {
 	tests := []struct {
-		name           string
-		weightUnit     string
-		expectedUnit   string
+		name         string
+		weightUnit   string
+		expectedUnit string
 	}{
 		{"kg returns kg", "kg", "kg"},
 		{"lb returns lb", "lb", "lb"},

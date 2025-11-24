@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,12 +34,10 @@ type Workout struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
-	// Exercises inside workout define their own order (not handled by plan)
-	// Exercises []Exercise ...
-	SetGroups        []SetGroup        `gorm:"foreignKey:WorkoutID" json:"set_groups,omitempty"`
-	WorkoutExercises []WorkoutExercise `gorm:"foreignKey:WorkoutID" json:"exercises,omitempty"`
-	WorkoutSessions  []WorkoutSession  `gorm:"foreignKey:WorkoutID" json:"sessions,omitempty"`
-	SharedWorkouts   []SharedWorkout   `gorm:"foreignKey:WorkoutID" json:"shared_workouts,omitempty"`
+	// Unified prescription architecture
+	Prescriptions   []WorkoutPrescription `gorm:"foreignKey:WorkoutID" json:"prescriptions,omitempty"`
+	WorkoutSessions []WorkoutSession      `gorm:"foreignKey:WorkoutID" json:"sessions,omitempty"`
+	SharedWorkouts  []SharedWorkout       `gorm:"foreignKey:WorkoutID" json:"shared_workouts,omitempty"`
 }
 
 type WorkoutPlanItem struct {
@@ -88,34 +85,10 @@ type Exercise struct {
 	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
-	WorkoutExercises []WorkoutExercise     `gorm:"foreignKey:ExerciseID" json:"workout_exercises,omitempty"`
-	ExerciseLogs     []ExerciseLog         `gorm:"foreignKey:ExerciseID" json:"exercise_logs,omitempty"`
-	MuscleGroups     []ExerciseMuscleGroup `gorm:"foreignKey:ExerciseID" json:"muscle_groups,omitempty"`
-	Equipment        []ExerciseEquipment   `gorm:"foreignKey:ExerciseID" json:"equipment,omitempty"`
-}
-
-type WorkoutExercise struct {
-	ID                uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	WorkoutID         uuid.UUID  `gorm:"type:uuid;not null" json:"workout_id"`
-	SetGroupID        uuid.UUID  `gorm:"type:uuid;not null" json:"set_group_id"`
-	ExerciseID        uuid.UUID  `gorm:"type:uuid;not null" json:"exercise_id"`
-	OrderNumber       int        `gorm:"not null" json:"order_number"`
-	TargetSets        int        `json:"target_sets"`
-	TargetReps        int        `json:"target_reps"`
-	TargetWeight      float64    `gorm:"type:numeric(10,2)" json:"target_weight"`
-	TargetRestSec     int        `json:"target_rest_sec"`
-	Prescription      string     `gorm:"type:varchar(20);not null;default:'reps'" json:"prescription"` // reps | time
-	TargetDurationSec int        `gorm:"default:0" json:"target_duration_sec"`
-	TargetRPEValueID  *uuid.UUID `gorm:"type:uuid" json:"target_rpe_value_id,omitempty"`
-
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
-
-	Workout        Workout        `gorm:"foreignKey:WorkoutID;constraint:OnDelete:CASCADE" json:"workout,omitempty"`
-	SetGroup       SetGroup       `gorm:"foreignKey:SetGroupID;constraint:OnDelete:CASCADE" json:"set_group,omitempty"`
-	Exercise       Exercise       `gorm:"foreignKey:ExerciseID;constraint:OnDelete:CASCADE" json:"exercise,omitempty"`
-	TargetRPEValue *RPEScaleValue `gorm:"foreignKey:TargetRPEValueID;constraint:OnDelete:SET NULL" json:"target_rpe_value,omitempty"`
+	Prescriptions []WorkoutPrescription `gorm:"foreignKey:ExerciseID" json:"prescriptions,omitempty"`
+	ExerciseLogs  []ExerciseLog         `gorm:"foreignKey:ExerciseID" json:"exercise_logs,omitempty"`
+	MuscleGroups  []ExerciseMuscleGroup `gorm:"foreignKey:ExerciseID" json:"muscle_groups,omitempty"`
+	Equipment     []ExerciseEquipment   `gorm:"foreignKey:ExerciseID" json:"equipment,omitempty"`
 }
 
 func (wp *WorkoutPlan) BeforeCreate(tx *gorm.DB) (err error) {
@@ -139,13 +112,6 @@ func (e *Exercise) BeforeCreate(tx *gorm.DB) (err error) {
 	return
 }
 
-func (we *WorkoutExercise) BeforeCreate(tx *gorm.DB) (err error) {
-	if we.ID == uuid.Nil {
-		we.ID = uuid.New()
-	}
-	return
-}
-
 func (wpi *WorkoutPlanItem) BeforeCreate(tx *gorm.DB) (err error) {
 	if wpi.ID == uuid.Nil {
 		wpi.ID = uuid.New()
@@ -158,26 +124,4 @@ func (pe *PlanEnrollment) BeforeCreate(tx *gorm.DB) (err error) {
 		pe.ID = uuid.New()
 	}
 	return
-}
-
-// Optional but recommended: keep reps vs time mutually exclusive and valid
-func (we *WorkoutExercise) BeforeSave(tx *gorm.DB) (err error) {
-	if we.Prescription == "" {
-		we.Prescription = "reps"
-	}
-	switch we.Prescription {
-	case "reps":
-		if we.TargetReps <= 0 {
-			return errors.New("target_reps must be > 0 when prescription = 'reps'")
-		}
-		we.TargetDurationSec = 0
-	case "time":
-		if we.TargetDurationSec <= 0 {
-			return errors.New("target_duration_sec must be > 0 when prescription = 'time'")
-		}
-		we.TargetReps = 0
-	default:
-		return errors.New("invalid prescription: must be 'reps' or 'time'")
-	}
-	return nil
 }

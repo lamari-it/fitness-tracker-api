@@ -12,7 +12,7 @@ import (
 // Request DTOs
 type CreateExerciseLogRequest struct {
 	SessionID        uuid.UUID  `json:"session_id" binding:"required"`
-	SetGroupID       *uuid.UUID `json:"set_group_id"`
+	PrescriptionID   *uuid.UUID `json:"prescription_id"`
 	ExerciseID       uuid.UUID  `json:"exercise_id" binding:"required"`
 	OrderNumber      int        `json:"order_number" binding:"required"`
 	Notes            string     `json:"notes"`
@@ -28,27 +28,30 @@ type UpdateExerciseLogRequest struct {
 
 // ExerciseLogResponse is the response DTO for exercise logs
 type ExerciseLogResponse struct {
-	ID               uuid.UUID        `json:"id"`
-	SessionID        uuid.UUID        `json:"session_id"`
-	SetGroupID       *uuid.UUID       `json:"set_group_id,omitempty"`
-	ExerciseID       uuid.UUID        `json:"exercise_id"`
-	ExerciseName     string           `json:"exercise_name"`
-	OrderNumber      int              `json:"order_number"`
-	Notes            string           `json:"notes"`
-	DifficultyRating int              `json:"difficulty_rating"`
-	DifficultyType   string           `json:"difficulty_type"`
-	SetLogs          []SetLogResponse `json:"set_logs,omitempty"`
+	ID               uuid.UUID               `json:"id"`
+	SessionID        uuid.UUID               `json:"session_id"`
+	PrescriptionID   *uuid.UUID              `json:"prescription_id,omitempty"`
+	GroupID          *uuid.UUID              `json:"group_id,omitempty"`
+	GroupName        *string                 `json:"group_name,omitempty"`
+	GroupType        models.PrescriptionType `json:"group_type,omitempty"`
+	ExerciseID       uuid.UUID               `json:"exercise_id"`
+	ExerciseName     string                  `json:"exercise_name"`
+	OrderNumber      int                     `json:"order_number"`
+	Notes            string                  `json:"notes"`
+	DifficultyRating int                     `json:"difficulty_rating"`
+	DifficultyType   string                  `json:"difficulty_type"`
+	SetLogs          []SetLogResponse        `json:"set_logs,omitempty"`
 }
 
 // SetLogResponse is the response DTO for set logs
 type SetLogResponse struct {
 	ID                uuid.UUID  `json:"id"`
 	SetNumber         int        `json:"set_number"`
-	WeightKg          float64    `json:"weight_kg"`                    // Canonical weight in kg
-	WeightDisplay     float64    `json:"weight_display"`               // Weight in user's preferred unit
-	WeightDisplayUnit string     `json:"weight_display_unit"`          // User's preferred unit (kg/lb)
-	InputWeight       float64    `json:"input_weight"`                 // Original input value
-	InputWeightUnit   string     `json:"input_weight_unit"`            // Original input unit
+	WeightKg          float64    `json:"weight_kg"`           // Canonical weight in kg
+	WeightDisplay     float64    `json:"weight_display"`      // Weight in user's preferred unit
+	WeightDisplayUnit string     `json:"weight_display_unit"` // User's preferred unit (kg/lb)
+	InputWeight       float64    `json:"input_weight"`        // Original input value
+	InputWeightUnit   string     `json:"input_weight_unit"`   // Original input unit
 	Reps              int        `json:"reps"`
 	RestAfterSec      int        `json:"rest_after_sec"`
 	Tempo             string     `json:"tempo"`
@@ -132,7 +135,7 @@ func CreateExerciseLog(c *gin.Context) {
 
 	exerciseLog := models.ExerciseLog{
 		SessionID:        req.SessionID,
-		SetGroupID:       req.SetGroupID,
+		PrescriptionID:   req.PrescriptionID,
 		ExerciseID:       req.ExerciseID,
 		OrderNumber:      req.OrderNumber,
 		Notes:            req.Notes,
@@ -146,12 +149,12 @@ func CreateExerciseLog(c *gin.Context) {
 	}
 
 	// Reload with relationships
-	database.DB.Preload("Exercise").Preload("SetGroup").Preload("SetLogs").First(&exerciseLog, "id = ?", exerciseLog.ID)
+	database.DB.Preload("Exercise").Preload("Prescription").Preload("SetLogs").First(&exerciseLog, "id = ?", exerciseLog.ID)
 
 	response := ExerciseLogResponse{
 		ID:               exerciseLog.ID,
 		SessionID:        exerciseLog.SessionID,
-		SetGroupID:       exerciseLog.SetGroupID,
+		PrescriptionID:   exerciseLog.PrescriptionID,
 		ExerciseID:       exerciseLog.ExerciseID,
 		ExerciseName:     exerciseLog.Exercise.Name,
 		OrderNumber:      exerciseLog.OrderNumber,
@@ -159,6 +162,13 @@ func CreateExerciseLog(c *gin.Context) {
 		DifficultyRating: exerciseLog.DifficultyRating,
 		DifficultyType:   exerciseLog.DifficultyType,
 		SetLogs:          []SetLogResponse{},
+	}
+
+	// Add prescription group info if available
+	if exerciseLog.Prescription != nil {
+		response.GroupID = &exerciseLog.Prescription.GroupID
+		response.GroupName = exerciseLog.Prescription.GroupName
+		response.GroupType = exerciseLog.Prescription.Type
 	}
 
 	utils.CreatedResponse(c, "Exercise log created successfully", response)
@@ -194,7 +204,7 @@ func GetExerciseLog(c *gin.Context) {
 	if err := database.DB.
 		Preload("Session").
 		Preload("Exercise").
-		Preload("SetGroup").
+		Preload("Prescription").
 		Preload("SetLogs").
 		First(&exerciseLog, "id = ?", exerciseLogID).Error; err != nil {
 		utils.NotFoundResponse(c, "Exercise log not found")
@@ -218,7 +228,7 @@ func GetExerciseLog(c *gin.Context) {
 	response := ExerciseLogResponse{
 		ID:               exerciseLog.ID,
 		SessionID:        exerciseLog.SessionID,
-		SetGroupID:       exerciseLog.SetGroupID,
+		PrescriptionID:   exerciseLog.PrescriptionID,
 		ExerciseID:       exerciseLog.ExerciseID,
 		ExerciseName:     exerciseLog.Exercise.Name,
 		OrderNumber:      exerciseLog.OrderNumber,
@@ -226,6 +236,13 @@ func GetExerciseLog(c *gin.Context) {
 		DifficultyRating: exerciseLog.DifficultyRating,
 		DifficultyType:   exerciseLog.DifficultyType,
 		SetLogs:          setLogs,
+	}
+
+	// Add prescription group info if available
+	if exerciseLog.Prescription != nil {
+		response.GroupID = &exerciseLog.Prescription.GroupID
+		response.GroupName = exerciseLog.Prescription.GroupName
+		response.GroupType = exerciseLog.Prescription.Type
 	}
 
 	utils.SuccessResponse(c, "Exercise log retrieved successfully", response)
@@ -285,7 +302,7 @@ func UpdateExerciseLog(c *gin.Context) {
 	}
 
 	// Reload with relationships
-	database.DB.Preload("Exercise").Preload("SetGroup").Preload("SetLogs").First(&exerciseLog, "id = ?", exerciseLog.ID)
+	database.DB.Preload("Exercise").Preload("Prescription").Preload("SetLogs").First(&exerciseLog, "id = ?", exerciseLog.ID)
 
 	// Get user's preferred weight unit
 	preferredUnit := getUserPreferredWeightUnit(authUserID)
@@ -298,7 +315,7 @@ func UpdateExerciseLog(c *gin.Context) {
 	response := ExerciseLogResponse{
 		ID:               exerciseLog.ID,
 		SessionID:        exerciseLog.SessionID,
-		SetGroupID:       exerciseLog.SetGroupID,
+		PrescriptionID:   exerciseLog.PrescriptionID,
 		ExerciseID:       exerciseLog.ExerciseID,
 		ExerciseName:     exerciseLog.Exercise.Name,
 		OrderNumber:      exerciseLog.OrderNumber,
@@ -306,6 +323,13 @@ func UpdateExerciseLog(c *gin.Context) {
 		DifficultyRating: exerciseLog.DifficultyRating,
 		DifficultyType:   exerciseLog.DifficultyType,
 		SetLogs:          setLogs,
+	}
+
+	// Add prescription group info if available
+	if exerciseLog.Prescription != nil {
+		response.GroupID = &exerciseLog.Prescription.GroupID
+		response.GroupName = exerciseLog.Prescription.GroupName
+		response.GroupType = exerciseLog.Prescription.Type
 	}
 
 	utils.SuccessResponse(c, "Exercise log updated successfully", response)

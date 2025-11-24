@@ -733,7 +733,7 @@ func testGetTrainerPublicProfile(t *testing.T, e *httpexpect.Expect) {
 	trainerID := createResponse.Value("data").Object().Value("id").String().Raw()
 
 	t.Run("Get Public Profile Successfully", func(t *testing.T) {
-		response := e.GET("/api/v1/trainers/" + trainerID).
+		response := e.GET("/api/v1/trainers/"+trainerID).
 			WithHeader("Authorization", "Bearer "+clientToken).
 			Expect().
 			Status(200).
@@ -764,7 +764,7 @@ func testGetTrainerPublicProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Get Non-existent Trainer", func(t *testing.T) {
 		fakeID := "00000000-0000-0000-0000-000000000000"
-		response := e.GET("/api/v1/trainers/" + fakeID).
+		response := e.GET("/api/v1/trainers/"+fakeID).
 			WithHeader("Authorization", "Bearer "+clientToken).
 			Expect().
 			Status(404).
@@ -863,7 +863,7 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 	privateTrainerID := privateResp.Value("data").Object().Value("id").String().Raw()
 
 	t.Run("Public Profile Accessible By Anyone", func(t *testing.T) {
-		response := e.GET("/api/v1/trainers/" + publicTrainerID).
+		response := e.GET("/api/v1/trainers/"+publicTrainerID).
 			WithHeader("Authorization", "Bearer "+viewerToken).
 			Expect().
 			Status(200).
@@ -877,7 +877,7 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Link Only Profile Accessible With Direct Link", func(t *testing.T) {
-		response := e.GET("/api/v1/trainers/" + linkOnlyTrainerID).
+		response := e.GET("/api/v1/trainers/"+linkOnlyTrainerID).
 			WithHeader("Authorization", "Bearer "+viewerToken).
 			Expect().
 			Status(200).
@@ -891,7 +891,7 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Private Profile Not Accessible By Others", func(t *testing.T) {
-		response := e.GET("/api/v1/trainers/" + privateTrainerID).
+		response := e.GET("/api/v1/trainers/"+privateTrainerID).
 			WithHeader("Authorization", "Bearer "+viewerToken).
 			Expect().
 			Status(404).
@@ -903,7 +903,7 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Private Profile Accessible By Owner", func(t *testing.T) {
-		response := e.GET("/api/v1/trainers/" + privateTrainerID).
+		response := e.GET("/api/v1/trainers/"+privateTrainerID).
 			WithHeader("Authorization", "Bearer "+privateTrainerToken).
 			Expect().
 			Status(200).

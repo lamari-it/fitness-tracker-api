@@ -22,7 +22,7 @@ type RPEScale struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
-	Trainer *User          `gorm:"foreignKey:TrainerID;constraint:OnDelete:CASCADE" json:"trainer,omitempty"`
+	Trainer *User           `gorm:"foreignKey:TrainerID;constraint:OnDelete:CASCADE" json:"trainer,omitempty"`
 	Values  []RPEScaleValue `gorm:"foreignKey:ScaleID" json:"values,omitempty"`
 }
 
@@ -127,16 +127,16 @@ type AddRPEScaleValueRequest struct {
 // Response DTOs
 
 type RPEScaleResponse struct {
-	ID          uuid.UUID              `json:"id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	MinValue    int                    `json:"min_value"`
-	MaxValue    int                    `json:"max_value"`
-	IsGlobal    bool                   `json:"is_global"`
-	TrainerID   *uuid.UUID             `json:"trainer_id,omitempty"`
+	ID          uuid.UUID               `json:"id"`
+	Name        string                  `json:"name"`
+	Description string                  `json:"description"`
+	MinValue    int                     `json:"min_value"`
+	MaxValue    int                     `json:"max_value"`
+	IsGlobal    bool                    `json:"is_global"`
+	TrainerID   *uuid.UUID              `json:"trainer_id,omitempty"`
 	Values      []RPEScaleValueResponse `json:"values,omitempty"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
+	CreatedAt   time.Time               `json:"created_at"`
+	UpdatedAt   time.Time               `json:"updated_at"`
 }
 
 type RPEScaleValueResponse struct {

@@ -41,13 +41,13 @@ type CreateEmailInvitationRequest struct {
 // Response DTOs
 
 type TrainerInvitationResponse struct {
-	ID           uuid.UUID           `json:"id"`
-	TrainerID    uuid.UUID           `json:"trainer_id"`
-	InviteeEmail string              `json:"invitee_email"`
-	Status       string              `json:"status"`
-	ExpiresAt    time.Time           `json:"expires_at"`
-	AcceptedAt   *time.Time          `json:"accepted_at,omitempty"`
-	CreatedAt    time.Time           `json:"created_at"`
+	ID           uuid.UUID            `json:"id"`
+	TrainerID    uuid.UUID            `json:"trainer_id"`
+	InviteeEmail string               `json:"invitee_email"`
+	Status       string               `json:"status"`
+	ExpiresAt    time.Time            `json:"expires_at"`
+	AcceptedAt   *time.Time           `json:"accepted_at,omitempty"`
+	CreatedAt    time.Time            `json:"created_at"`
 	Trainer      *TrainerInfoResponse `json:"trainer,omitempty"`
 }
 

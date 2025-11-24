@@ -61,9 +61,9 @@ func seedRoleInheritance(db *gorm.DB) error {
 
 	// Define inheritance relationships
 	inheritanceMap := []struct {
-		childID  uint
-		parentID uint
-		childName string
+		childID    uint
+		parentID   uint
+		childName  string
 		parentName string
 	}{
 		{trainerRole.ID, userRole.ID, "trainer", "user"},

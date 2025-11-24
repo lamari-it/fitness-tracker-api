@@ -166,7 +166,7 @@ func testTrainerClientFlow(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Client Accepts Invitation", func(t *testing.T) {
-		response := e.PUT("/api/v1/me/trainer-invitations/" + invitationID).
+		response := e.PUT("/api/v1/me/trainer-invitations/"+invitationID).
 			WithHeader("Authorization", "Bearer "+clientToken).
 			WithJSON(map[string]interface{}{
 				"action": "accept",
@@ -217,7 +217,7 @@ func testTrainerClientFlow(t *testing.T, e *httpexpect.Expect) {
 
 		linkID := clientsResponse.Value("data").Array().Value(0).Object().Value("id").String().Raw()
 
-		response := e.DELETE("/api/v1/trainers/clients/" + linkID).
+		response := e.DELETE("/api/v1/trainers/clients/"+linkID).
 			WithHeader("Authorization", "Bearer "+trainerToken).
 			Expect().
 			Status(200).
@@ -285,7 +285,7 @@ func testInvitationResponses(t *testing.T, e *httpexpect.Expect) {
 	invitationID := inviteResponse.Value("data").Object().Value("id").String().Raw()
 
 	t.Run("Reject Invitation", func(t *testing.T) {
-		response := e.PUT("/api/v1/me/trainer-invitations/" + invitationID).
+		response := e.PUT("/api/v1/me/trainer-invitations/"+invitationID).
 			WithHeader("Authorization", "Bearer "+clientToken).
 			WithJSON(map[string]interface{}{
 				"action": "reject",
@@ -406,7 +406,7 @@ func testTrainerClientAuthorization(t *testing.T, e *httpexpect.Expect) {
 			Status(201)
 
 		// Trainer 2 tries to remove trainer 1's client
-		response := e.DELETE("/api/v1/trainers/clients/" + invitationID).
+		response := e.DELETE("/api/v1/trainers/clients/"+invitationID).
 			WithHeader("Authorization", "Bearer "+trainer2Token).
 			Expect().
 			Status(403).
@@ -419,7 +419,7 @@ func testTrainerClientAuthorization(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Other User Cannot Accept Invitation", func(t *testing.T) {
 		// Trainer 2 tries to accept invitation meant for client
-		response := e.PUT("/api/v1/me/trainer-invitations/" + invitationID).
+		response := e.PUT("/api/v1/me/trainer-invitations/"+invitationID).
 			WithHeader("Authorization", "Bearer "+trainer2Token).
 			WithJSON(map[string]interface{}{
 				"action": "accept",

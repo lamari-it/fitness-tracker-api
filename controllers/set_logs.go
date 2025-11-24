@@ -81,10 +81,10 @@ func CreateSetLog(c *gin.Context) {
 	setLog := models.SetLog{
 		ExerciseLogID:   req.ExerciseLogID,
 		SetNumber:       req.SetNumber,
-		Weight:          weightInKg,      // Canonical storage in kg
-		WeightUnit:      normalizedUnit,  // Keep for backward compatibility
-		InputWeight:     req.Weight,      // Original input value
-		InputWeightUnit: normalizedUnit,  // Original input unit
+		Weight:          weightInKg,     // Canonical storage in kg
+		WeightUnit:      normalizedUnit, // Keep for backward compatibility
+		InputWeight:     req.Weight,     // Original input value
+		InputWeightUnit: normalizedUnit, // Original input unit
 		Reps:            req.Reps,
 		RestAfterSec:    req.RestAfterSec,
 		Tempo:           req.Tempo,
@@ -210,9 +210,9 @@ func UpdateSetLog(c *gin.Context) {
 	// Convert to canonical kg for storage
 	weightInKg := utils.ConvertToKg(req.Weight, normalizedUnit)
 
-	setLog.Weight = weightInKg           // Canonical storage in kg
-	setLog.WeightUnit = normalizedUnit   // Keep for backward compatibility
-	setLog.InputWeight = req.Weight      // Original input value
+	setLog.Weight = weightInKg              // Canonical storage in kg
+	setLog.WeightUnit = normalizedUnit      // Keep for backward compatibility
+	setLog.InputWeight = req.Weight         // Original input value
 	setLog.InputWeightUnit = normalizedUnit // Original input unit
 	setLog.Reps = req.Reps
 	setLog.RestAfterSec = req.RestAfterSec

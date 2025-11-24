@@ -3402,6 +3402,305 @@
             "description": "Delete a workout"
           },
           "response": []
+        },
+        {
+          "name": "Create Prescription Group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('prescription_group_id', jsonData.data.group_id);",
+                  "    pm.test('Prescription group created successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "        pm.expect(jsonData.data.group_id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.type).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"straight\",\n  \"group_order\": 1,\n  \"group_name\": \"Bench Press\",\n  \"rest_between_sets\": 120,\n  \"group_notes\": \"Focus on controlled movement\",\n  \"exercises\": [\n    {\n      \"exercise_id\": \"{{exercise_id}}\",\n      \"exercise_order\": 1,\n      \"sets\": 4,\n      \"reps\": 8,\n      \"weight_kg\": 60.0,\n      \"rpe_value_id\": \"{{rpe_value_id}}\",\n      \"notes\": \"Warm up first\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workouts",
+                "{{workout_id}}",
+                "prescriptions"
+              ]
+            },
+            "description": "Create a new prescription group for a workout. Types: straight, superset, circuit, giant_set, drop_set, pyramid, rest_pause, amrap, emom, hiit, warmup, cooldown"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workout Prescriptions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Prescriptions retrieved successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "        pm.expect(jsonData.data).to.be.an('array');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workouts",
+                "{{workout_id}}",
+                "prescriptions"
+              ]
+            },
+            "description": "Get all prescription groups for a workout"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Prescription Group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Prescription group updated successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"pyramid\",\n  \"group_name\": \"Heavy Bench Press\",\n  \"rest_between_sets\": 180,\n  \"exercises\": [\n    {\n      \"exercise_id\": \"{{exercise_id}}\",\n      \"exercise_order\": 1,\n      \"sets\": 5,\n      \"reps\": 5,\n      \"weight_kg\": 80.0,\n      \"rpe_value_id\": \"{{rpe_value_id}}\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions/{{prescription_group_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workouts",
+                "{{workout_id}}",
+                "prescriptions",
+                "{{prescription_group_id}}"
+              ]
+            },
+            "description": "Update an existing prescription group"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Exercise to Prescription Group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Exercise added to prescription group successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercise_id\": \"{{exercise_id}}\",\n  \"sets\": 3,\n  \"reps\": 12,\n  \"weight_kg\": 40.0,\n  \"rpe_value_id\": \"{{rpe_value_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions/{{prescription_group_id}}/exercises",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workouts",
+                "{{workout_id}}",
+                "prescriptions",
+                "{{prescription_group_id}}",
+                "exercises"
+              ]
+            },
+            "description": "Add an exercise to an existing prescription group"
+          },
+          "response": []
+        },
+        {
+          "name": "Reorder Prescription Groups",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Prescription groups reordered successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"group_orders\": [\n    {\n      \"group_id\": \"{{prescription_group_id}}\",\n      \"group_order\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions/reorder",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workouts",
+                "{{workout_id}}",
+                "prescriptions",
+                "reorder"
+              ]
+            },
+            "description": "Reorder prescription groups within a workout"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Prescription Group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Prescription group deleted successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions/{{prescription_group_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workouts",
+                "{{workout_id}}",
+                "prescriptions",
+                "{{prescription_group_id}}"
+              ]
+            },
+            "description": "Delete a prescription group from a workout"
+          },
+          "response": []
         }
       ],
       "description": "Standalone workout management endpoints"

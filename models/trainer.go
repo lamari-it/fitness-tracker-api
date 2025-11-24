@@ -9,15 +9,15 @@ import (
 )
 
 type TrainerProfile struct {
-	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID      uuid.UUID      `gorm:"type:uuid;not null;unique" json:"user_id"`
-	Bio         string         `gorm:"type:text" json:"bio"`
-	HourlyRate  float64        `gorm:"type:numeric(10,2)" json:"hourly_rate"`
-	Location    string         `gorm:"type:text" json:"location"`
-	Visibility  string         `gorm:"type:varchar(20);default:'public'" json:"visibility"` // public, link_only, private
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID         uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	UserID     uuid.UUID      `gorm:"type:uuid;not null;unique" json:"user_id"`
+	Bio        string         `gorm:"type:text" json:"bio"`
+	HourlyRate float64        `gorm:"type:numeric(10,2)" json:"hourly_rate"`
+	Location   string         `gorm:"type:text" json:"location"`
+	Visibility string         `gorm:"type:varchar(20);default:'public'" json:"visibility"` // public, link_only, private
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
 	User        User        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`

@@ -110,8 +110,7 @@ func CleanDatabase(t *testing.T) {
 		"exercise_logs",
 		"workout_sessions",
 		"plan_enrollments",
-		"workout_exercises",
-		"set_groups",
+		"workout_prescriptions",
 		"workout_plan_items",
 		"workouts",
 		"workout_plans",
@@ -249,4 +248,38 @@ func SeedTestRoles(t *testing.T) {
 	if err := database.SeedRoles(testDB); err != nil {
 		t.Logf("Note: SeedRoles returned: %v", err)
 	}
+}
+
+// SeedTestGlobalRPEScale creates the global RPE scale for use in tests
+func SeedTestGlobalRPEScale(t *testing.T) {
+	if testDB == nil {
+		t.Fatal("Test database not initialized")
+	}
+
+	// Seed global RPE scale that tests will use
+	database.SeedGlobalRPEScale()
+}
+
+// GetRPEValueID retrieves an RPE value ID by its numeric value from the global scale
+func GetRPEValueID(t *testing.T, value int) string {
+	if testDB == nil {
+		t.Fatal("Test database not initialized")
+	}
+
+	var rpeValue struct {
+		ID string
+	}
+
+	// Join with rpe_scales to get value from global scale
+	err := testDB.Table("rpe_scale_values").
+		Select("rpe_scale_values.id").
+		Joins("JOIN rpe_scales ON rpe_scales.id = rpe_scale_values.scale_id").
+		Where("rpe_scales.is_global = ? AND rpe_scale_values.value = ?", true, value).
+		First(&rpeValue).Error
+
+	if err != nil {
+		t.Fatalf("Failed to get RPE value ID for value %d: %v", value, err)
+	}
+
+	return rpeValue.ID
 }

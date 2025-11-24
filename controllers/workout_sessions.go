@@ -119,7 +119,7 @@ func GetWorkoutSession(c *gin.Context) {
 		Preload("CreatedBy").
 		Preload("Workout").
 		Preload("ExerciseLogs.Exercise").
-		Preload("ExerciseLogs.SetGroup").
+		Preload("ExerciseLogs.Prescription").
 		Preload("ExerciseLogs.SetLogs").
 		First(&session, "id = ?", sessionID).Error; err != nil {
 		utils.NotFoundResponse(c, "Workout session not found")

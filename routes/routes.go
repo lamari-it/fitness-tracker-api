@@ -185,10 +185,13 @@ func SetupRoutes(r *gin.Engine) {
 				workouts.DELETE("/:id", controllers.DeleteWorkout)
 				workouts.POST("/:id/duplicate", controllers.DuplicateWorkout)
 
-				// Workout Exercises
-				workouts.POST("/:id/exercises", controllers.AddExerciseToWorkout)
-				workouts.GET("/:id/exercises", controllers.GetWorkoutExercises)
-				workouts.DELETE("/:id/exercises/:exercise_id", controllers.RemoveExerciseFromWorkout)
+				// Workout Prescriptions
+				workouts.POST("/:id/prescriptions", controllers.CreatePrescriptionGroup)
+				workouts.GET("/:id/prescriptions", controllers.GetWorkoutPrescriptions)
+				workouts.PUT("/:id/prescriptions/reorder", controllers.ReorderPrescriptionGroups)
+				workouts.PUT("/:id/prescriptions/:group_id", controllers.UpdatePrescriptionGroup)
+				workouts.DELETE("/:id/prescriptions/:group_id", controllers.DeletePrescriptionGroup)
+				workouts.POST("/:id/prescriptions/:group_id/exercises", controllers.AddExerciseToPrescriptionGroup)
 			}
 
 			// Plan Enrollments

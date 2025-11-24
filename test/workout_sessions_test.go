@@ -65,7 +65,7 @@ func testUserWorkoutSessionFlow(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Get Workout Session", func(t *testing.T) {
-		response := e.GET("/api/v1/workout-sessions/" + sessionID).
+		response := e.GET("/api/v1/workout-sessions/"+sessionID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(200).
@@ -89,7 +89,7 @@ func testUserWorkoutSessionFlow(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Update Workout Session", func(t *testing.T) {
-		response := e.PUT("/api/v1/workout-sessions/" + sessionID).
+		response := e.PUT("/api/v1/workout-sessions/"+sessionID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
 				"notes": "Updated notes - felt great today",
@@ -104,7 +104,7 @@ func testUserWorkoutSessionFlow(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("End Workout Session", func(t *testing.T) {
-		response := e.PUT("/api/v1/workout-sessions/" + sessionID + "/end").
+		response := e.PUT("/api/v1/workout-sessions/"+sessionID+"/end").
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
 				"notes": "Completed workout",
@@ -121,13 +121,13 @@ func testUserWorkoutSessionFlow(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Delete Workout Session", func(t *testing.T) {
-		e.DELETE("/api/v1/workout-sessions/" + sessionID).
+		e.DELETE("/api/v1/workout-sessions/"+sessionID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(204)
 
 		// Verify it's gone
-		e.GET("/api/v1/workout-sessions/" + sessionID).
+		e.GET("/api/v1/workout-sessions/"+sessionID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(404)
@@ -179,7 +179,7 @@ func testTrainerLogsForClient(t *testing.T, e *httpexpect.Expect) {
 	invitationID := inviteResponse.Value("data").Object().Value("id").String().Raw()
 
 	// Client accepts
-	e.PUT("/api/v1/me/trainer-invitations/" + invitationID).
+	e.PUT("/api/v1/me/trainer-invitations/"+invitationID).
 		WithHeader("Authorization", "Bearer "+clientToken).
 		WithJSON(map[string]interface{}{
 			"action": "accept",
@@ -211,7 +211,7 @@ func testTrainerLogsForClient(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Trainer Can Access Session They Created", func(t *testing.T) {
-		response := e.GET("/api/v1/workout-sessions/" + sessionID).
+		response := e.GET("/api/v1/workout-sessions/"+sessionID).
 			WithHeader("Authorization", "Bearer "+trainerToken).
 			Expect().
 			Status(200).
@@ -222,7 +222,7 @@ func testTrainerLogsForClient(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Client Can Access Their Own Session", func(t *testing.T) {
-		response := e.GET("/api/v1/workout-sessions/" + sessionID).
+		response := e.GET("/api/v1/workout-sessions/"+sessionID).
 			WithHeader("Authorization", "Bearer "+clientToken).
 			Expect().
 			Status(200).
@@ -352,7 +352,7 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Get Exercise Log", func(t *testing.T) {
-		response := e.GET("/api/v1/exercise-logs/" + exerciseLogID).
+		response := e.GET("/api/v1/exercise-logs/"+exerciseLogID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(200).
@@ -423,7 +423,7 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Get Exercise Log With Sets", func(t *testing.T) {
-		response := e.GET("/api/v1/exercise-logs/" + exerciseLogID).
+		response := e.GET("/api/v1/exercise-logs/"+exerciseLogID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(200).
@@ -435,7 +435,7 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Update Set Log", func(t *testing.T) {
-		response := e.PUT("/api/v1/set-logs/" + setLogID).
+		response := e.PUT("/api/v1/set-logs/"+setLogID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
 				"weight":      105.0,
@@ -454,7 +454,7 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Update Exercise Log", func(t *testing.T) {
-		response := e.PUT("/api/v1/exercise-logs/" + exerciseLogID).
+		response := e.PUT("/api/v1/exercise-logs/"+exerciseLogID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
 				"notes":             "PR on bench press!",
@@ -473,26 +473,26 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Delete Set Log", func(t *testing.T) {
-		e.DELETE("/api/v1/set-logs/" + setLogID).
+		e.DELETE("/api/v1/set-logs/"+setLogID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(204)
 
 		// Verify it's deleted
-		e.GET("/api/v1/set-logs/" + setLogID).
+		e.GET("/api/v1/set-logs/"+setLogID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(404)
 	})
 
 	t.Run("Delete Exercise Log", func(t *testing.T) {
-		e.DELETE("/api/v1/exercise-logs/" + exerciseLogID).
+		e.DELETE("/api/v1/exercise-logs/"+exerciseLogID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(204)
 
 		// Verify it's deleted
-		e.GET("/api/v1/exercise-logs/" + exerciseLogID).
+		e.GET("/api/v1/exercise-logs/"+exerciseLogID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(404)
@@ -563,14 +563,14 @@ func testWorkoutSessionAuthorization(t *testing.T, e *httpexpect.Expect) {
 	setLogID := setLogResponse.Value("data").Object().Value("id").String().Raw()
 
 	t.Run("User Cannot Access Other User's Session", func(t *testing.T) {
-		e.GET("/api/v1/workout-sessions/" + sessionID).
+		e.GET("/api/v1/workout-sessions/"+sessionID).
 			WithHeader("Authorization", "Bearer "+user2Token).
 			Expect().
 			Status(404)
 	})
 
 	t.Run("User Cannot Update Other User's Session", func(t *testing.T) {
-		response := e.PUT("/api/v1/workout-sessions/" + sessionID).
+		response := e.PUT("/api/v1/workout-sessions/"+sessionID).
 			WithHeader("Authorization", "Bearer "+user2Token).
 			WithJSON(map[string]interface{}{
 				"notes": "Hacked!",
@@ -584,7 +584,7 @@ func testWorkoutSessionAuthorization(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("User Cannot Delete Other User's Session", func(t *testing.T) {
-		response := e.DELETE("/api/v1/workout-sessions/" + sessionID).
+		response := e.DELETE("/api/v1/workout-sessions/"+sessionID).
 			WithHeader("Authorization", "Bearer "+user2Token).
 			Expect().
 			Status(403).
@@ -595,14 +595,14 @@ func testWorkoutSessionAuthorization(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("User Cannot Access Other User's Exercise Log", func(t *testing.T) {
-		e.GET("/api/v1/exercise-logs/" + exerciseLogID).
+		e.GET("/api/v1/exercise-logs/"+exerciseLogID).
 			WithHeader("Authorization", "Bearer "+user2Token).
 			Expect().
 			Status(404)
 	})
 
 	t.Run("User Cannot Update Other User's Exercise Log", func(t *testing.T) {
-		response := e.PUT("/api/v1/exercise-logs/" + exerciseLogID).
+		response := e.PUT("/api/v1/exercise-logs/"+exerciseLogID).
 			WithHeader("Authorization", "Bearer "+user2Token).
 			WithJSON(map[string]interface{}{
 				"notes": "Hacked!",
@@ -616,14 +616,14 @@ func testWorkoutSessionAuthorization(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("User Cannot Access Other User's Set Log", func(t *testing.T) {
-		e.GET("/api/v1/set-logs/" + setLogID).
+		e.GET("/api/v1/set-logs/"+setLogID).
 			WithHeader("Authorization", "Bearer "+user2Token).
 			Expect().
 			Status(404)
 	})
 
 	t.Run("User Cannot Update Other User's Set Log", func(t *testing.T) {
-		response := e.PUT("/api/v1/set-logs/" + setLogID).
+		response := e.PUT("/api/v1/set-logs/"+setLogID).
 			WithHeader("Authorization", "Bearer "+user2Token).
 			WithJSON(map[string]interface{}{
 				"weight": 200.0,
@@ -829,7 +829,7 @@ func testWeightConversion(t *testing.T, e *httpexpect.Expect) {
 		setLogID := createResponse.Value("data").Object().Value("id").String().Raw()
 
 		// Update it with lbs
-		updateResponse := e.PUT("/api/v1/set-logs/" + setLogID).
+		updateResponse := e.PUT("/api/v1/set-logs/"+setLogID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
 				"weight":      110.0,
@@ -867,7 +867,7 @@ func testWeightConversion(t *testing.T, e *httpexpect.Expect) {
 		setLogID := createResponse.Value("data").Object().Value("id").String().Raw()
 
 		// Get the set log and verify conversion
-		getResponse := e.GET("/api/v1/set-logs/" + setLogID).
+		getResponse := e.GET("/api/v1/set-logs/"+setLogID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(200).
