@@ -7,62 +7,29 @@ import (
 	"gorm.io/gorm"
 )
 
+// ===== WORKOUT SESSION =====
+
+// WorkoutSession represents a single workout execution by a user
 type WorkoutSession struct {
-	ID          uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID      uuid.UUID      `gorm:"type:uuid;not null" json:"user_id"`
-	CreatedByID *uuid.UUID     `gorm:"type:uuid" json:"created_by_id,omitempty"` // Who logged the session (trainer or self)
-	WorkoutID   *uuid.UUID     `gorm:"type:uuid" json:"workout_id"`              // nullable for free-form workouts
-	StartedAt   time.Time      `gorm:"not null" json:"started_at"`
-	EndedAt     *time.Time     `json:"ended_at"`
-	Notes       string         `gorm:"type:text" json:"notes"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID                 uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	UserID             uuid.UUID      `gorm:"type:uuid;not null" json:"user_id"`
+	CreatedByID        *uuid.UUID     `gorm:"type:uuid" json:"created_by_id,omitempty"` // Who logged the session (trainer or self)
+	WorkoutID          *uuid.UUID     `gorm:"type:uuid" json:"workout_id"`              // nullable for free-form workouts
+	StartedAt          time.Time      `gorm:"not null" json:"started_at"`
+	EndedAt            *time.Time     `json:"ended_at"`
+	DurationSeconds    *int           `json:"duration_seconds,omitempty"`
+	PerceivedIntensity *int           `gorm:"check:perceived_intensity >= 1 AND perceived_intensity <= 10" json:"perceived_intensity,omitempty"`
+	Notes              string         `gorm:"type:text" json:"notes"`
+	Completed          bool           `gorm:"default:false" json:"completed"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	DeletedAt          gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
-	User         User          `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
-	CreatedBy    *User         `gorm:"foreignKey:CreatedByID;constraint:OnDelete:SET NULL" json:"created_by,omitempty"`
-	Workout      *Workout      `gorm:"foreignKey:WorkoutID;constraint:OnDelete:SET NULL" json:"workout,omitempty"`
-	ExerciseLogs []ExerciseLog `gorm:"foreignKey:SessionID" json:"exercise_logs,omitempty"`
-}
-
-type ExerciseLog struct {
-	ID               uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	SessionID        uuid.UUID      `gorm:"type:uuid;not null" json:"session_id"`
-	PrescriptionID   *uuid.UUID     `gorm:"type:uuid" json:"prescription_id"` // Reference to the prescription this log is for
-	ExerciseID       uuid.UUID      `gorm:"type:uuid;not null" json:"exercise_id"`
-	OrderNumber      int            `gorm:"not null" json:"order_number"`
-	Notes            string         `gorm:"type:text" json:"notes"`
-	DifficultyRating int            `gorm:"check:difficulty_rating >= 0 AND difficulty_rating <= 10" json:"difficulty_rating"`
-	DifficultyType   string         `gorm:"type:varchar(20)" json:"difficulty_type"` // easy, moderate, hard, very_hard
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
-	DeletedAt        gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
-
-	Session      WorkoutSession       `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE" json:"session,omitempty"`
-	Prescription *WorkoutPrescription `gorm:"foreignKey:PrescriptionID;constraint:OnDelete:SET NULL" json:"prescription,omitempty"`
-	Exercise     Exercise             `gorm:"foreignKey:ExerciseID;constraint:OnDelete:CASCADE" json:"exercise,omitempty"`
-	SetLogs      []SetLog             `gorm:"foreignKey:ExerciseLogID" json:"set_logs,omitempty"`
-}
-
-type SetLog struct {
-	ID              uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	ExerciseLogID   uuid.UUID      `gorm:"type:uuid;not null" json:"exercise_log_id"`
-	SetNumber       int            `gorm:"not null" json:"set_number"`
-	Weight          float64        `gorm:"type:numeric(10,2)" json:"weight"`                      // Canonical weight in kg
-	WeightUnit      string         `gorm:"type:varchar(5);default:'kg'" json:"weight_unit"`       // Display unit (deprecated, use InputWeightUnit)
-	InputWeight     float64        `gorm:"type:numeric(10,2)" json:"input_weight"`                // Original weight value entered by user
-	InputWeightUnit string         `gorm:"type:varchar(5);default:'kg'" json:"input_weight_unit"` // Unit of original input (kg/lb)
-	Reps            int            `json:"reps"`
-	RestAfterSec    int            `json:"rest_after_sec"`
-	Tempo           string         `gorm:"type:varchar(10)" json:"tempo"`                             // e.g., "3-1-2-1"
-	RPE             float64        `gorm:"type:numeric(3,1);check:rpe >= 0 AND rpe <= 10" json:"rpe"` // Rate of Perceived Exertion (legacy, 0 = not rated)
-	RPEValueID      *uuid.UUID     `gorm:"type:uuid" json:"rpe_value_id,omitempty"`                   // Reference to custom RPE scale value
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
-	DeletedAt       gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
-
-	ExerciseLog ExerciseLog    `gorm:"foreignKey:ExerciseLogID;constraint:OnDelete:CASCADE" json:"exercise_log,omitempty"`
-	RPEValue    *RPEScaleValue `gorm:"foreignKey:RPEValueID;constraint:OnDelete:SET NULL" json:"rpe_value,omitempty"`
+	// Relations
+	User          User           `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
+	CreatedBy     *User          `gorm:"foreignKey:CreatedByID;constraint:OnDelete:SET NULL" json:"created_by,omitempty"`
+	Workout       *Workout       `gorm:"foreignKey:WorkoutID;constraint:OnDelete:SET NULL" json:"workout,omitempty"`
+	SessionBlocks []SessionBlock `gorm:"foreignKey:SessionID" json:"session_blocks,omitempty"`
 }
 
 func (ws *WorkoutSession) BeforeCreate(tx *gorm.DB) (err error) {
@@ -72,91 +39,514 @@ func (ws *WorkoutSession) BeforeCreate(tx *gorm.DB) (err error) {
 	return
 }
 
-func (el *ExerciseLog) BeforeCreate(tx *gorm.DB) (err error) {
-	if el.ID == uuid.Nil {
-		el.ID = uuid.New()
+// ===== SESSION BLOCK =====
+
+// SessionBlock represents a block of exercises in a session (mirrors prescription group)
+type SessionBlock struct {
+	ID                uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	SessionID         uuid.UUID      `gorm:"type:uuid;not null;index" json:"session_id"`
+	GroupID           uuid.UUID      `gorm:"type:uuid;not null;index" json:"group_id"` // From workout_prescriptions
+	BlockOrder        int            `gorm:"not null" json:"block_order"`
+	StartedAt         *time.Time     `json:"started_at,omitempty"`
+	CompletedAt       *time.Time     `json:"completed_at,omitempty"`
+	Skipped           bool           `gorm:"default:false" json:"skipped"`
+	PerceivedExertion *int           `gorm:"check:perceived_exertion >= 1 AND perceived_exertion <= 10" json:"perceived_exertion,omitempty"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
+	DeletedAt         gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+
+	// Relations
+	Session          WorkoutSession    `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE" json:"session,omitempty"`
+	SessionExercises []SessionExercise `gorm:"foreignKey:SessionBlockID" json:"session_exercises,omitempty"`
+}
+
+func (sb *SessionBlock) BeforeCreate(tx *gorm.DB) (err error) {
+	if sb.ID == uuid.Nil {
+		sb.ID = uuid.New()
 	}
 	return
 }
 
-func (sl *SetLog) BeforeCreate(tx *gorm.DB) (err error) {
-	if sl.ID == uuid.Nil {
-		sl.ID = uuid.New()
+// ===== SESSION EXERCISE =====
+
+// SessionExercise represents an exercise instance within a session block
+type SessionExercise struct {
+	ID              uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	SessionBlockID  uuid.UUID      `gorm:"type:uuid;not null;index" json:"session_block_id"`
+	PrescriptionID  *uuid.UUID     `gorm:"type:uuid;index" json:"prescription_id,omitempty"` // Reference to workout_prescriptions
+	ExerciseID      uuid.UUID      `gorm:"type:uuid;not null;index" json:"exercise_id"`
+	ExerciseOrder   int            `gorm:"not null" json:"exercise_order"`
+	StartedAt       *time.Time     `json:"started_at,omitempty"`
+	CompletedAt     *time.Time     `json:"completed_at,omitempty"`
+	Skipped         bool           `gorm:"default:false" json:"skipped"`
+	Notes           string         `gorm:"type:text" json:"notes"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+	DeletedAt       gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+
+	// Relations
+	SessionBlock SessionBlock         `gorm:"foreignKey:SessionBlockID;constraint:OnDelete:CASCADE" json:"session_block,omitempty"`
+	Prescription *WorkoutPrescription `gorm:"foreignKey:PrescriptionID;constraint:OnDelete:SET NULL" json:"prescription,omitempty"`
+	Exercise     Exercise             `gorm:"foreignKey:ExerciseID;constraint:OnDelete:CASCADE" json:"exercise,omitempty"`
+	SessionSets  []SessionSet         `gorm:"foreignKey:SessionExerciseID" json:"session_sets,omitempty"`
+}
+
+func (se *SessionExercise) BeforeCreate(tx *gorm.DB) (err error) {
+	if se.ID == uuid.Nil {
+		se.ID = uuid.New()
 	}
 	return
 }
 
-// Response DTOs
+// ===== SESSION SET =====
+
+// SessionSet represents an actual performed set within a session exercise
+type SessionSet struct {
+	ID                    uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	SessionExerciseID     uuid.UUID      `gorm:"type:uuid;not null;index" json:"session_exercise_id"`
+	SetNumber             int            `gorm:"not null" json:"set_number"`
+	Completed             bool           `gorm:"default:false" json:"completed"`
+	ActualReps            *int           `json:"actual_reps,omitempty"`
+	ActualWeightKg        *float64       `gorm:"type:numeric(10,2)" json:"actual_weight_kg,omitempty"`
+	ActualDurationSeconds *int           `json:"actual_duration_seconds,omitempty"`
+	RPEValueID            *uuid.UUID     `gorm:"type:uuid" json:"rpe_value_id,omitempty"`
+	WasFailure            bool           `gorm:"default:false" json:"was_failure"`
+	Notes                 string         `gorm:"type:text" json:"notes"`
+	CreatedAt             time.Time      `json:"created_at"`
+	UpdatedAt             time.Time      `json:"updated_at"`
+	DeletedAt             gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+
+	// Relations
+	SessionExercise SessionExercise `gorm:"foreignKey:SessionExerciseID;constraint:OnDelete:CASCADE" json:"session_exercise,omitempty"`
+	RPEValue        *RPEScaleValue  `gorm:"foreignKey:RPEValueID;constraint:OnDelete:SET NULL" json:"rpe_value,omitempty"`
+}
+
+func (ss *SessionSet) BeforeCreate(tx *gorm.DB) (err error) {
+	if ss.ID == uuid.Nil {
+		ss.ID = uuid.New()
+	}
+	return
+}
+
+// ===== REQUEST DTOs =====
+
+// CreateWorkoutSessionRequest represents the request to start a workout session
+type CreateWorkoutSessionRequest struct {
+	UserID    *uuid.UUID `json:"user_id,omitempty"`    // Optional: if not provided, uses authenticated user
+	WorkoutID *uuid.UUID `json:"workout_id,omitempty"` // Optional: for free-form workouts
+	StartedAt *time.Time `json:"started_at,omitempty"` // Optional: defaults to now
+	Notes     *string    `json:"notes,omitempty"`
+}
+
+// EndWorkoutSessionRequest represents the request to end a workout session
+type EndWorkoutSessionRequest struct {
+	EndedAt            *time.Time `json:"ended_at,omitempty"` // Optional: defaults to now
+	Notes              *string    `json:"notes,omitempty"`
+	PerceivedIntensity *int       `json:"perceived_intensity,omitempty" binding:"omitempty,min=1,max=10"`
+}
+
+// UpdateWorkoutSessionRequest represents the request to update a session
+type UpdateWorkoutSessionRequest struct {
+	Notes              *string `json:"notes,omitempty"`
+	PerceivedIntensity *int    `json:"perceived_intensity,omitempty" binding:"omitempty,min=1,max=10"`
+}
+
+// CompleteWorkoutSessionRequest represents the request to complete a workout session
+type CompleteWorkoutSessionRequest struct {
+	PerceivedIntensity *int   `json:"perceived_intensity,omitempty" binding:"omitempty,min=1,max=10"`
+	Notes              string `json:"notes,omitempty"`
+}
+
+// UpdateSessionBlockRequest represents the request to update a session block
+type UpdateSessionBlockRequest struct {
+	PerceivedExertion *int `json:"perceived_exertion,omitempty" binding:"omitempty,min=1,max=10"`
+}
+
+// UpdateSessionExerciseRequest represents the request to update a session exercise
+type UpdateSessionExerciseRequest struct {
+	Notes string `json:"notes,omitempty"`
+}
+
+// CreateSessionSetRequest represents the request to add a set to an exercise
+type CreateSessionSetRequest struct {
+	ActualReps            *int       `json:"actual_reps,omitempty"`
+	ActualWeightKg        *float64   `json:"actual_weight_kg,omitempty"`
+	WeightUnit            *string    `json:"weight_unit,omitempty"` // kg or lb, for conversion
+	ActualDurationSeconds *int       `json:"actual_duration_seconds,omitempty"`
+	RPEValueID            *uuid.UUID `json:"rpe_value_id,omitempty"`
+	Notes                 *string    `json:"notes,omitempty"`
+}
+
+// UpdateSessionSetRequest represents the request to update a logged set
+type UpdateSessionSetRequest struct {
+	ActualReps            *int       `json:"actual_reps,omitempty"`
+	ActualWeightKg        *float64   `json:"actual_weight_kg,omitempty"`
+	WeightUnit            *string    `json:"weight_unit,omitempty"` // kg or lb, for conversion
+	ActualDurationSeconds *int       `json:"actual_duration_seconds,omitempty"`
+	RPEValueID            *uuid.UUID `json:"rpe_value_id,omitempty"`
+	WasFailure            *bool      `json:"was_failure,omitempty"`
+	Completed             *bool      `json:"completed,omitempty"`
+	Notes                 *string    `json:"notes,omitempty"`
+}
+
+// ===== RESPONSE DTOs =====
+
+// SessionSetResponse represents a set in the response
+type SessionSetResponse struct {
+	ID                    uuid.UUID      `json:"id"`
+	SetNumber             int            `json:"set_number"`
+	Completed             bool           `json:"completed"`
+	ActualReps            *int           `json:"actual_reps,omitempty"`
+	ActualWeightKg        *float64       `json:"actual_weight_kg,omitempty"`
+	ActualWeightDisplay   *float64       `json:"actual_weight_display,omitempty"`
+	ActualWeightUnit      string         `json:"actual_weight_unit,omitempty"`
+	ActualDurationSeconds *int           `json:"actual_duration_seconds,omitempty"`
+	RPEValueID            *uuid.UUID     `json:"rpe_value_id,omitempty"`
+	RPEValue              *RPEValueBrief `json:"rpe_value,omitempty"`
+	WasFailure            bool           `json:"was_failure"`
+	Notes                 string         `json:"notes,omitempty"`
+	CreatedAt             time.Time      `json:"created_at"`
+}
+
+// SessionExerciseResponse represents an exercise in the response
+type SessionExerciseResponse struct {
+	ID             uuid.UUID            `json:"id"`
+	PrescriptionID *uuid.UUID           `json:"prescription_id,omitempty"`
+	ExerciseID     uuid.UUID            `json:"exercise_id"`
+	ExerciseName   string               `json:"exercise_name"`
+	ExerciseOrder  int                  `json:"exercise_order"`
+	StartedAt      *time.Time           `json:"started_at,omitempty"`
+	CompletedAt    *time.Time           `json:"completed_at,omitempty"`
+	Skipped        bool                 `json:"skipped"`
+	Notes          string               `json:"notes,omitempty"`
+	Prescription   *PrescriptionBrief   `json:"prescription,omitempty"`
+	Sets           []SessionSetResponse `json:"sets"`
+}
+
+// PrescriptionBrief represents prescription details in responses
+type PrescriptionBrief struct {
+	Sets           *int     `json:"sets,omitempty"`
+	Reps           *int     `json:"reps,omitempty"`
+	HoldSeconds    *int     `json:"hold_seconds,omitempty"`
+	WeightKg       *float64 `json:"weight_kg,omitempty"`
+	TargetWeightKg *float64 `json:"target_weight_kg,omitempty"`
+}
+
+// SessionBlockResponse represents a block in the response
+type SessionBlockResponse struct {
+	ID                uuid.UUID                 `json:"id"`
+	GroupID           uuid.UUID                 `json:"group_id"`
+	BlockOrder        int                       `json:"block_order"`
+	Type              PrescriptionType          `json:"type,omitempty"`
+	GroupName         string                    `json:"group_name,omitempty"`
+	GroupRounds       *int                      `json:"group_rounds,omitempty"`
+	RestBetweenSets   *int                      `json:"rest_between_sets,omitempty"`
+	StartedAt         *time.Time                `json:"started_at"`
+	CompletedAt       *time.Time                `json:"completed_at"`
+	Skipped           bool                      `json:"skipped"`
+	PerceivedExertion *int                      `json:"perceived_exertion,omitempty"`
+	Exercises         []SessionExerciseResponse `json:"exercises"`
+}
+
+// WorkoutSessionResponse represents the full session response
 type WorkoutSessionResponse struct {
-	ID            uuid.UUID          `json:"id"`
-	UserID        uuid.UUID          `json:"user_id"`
-	CreatedByID   *uuid.UUID         `json:"created_by_id,omitempty"`
-	CreatedByName string             `json:"created_by_name,omitempty"`
-	WorkoutID     *uuid.UUID         `json:"workout_id"`
-	StartedAt     time.Time          `json:"started_at"`
-	EndedAt       *time.Time         `json:"ended_at"`
-	Notes         string             `json:"notes"`
-	Duration      *int               `json:"duration_minutes,omitempty"`
-	ExerciseLogs  []ExerciseLogBrief `json:"exercise_logs,omitempty"`
-	CreatedAt     time.Time          `json:"created_at"`
-	UpdatedAt     time.Time          `json:"updated_at"`
+	ID                 uuid.UUID              `json:"id"`
+	UserID             uuid.UUID              `json:"user_id"`
+	CreatedByID        *uuid.UUID             `json:"created_by_id,omitempty"`
+	CreatedByName      string                 `json:"created_by_name,omitempty"`
+	WorkoutID          *uuid.UUID             `json:"workout_id,omitempty"`
+	WorkoutTitle       string                 `json:"workout_title,omitempty"`
+	StartedAt          time.Time              `json:"started_at"`
+	EndedAt            *time.Time             `json:"ended_at,omitempty"`
+	DurationSeconds    *int                   `json:"duration_seconds,omitempty"`
+	DurationMinutes    *int                   `json:"duration_minutes,omitempty"`
+	PerceivedIntensity *int                   `json:"perceived_intensity,omitempty"`
+	Notes              string                 `json:"notes,omitempty"`
+	Completed          bool                   `json:"completed"`
+	Blocks             []SessionBlockResponse `json:"blocks"`
+	CreatedAt          time.Time              `json:"created_at"`
+	UpdatedAt          time.Time              `json:"updated_at"`
 }
 
-type ExerciseLogBrief struct {
-	ID               uuid.UUID        `json:"id"`
-	PrescriptionID   *uuid.UUID       `json:"prescription_id,omitempty"`
-	GroupID          *uuid.UUID       `json:"group_id,omitempty"`
-	GroupName        string           `json:"group_name,omitempty"`
-	GroupType        PrescriptionType `json:"group_type,omitempty"`
-	ExerciseID       uuid.UUID        `json:"exercise_id"`
-	ExerciseName     string           `json:"exercise_name"`
-	OrderNumber      int              `json:"order_number"`
-	TotalSets        int              `json:"total_sets"`
-	DifficultyRating int              `json:"difficulty_rating"`
+// WorkoutSessionListResponse represents a session in list view (without nested details)
+type WorkoutSessionListResponse struct {
+	ID                 uuid.UUID  `json:"id"`
+	UserID             uuid.UUID  `json:"user_id"`
+	WorkoutID          *uuid.UUID `json:"workout_id,omitempty"`
+	WorkoutTitle       string     `json:"workout_title,omitempty"`
+	StartedAt          time.Time  `json:"started_at"`
+	EndedAt            *time.Time `json:"ended_at,omitempty"`
+	DurationMinutes    *int       `json:"duration_minutes,omitempty"`
+	PerceivedIntensity *int       `json:"perceived_intensity,omitempty"`
+	Completed          bool       `json:"completed"`
+	TotalBlocks        int        `json:"total_blocks"`
+	CompletedBlocks    int        `json:"completed_blocks"`
+	CreatedAt          time.Time  `json:"created_at"`
 }
 
-func (ws *WorkoutSession) ToResponse() WorkoutSessionResponse {
-	response := WorkoutSessionResponse{
-		ID:          ws.ID,
-		UserID:      ws.UserID,
-		CreatedByID: ws.CreatedByID,
-		WorkoutID:   ws.WorkoutID,
-		StartedAt:   ws.StartedAt,
-		EndedAt:     ws.EndedAt,
-		Notes:       ws.Notes,
-		CreatedAt:   ws.CreatedAt,
-		UpdatedAt:   ws.UpdatedAt,
+// ===== HELPER FUNCTIONS =====
+
+// ToListResponse converts a WorkoutSession to a list response
+func (ws *WorkoutSession) ToListResponse() WorkoutSessionListResponse {
+	response := WorkoutSessionListResponse{
+		ID:                 ws.ID,
+		UserID:             ws.UserID,
+		WorkoutID:          ws.WorkoutID,
+		StartedAt:          ws.StartedAt,
+		EndedAt:            ws.EndedAt,
+		PerceivedIntensity: ws.PerceivedIntensity,
+		Completed:          ws.Completed,
+		CreatedAt:          ws.CreatedAt,
 	}
 
-	// Include creator's name if available
-	if ws.CreatedBy != nil {
-		response.CreatedByName = ws.CreatedBy.FirstName + " " + ws.CreatedBy.LastName
+	if ws.Workout != nil {
+		response.WorkoutTitle = ws.Workout.Title
 	}
 
 	if ws.EndedAt != nil {
 		duration := int(ws.EndedAt.Sub(ws.StartedAt).Minutes())
-		response.Duration = &duration
+		response.DurationMinutes = &duration
 	}
 
-	for _, log := range ws.ExerciseLogs {
-		brief := ExerciseLogBrief{
-			ID:               log.ID,
-			PrescriptionID:   log.PrescriptionID,
-			ExerciseID:       log.ExerciseID,
-			ExerciseName:     log.Exercise.Name,
-			OrderNumber:      log.OrderNumber,
-			TotalSets:        len(log.SetLogs),
-			DifficultyRating: log.DifficultyRating,
+	response.TotalBlocks = len(ws.SessionBlocks)
+	for _, block := range ws.SessionBlocks {
+		if block.CompletedAt != nil || block.Skipped {
+			response.CompletedBlocks++
 		}
-		if log.Prescription != nil {
-			brief.GroupID = &log.Prescription.GroupID
-			if log.Prescription.GroupName != nil {
-				brief.GroupName = *log.Prescription.GroupName
-			}
-			brief.GroupType = log.Prescription.Type
-		}
-		response.ExerciseLogs = append(response.ExerciseLogs, brief)
 	}
 
 	return response
+}
+
+// BuildSessionResponse builds a full session response with nested blocks, exercises, and sets
+func BuildSessionResponse(session WorkoutSession, weightUnit string) WorkoutSessionResponse {
+	response := WorkoutSessionResponse{
+		ID:                 session.ID,
+		UserID:             session.UserID,
+		CreatedByID:        session.CreatedByID,
+		WorkoutID:          session.WorkoutID,
+		StartedAt:          session.StartedAt,
+		EndedAt:            session.EndedAt,
+		DurationSeconds:    session.DurationSeconds,
+		PerceivedIntensity: session.PerceivedIntensity,
+		Notes:              session.Notes,
+		Completed:          session.Completed,
+		Blocks:             []SessionBlockResponse{},
+		CreatedAt:          session.CreatedAt,
+		UpdatedAt:          session.UpdatedAt,
+	}
+
+	// Include creator's name if available
+	if session.CreatedBy != nil {
+		response.CreatedByName = session.CreatedBy.FirstName + " " + session.CreatedBy.LastName
+	}
+
+	// Include workout title if available
+	if session.Workout != nil {
+		response.WorkoutTitle = session.Workout.Title
+	}
+
+	// Calculate duration in minutes
+	if session.EndedAt != nil {
+		duration := int(session.EndedAt.Sub(session.StartedAt).Minutes())
+		response.DurationMinutes = &duration
+	}
+
+	// Build nested block responses
+	for _, block := range session.SessionBlocks {
+		blockResp := SessionBlockResponse{
+			ID:                block.ID,
+			GroupID:           block.GroupID,
+			BlockOrder:        block.BlockOrder,
+			StartedAt:         block.StartedAt,
+			CompletedAt:       block.CompletedAt,
+			Skipped:           block.Skipped,
+			PerceivedExertion: block.PerceivedExertion,
+			Exercises:         []SessionExerciseResponse{},
+		}
+
+		// Get group metadata from first prescription in block (if available)
+		if len(block.SessionExercises) > 0 && block.SessionExercises[0].Prescription != nil {
+			p := block.SessionExercises[0].Prescription
+			blockResp.Type = p.Type
+			if p.GroupName != nil {
+				blockResp.GroupName = *p.GroupName
+			}
+			blockResp.GroupRounds = p.GroupRounds
+			blockResp.RestBetweenSets = p.RestBetweenSets
+		}
+
+		// Build nested exercise responses
+		for _, exercise := range block.SessionExercises {
+			exerciseResp := SessionExerciseResponse{
+				ID:             exercise.ID,
+				PrescriptionID: exercise.PrescriptionID,
+				ExerciseID:     exercise.ExerciseID,
+				ExerciseName:   exercise.Exercise.Name,
+				ExerciseOrder:  exercise.ExerciseOrder,
+				StartedAt:      exercise.StartedAt,
+				CompletedAt:    exercise.CompletedAt,
+				Skipped:        exercise.Skipped,
+				Notes:          exercise.Notes,
+				Sets:           []SessionSetResponse{},
+			}
+
+			// Include prescription details if available
+			if exercise.Prescription != nil {
+				exerciseResp.Prescription = &PrescriptionBrief{
+					Sets:           exercise.Prescription.Sets,
+					Reps:           exercise.Prescription.Reps,
+					HoldSeconds:    exercise.Prescription.HoldSeconds,
+					WeightKg:       exercise.Prescription.WeightKg,
+					TargetWeightKg: exercise.Prescription.TargetWeightKg,
+				}
+			}
+
+			// Build nested set responses
+			for _, set := range exercise.SessionSets {
+				setResp := SessionSetResponse{
+					ID:                    set.ID,
+					SetNumber:             set.SetNumber,
+					Completed:             set.Completed,
+					ActualReps:            set.ActualReps,
+					ActualWeightKg:        set.ActualWeightKg,
+					ActualDurationSeconds: set.ActualDurationSeconds,
+					RPEValueID:            set.RPEValueID,
+					WasFailure:            set.WasFailure,
+					Notes:                 set.Notes,
+					CreatedAt:             set.CreatedAt,
+				}
+
+				// Convert weight for display
+				if set.ActualWeightKg != nil {
+					if weightUnit == "lb" {
+						converted := *set.ActualWeightKg * 2.20462262185
+						setResp.ActualWeightDisplay = &converted
+						setResp.ActualWeightUnit = "lb"
+					} else {
+						setResp.ActualWeightDisplay = set.ActualWeightKg
+						setResp.ActualWeightUnit = "kg"
+					}
+				}
+
+				// Include RPE value details if available
+				if set.RPEValue != nil {
+					setResp.RPEValue = &RPEValueBrief{
+						ID:          set.RPEValue.ID,
+						Value:       set.RPEValue.Value,
+						Label:       set.RPEValue.Label,
+						Description: set.RPEValue.Description,
+					}
+				}
+
+				exerciseResp.Sets = append(exerciseResp.Sets, setResp)
+			}
+
+			blockResp.Exercises = append(blockResp.Exercises, exerciseResp)
+		}
+
+		response.Blocks = append(response.Blocks, blockResp)
+	}
+
+	return response
+}
+
+// ToResponse converts a SessionBlock to a response (with default kg weight unit)
+func (sb *SessionBlock) ToResponse() SessionBlockResponse {
+	blockResp := SessionBlockResponse{
+		ID:                sb.ID,
+		GroupID:           sb.GroupID,
+		BlockOrder:        sb.BlockOrder,
+		StartedAt:         sb.StartedAt,
+		CompletedAt:       sb.CompletedAt,
+		Skipped:           sb.Skipped,
+		PerceivedExertion: sb.PerceivedExertion,
+		Exercises:         []SessionExerciseResponse{},
+	}
+
+	// Get group metadata from first prescription in block (if available)
+	if len(sb.SessionExercises) > 0 && sb.SessionExercises[0].Prescription != nil {
+		p := sb.SessionExercises[0].Prescription
+		blockResp.Type = p.Type
+		if p.GroupName != nil {
+			blockResp.GroupName = *p.GroupName
+		}
+		blockResp.GroupRounds = p.GroupRounds
+		blockResp.RestBetweenSets = p.RestBetweenSets
+	}
+
+	// Build nested exercise responses
+	for _, exercise := range sb.SessionExercises {
+		blockResp.Exercises = append(blockResp.Exercises, exercise.ToResponse())
+	}
+
+	return blockResp
+}
+
+// ToResponse converts a SessionExercise to a response (with default kg weight unit)
+func (se *SessionExercise) ToResponse() SessionExerciseResponse {
+	exerciseResp := SessionExerciseResponse{
+		ID:             se.ID,
+		PrescriptionID: se.PrescriptionID,
+		ExerciseID:     se.ExerciseID,
+		ExerciseName:   se.Exercise.Name,
+		ExerciseOrder:  se.ExerciseOrder,
+		StartedAt:      se.StartedAt,
+		CompletedAt:    se.CompletedAt,
+		Skipped:        se.Skipped,
+		Notes:          se.Notes,
+		Sets:           []SessionSetResponse{},
+	}
+
+	// Include prescription details if available
+	if se.Prescription != nil {
+		exerciseResp.Prescription = &PrescriptionBrief{
+			Sets:           se.Prescription.Sets,
+			Reps:           se.Prescription.Reps,
+			HoldSeconds:    se.Prescription.HoldSeconds,
+			WeightKg:       se.Prescription.WeightKg,
+			TargetWeightKg: se.Prescription.TargetWeightKg,
+		}
+	}
+
+	// Build nested set responses
+	for _, set := range se.SessionSets {
+		exerciseResp.Sets = append(exerciseResp.Sets, set.ToResponse())
+	}
+
+	return exerciseResp
+}
+
+// ToResponse converts a SessionSet to a response (with default kg weight unit)
+func (ss *SessionSet) ToResponse() SessionSetResponse {
+	setResp := SessionSetResponse{
+		ID:                    ss.ID,
+		SetNumber:             ss.SetNumber,
+		Completed:             ss.Completed,
+		ActualReps:            ss.ActualReps,
+		ActualWeightKg:        ss.ActualWeightKg,
+		ActualDurationSeconds: ss.ActualDurationSeconds,
+		RPEValueID:            ss.RPEValueID,
+		WasFailure:            ss.WasFailure,
+		Notes:                 ss.Notes,
+		CreatedAt:             ss.CreatedAt,
+	}
+
+	// Default to kg for display
+	if ss.ActualWeightKg != nil {
+		setResp.ActualWeightDisplay = ss.ActualWeightKg
+		setResp.ActualWeightUnit = "kg"
+	}
+
+	// Include RPE value details if available
+	if ss.RPEValue != nil {
+		setResp.RPEValue = &RPEValueBrief{
+			ID:          ss.RPEValue.ID,
+			Value:       ss.RPEValue.Value,
+			Label:       ss.RPEValue.Label,
+			Description: ss.RPEValue.Description,
+		}
+	}
+
+	return setResp
 }

@@ -2685,99 +2685,6 @@
           "response": []
         },
         {
-          "name": "Create Set Group",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"workout_id\": \"{{workout_id}}\",\n  \"group_type\": \"superset\",\n  \"name\": \"Chest & Back Superset\",\n  \"notes\": \"Perform exercises back-to-back with minimal rest\",\n  \"order_number\": 1,\n  \"rest_between_sets\": 60,\n  \"rounds\": 3\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/set-groups",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "set-groups"
-              ]
-            },
-            "description": "Create a new set group for organizing exercises (superset, circuit, etc.)"
-          },
-          "response": []
-        },
-        {
-          "name": "Add Exercise to Set Group",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"workout_id\": \"{{workout_id}}\",\n  \"set_group_id\": \"{{set_group_id}}\",\n  \"exercise_id\": \"{{exercise_id}}\",\n  \"order_number\": 1,\n  \"target_sets\": 3,\n  \"target_reps\": 10,\n  \"target_weight\": 135.5,\n  \"target_rest_sec\": 60\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/workout-exercises",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "workout-exercises"
-              ]
-            },
-            "description": "Add an exercise to a specific set group within a workout"
-          },
-          "response": []
-        },
-        {
-          "name": "Get Set Groups for Workout",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/set-groups",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "workouts",
-                "{{workout_id}}",
-                "set-groups"
-              ]
-            },
-            "description": "Get all set groups for a specific workout with their exercises"
-          },
-          "response": []
-        },
-        {
           "name": "Add Workout to Plan",
           "event": [
             {
@@ -3217,147 +3124,6 @@
               ]
             },
             "description": "Create a duplicate of an existing workout"
-          },
-          "response": []
-        },
-        {
-          "name": "Add Exercise to Workout",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('workout_exercise_id', jsonData.data.id);",
-                  "    pm.test('Exercise added to workout successfully', function () {",
-                  "        pm.expect(jsonData.success).to.be.true;",
-                  "        pm.expect(jsonData.data.workout_id).to.equal(pm.environment.get('workout_id'));",
-                  "    });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"exercise_id\": \"{{exercise_id}}\",\n  \"set_group_id\": \"{{set_group_id}}\",\n  \"order_number\": 1,\n  \"target_sets\": 3,\n  \"target_reps\": 12,\n  \"target_weight\": 50,\n  \"target_rest_sec\": 60,\n  \"prescription\": \"reps\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/exercises",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "workouts",
-                "{{workout_id}}",
-                "exercises"
-              ]
-            },
-            "description": "Add an exercise to a workout"
-          },
-          "response": []
-        },
-        {
-          "name": "Get Workout Exercises",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.test('Workout exercises retrieved successfully', function () {",
-                  "        pm.expect(jsonData.success).to.be.true;",
-                  "        pm.expect(jsonData.data).to.be.an('array');",
-                  "    });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/exercises",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "workouts",
-                "{{workout_id}}",
-                "exercises"
-              ]
-            },
-            "description": "Get all exercises in a workout"
-          },
-          "response": []
-        },
-        {
-          "name": "Remove Exercise from Workout",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.test('Exercise removed from workout successfully', function () {",
-                  "        pm.expect(jsonData.success).to.be.true;",
-                  "    });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/exercises/{{workout_exercise_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "workouts",
-                "{{workout_id}}",
-                "exercises",
-                "{{workout_exercise_id}}"
-              ]
-            },
-            "description": "Remove an exercise from a workout"
           },
           "response": []
         },
@@ -4194,105 +3960,6 @@
               ]
             },
             "description": "Start a new workout session"
-          },
-          "response": []
-        },
-        {
-          "name": "Log Exercise",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"session_id\": \"{{session_id}}\",\n  \"set_group_id\": \"{{set_group_id}}\",\n  \"exercise_id\": \"{{exercise_id}}\",\n  \"order_number\": 1,\n  \"notes\": \"Good form throughout\",\n  \"difficulty_rating\": 7,\n  \"difficulty_type\": \"moderate\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/exercise-logs",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "exercise-logs"
-              ]
-            },
-            "description": "Log an exercise within a workout session"
-          },
-          "response": []
-        },
-        {
-          "name": "Log Set",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"exercise_log_id\": \"{{exercise_log_id}}\",\n  \"set_number\": 1,\n  \"weight\": 60,\n  \"weight_unit\": \"kg\",\n  \"reps\": 10,\n  \"rest_after_sec\": 90,\n  \"tempo\": \"2-1-2-1\",\n  \"rpe\": 7.5\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/set-logs",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "set-logs"
-              ]
-            },
-            "description": "Log a set within an exercise. Weight unit can be 'kg', 'lbs', or 'lb' (default: 'kg')"
-          },
-          "response": []
-        },
-        {
-          "name": "Log Set (Imperial)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"exercise_log_id\": \"{{exercise_log_id}}\",\n  \"set_number\": 2,\n  \"weight\": 135,\n  \"weight_unit\": \"lbs\",\n  \"reps\": 8,\n  \"rest_after_sec\": 120,\n  \"rpe\": 8.0\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/set-logs",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "set-logs"
-              ]
-            },
-            "description": "Example of logging a set with pounds (lbs) as weight unit"
           },
           "response": []
         },
@@ -6533,6 +6200,166 @@
       "name": "Workout Sessions",
       "item": [
         {
+          "name": "Setup Test Session (Run First)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// This request sets up a complete test environment",
+                  "// It will create: exercise -> workout with prescription -> session",
+                  "// And extract all IDs needed for testing session endpoints"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const baseUrl = pm.environment.get('base_url') || pm.variables.get('base_url');",
+                  "const authToken = pm.environment.get('auth_token');",
+                  "",
+                  "if (!authToken) {",
+                  "    pm.test('Auth token required - login first', function() {",
+                  "        pm.expect.fail('Please login first to get auth_token');",
+                  "    });",
+                  "    return;",
+                  "}",
+                  "",
+                  "// Step 1: Create an exercise",
+                  "pm.sendRequest({",
+                  "    url: baseUrl + '/api/v1/exercises/',",
+                  "    method: 'POST',",
+                  "    header: {",
+                  "        'Authorization': 'Bearer ' + authToken,",
+                  "        'Content-Type': 'application/json'",
+                  "    },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({",
+                  "            name: 'Test Exercise ' + Date.now(),",
+                  "            description: 'Created for session testing'",
+                  "        })",
+                  "    }",
+                  "}, function(err, res) {",
+                  "    if (err || res.code !== 201) {",
+                  "        console.log('Failed to create exercise:', err || res.json());",
+                  "        return;",
+                  "    }",
+                  "    ",
+                  "    const exerciseId = res.json().data.id;",
+                  "    pm.environment.set('exercise_id', exerciseId);",
+                  "    console.log('Created exercise:', exerciseId);",
+                  "    ",
+                  "    // Step 2: Create a workout with prescription",
+                  "    pm.sendRequest({",
+                  "        url: baseUrl + '/api/v1/workouts/',",
+                  "        method: 'POST',",
+                  "        header: {",
+                  "            'Authorization': 'Bearer ' + authToken,",
+                  "            'Content-Type': 'application/json'",
+                  "        },",
+                  "        body: {",
+                  "            mode: 'raw',",
+                  "            raw: JSON.stringify({",
+                  "                title: 'Test Workout ' + Date.now(),",
+                  "                description: 'Created for session testing',",
+                  "                exercises: [{",
+                  "                    exercise_id: exerciseId,",
+                  "                    exercise_order: 1,",
+                  "                    sets: 3,",
+                  "                    reps: 10,",
+                  "                    target_weight_kg: 50.0",
+                  "                }]",
+                  "            })",
+                  "        }",
+                  "    }, function(err, res) {",
+                  "        if (err || res.code !== 201) {",
+                  "            console.log('Failed to create workout:', err || res.json());",
+                  "            return;",
+                  "        }",
+                  "        ",
+                  "        const workoutId = res.json().data.id;",
+                  "        pm.environment.set('workout_id', workoutId);",
+                  "        console.log('Created workout:', workoutId);",
+                  "        ",
+                  "        // Step 3: Create session from workout",
+                  "        pm.sendRequest({",
+                  "            url: baseUrl + '/api/v1/workout-sessions',",
+                  "            method: 'POST',",
+                  "            header: {",
+                  "                'Authorization': 'Bearer ' + authToken,",
+                  "                'Content-Type': 'application/json'",
+                  "            },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({",
+                  "                    workout_id: workoutId,",
+                  "                    notes: 'Test session for Postman'",
+                  "                })",
+                  "            }",
+                  "        }, function(err, res) {",
+                  "            if (err || res.code !== 201) {",
+                  "                console.log('Failed to create session:', err || res.json());",
+                  "                return;",
+                  "            }",
+                  "            ",
+                  "            const data = res.json().data;",
+                  "            pm.environment.set('workout_session_id', data.id);",
+                  "            console.log('Created session:', data.id);",
+                  "            ",
+                  "            // Extract block, exercise, set IDs",
+                  "            if (data.blocks && data.blocks.length > 0) {",
+                  "                pm.environment.set('session_block_id', data.blocks[0].id);",
+                  "                console.log('Set session_block_id:', data.blocks[0].id);",
+                  "                ",
+                  "                if (data.blocks[0].exercises && data.blocks[0].exercises.length > 0) {",
+                  "                    pm.environment.set('session_exercise_id', data.blocks[0].exercises[0].id);",
+                  "                    console.log('Set session_exercise_id:', data.blocks[0].exercises[0].id);",
+                  "                    ",
+                  "                    if (data.blocks[0].exercises[0].sets && data.blocks[0].exercises[0].sets.length > 0) {",
+                  "                        pm.environment.set('session_set_id', data.blocks[0].exercises[0].sets[0].id);",
+                  "                        console.log('Set session_set_id:', data.blocks[0].exercises[0].sets[0].id);",
+                  "                    }",
+                  "                }",
+                  "            }",
+                  "            ",
+                  "            pm.test('Test environment setup complete', function() {",
+                  "                pm.expect(pm.environment.get('session_block_id')).to.be.a('string');",
+                  "                pm.expect(pm.environment.get('session_exercise_id')).to.be.a('string');",
+                  "                pm.expect(pm.environment.get('session_set_id')).to.be.a('string');",
+                  "            });",
+                  "        });",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Run this request first to set up a complete test environment.\n\nThis will:\n1. Create a test exercise\n2. Create a workout with a prescription\n3. Create a session from that workout\n4. Extract and set all environment variables:\n   - exercise_id\n   - workout_id\n   - workout_session_id\n   - session_block_id\n   - session_exercise_id\n   - session_set_id\n\nAfter running this, all session block/exercise/set endpoints will work."
+          },
+          "response": []
+        },
+        {
           "name": "Create Workout Session",
           "event": [
             {
@@ -6580,6 +6407,66 @@
               ]
             },
             "description": "Create a new workout session"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Session from Workout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('workout_session_id', jsonData.data.id);",
+                  "    pm.test('Session created with auto-generated structure', function () {",
+                  "        pm.expect(jsonData.data.workout_id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.blocks).to.be.an('array');",
+                  "    });",
+                  "    if (jsonData.data.blocks.length > 0) {",
+                  "        pm.environment.set('session_block_id', jsonData.data.blocks[0].id);",
+                  "        if (jsonData.data.blocks[0].exercises.length > 0) {",
+                  "            pm.environment.set('session_exercise_id', jsonData.data.blocks[0].exercises[0].id);",
+                  "            if (jsonData.data.blocks[0].exercises[0].sets.length > 0) {",
+                  "                pm.environment.set('session_set_id', jsonData.data.blocks[0].exercises[0].sets[0].id);",
+                  "            }",
+                  "        }",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workout_id\": \"{{workout_id}}\",\n  \"notes\": \"Starting workout from prescription\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/workout-sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workout-sessions"
+              ]
+            },
+            "description": "Create a workout session from a workout with prescriptions. This automatically creates blocks, exercises, and sets based on the workout prescriptions."
           },
           "response": []
         },
@@ -6828,64 +6715,13 @@
           "response": []
         }
       ],
-      "description": "Workout session logging endpoints"
+      "description": "Workout session logging endpoints. When creating a session with a workout_id that has prescriptions, blocks/exercises/sets are automatically created."
     },
     {
-      "name": "Exercise Logs",
+      "name": "Session Blocks",
       "item": [
         {
-          "name": "Create Exercise Log",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('exercise_log_id', jsonData.data.id);",
-                  "    pm.test('Exercise log created successfully', function () {",
-                  "        pm.expect(jsonData.data.id).to.be.a('string');",
-                  "        pm.expect(jsonData.data.exercise_name).to.be.a('string');",
-                  "    });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"session_id\": \"{{workout_session_id}}\",\n  \"exercise_id\": \"{{exercise_id}}\",\n  \"order_number\": 1,\n  \"notes\": \"Feeling strong today\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/exercise-logs",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "exercise-logs"
-              ]
-            },
-            "description": "Create an exercise log in a workout session"
-          },
-          "response": []
-        },
-        {
-          "name": "Get Exercise Log by ID",
+          "name": "Get Session Block",
           "request": {
             "method": "GET",
             "header": [
@@ -6895,23 +6731,77 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/exercise-logs/{{exercise_log_id}}",
+              "raw": "{{base_url}}/api/v1/session-blocks/{{session_block_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "exercise-logs",
-                "{{exercise_log_id}}"
+                "session-blocks",
+                "{{session_block_id}}"
               ]
             },
-            "description": "Get a specific exercise log with set logs"
+            "description": "Get a specific session block with its exercises and sets"
           },
           "response": []
         },
         {
-          "name": "Update Exercise Log",
+          "name": "Complete Session Block",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/session-blocks/{{session_block_id}}/complete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "session-blocks",
+                "{{session_block_id}}",
+                "complete"
+              ]
+            },
+            "description": "Mark a session block as completed"
+          },
+          "response": []
+        },
+        {
+          "name": "Skip Session Block",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/session-blocks/{{session_block_id}}/skip",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "session-blocks",
+                "{{session_block_id}}",
+                "skip"
+              ]
+            },
+            "description": "Mark a session block as skipped"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Session Block RPE",
           "request": {
             "method": "PUT",
             "header": [
@@ -6926,28 +6816,35 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"notes\": \"Updated notes - PR achieved!\",\n  \"difficulty_rating\": 8,\n  \"difficulty_type\": \"hard\"\n}"
+              "raw": "{\n  \"perceived_exertion\": 7\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/exercise-logs/{{exercise_log_id}}",
+              "raw": "{{base_url}}/api/v1/session-blocks/{{session_block_id}}/rpe",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "exercise-logs",
-                "{{exercise_log_id}}"
+                "session-blocks",
+                "{{session_block_id}}",
+                "rpe"
               ]
             },
-            "description": "Update exercise log notes and difficulty"
+            "description": "Update the perceived exertion (1-10) for a session block"
           },
           "response": []
-        },
+        }
+      ],
+      "description": "Session block endpoints for managing exercise groups within a workout session"
+    },
+    {
+      "name": "Session Exercises",
+      "item": [
         {
-          "name": "Delete Exercise Log",
+          "name": "Get Session Exercise",
           "request": {
-            "method": "DELETE",
+            "method": "GET",
             "header": [
               {
                 "key": "Authorization",
@@ -6955,29 +6852,112 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/exercise-logs/{{exercise_log_id}}",
+              "raw": "{{base_url}}/api/v1/session-exercises/{{session_exercise_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "exercise-logs",
-                "{{exercise_log_id}}"
+                "session-exercises",
+                "{{session_exercise_id}}"
               ]
             },
-            "description": "Delete an exercise log"
+            "description": "Get a specific session exercise with its sets"
           },
           "response": []
-        }
-      ],
-      "description": "Exercise log endpoints within workout sessions"
-    },
-    {
-      "name": "Set Logs",
-      "item": [
+        },
         {
-          "name": "Create Set Log",
+          "name": "Complete Session Exercise",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/session-exercises/{{session_exercise_id}}/complete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "session-exercises",
+                "{{session_exercise_id}}",
+                "complete"
+              ]
+            },
+            "description": "Mark a session exercise as completed"
+          },
+          "response": []
+        },
+        {
+          "name": "Skip Session Exercise",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/session-exercises/{{session_exercise_id}}/skip",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "session-exercises",
+                "{{session_exercise_id}}",
+                "skip"
+              ]
+            },
+            "description": "Mark a session exercise as skipped"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Session Exercise Notes",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Felt strong on this exercise - PR achieved!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/session-exercises/{{session_exercise_id}}/notes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "session-exercises",
+                "{{session_exercise_id}}",
+                "notes"
+              ]
+            },
+            "description": "Update notes for a session exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Set to Exercise",
           "event": [
             {
               "listen": "test",
@@ -6985,8 +6965,8 @@
                 "exec": [
                   "if (pm.response.code === 201) {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('set_log_id', jsonData.data.id);",
-                  "    pm.test('Set log created successfully', function () {",
+                  "    pm.environment.set('session_set_id', jsonData.data.id);",
+                  "    pm.test('Set added successfully', function () {",
                   "        pm.expect(jsonData.data.id).to.be.a('string');",
                   "        pm.expect(jsonData.data.set_number).to.be.a('number');",
                   "    });",
@@ -7010,76 +6990,33 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"exercise_log_id\": \"{{exercise_log_id}}\",\n  \"set_number\": 1,\n  \"weight\": 100.0,\n  \"weight_unit\": \"kg\",\n  \"reps\": 8,\n  \"rpe\": 7.5,\n  \"rest_after_sec\": 90,\n  \"tempo\": \"3-1-2-1\"\n}"
+              "raw": "{\n  \"actual_reps\": 8,\n  \"actual_weight_kg\": 100.0\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/set-logs",
+              "raw": "{{base_url}}/api/v1/session-exercises/{{session_exercise_id}}/sets",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "set-logs"
+                "session-exercises",
+                "{{session_exercise_id}}",
+                "sets"
               ]
             },
-            "description": "Create a set log for an exercise. Weights are automatically converted to kg for storage."
+            "description": "Add an extra set to a session exercise. The set number is automatically assigned."
           },
           "response": []
-        },
+        }
+      ],
+      "description": "Session exercise endpoints for managing individual exercises within a session block"
+    },
+    {
+      "name": "Session Sets",
+      "item": [
         {
-          "name": "Create Set Log (lbs)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.test('Set log created with lbs converted to kg', function () {",
-                  "        pm.expect(jsonData.data.weight_kg).to.be.closeTo(102.06, 0.1);",
-                  "        pm.expect(jsonData.data.input_weight).to.equal(225);",
-                  "        pm.expect(jsonData.data.input_weight_unit).to.equal('lb');",
-                  "    });",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{auth_token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"exercise_log_id\": \"{{exercise_log_id}}\",\n  \"set_number\": 2,\n  \"weight\": 225,\n  \"weight_unit\": \"lb\",\n  \"reps\": 5,\n  \"rpe\": 8.5,\n  \"rest_after_sec\": 180,\n  \"tempo\": \"2-0-1-0\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/set-logs",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "set-logs"
-              ]
-            },
-            "description": "Create a set log using pounds (lbs). The weight will be converted to kg for storage. Response includes both canonical kg and converted display values."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Set Log by ID",
+          "name": "Get Session Set",
           "request": {
             "method": "GET",
             "header": [
@@ -7089,23 +7026,23 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/set-logs/{{set_log_id}}",
+              "raw": "{{base_url}}/api/v1/session-sets/{{session_set_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "set-logs",
-                "{{set_log_id}}"
+                "session-sets",
+                "{{session_set_id}}"
               ]
             },
-            "description": "Get a specific set log"
+            "description": "Get a specific session set"
           },
           "response": []
         },
         {
-          "name": "Update Set Log",
+          "name": "Update Session Set",
           "request": {
             "method": "PUT",
             "header": [
@@ -7120,26 +7057,95 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"weight\": 105.0,\n  \"weight_unit\": \"kg\",\n  \"reps\": 8,\n  \"rpe\": 8.0,\n  \"rest_after_sec\": 120\n}"
+              "raw": "{\n  \"actual_reps\": 10,\n  \"actual_weight_kg\": 85.0,\n  \"was_failure\": false\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/set-logs/{{set_log_id}}",
+              "raw": "{{base_url}}/api/v1/session-sets/{{session_set_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "set-logs",
-                "{{set_log_id}}"
+                "session-sets",
+                "{{session_set_id}}"
               ]
             },
-            "description": "Update a set log"
+            "description": "Update a session set with actual performance data"
           },
           "response": []
         },
         {
-          "name": "Delete Set Log",
+          "name": "Update Session Set (with lbs)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actual_reps\": 5,\n  \"actual_weight_kg\": 225.0,\n  \"weight_unit\": \"lb\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/session-sets/{{session_set_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "session-sets",
+                "{{session_set_id}}"
+              ]
+            },
+            "description": "Update a session set with weight in lbs (will be converted to kg)"
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Session Set",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actual_reps\": 8,\n  \"actual_weight_kg\": 100.0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/session-sets/{{session_set_id}}/complete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "session-sets",
+                "{{session_set_id}}",
+                "complete"
+              ]
+            },
+            "description": "Mark a session set as completed with optional performance data"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Session Set",
           "request": {
             "method": "DELETE",
             "header": [
@@ -7149,23 +7155,23 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/set-logs/{{set_log_id}}",
+              "raw": "{{base_url}}/api/v1/session-sets/{{session_set_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "set-logs",
-                "{{set_log_id}}"
+                "session-sets",
+                "{{session_set_id}}"
               ]
             },
-            "description": "Delete a set log"
+            "description": "Delete a session set"
           },
           "response": []
         }
       ],
-      "description": "Set log endpoints for individual exercise sets.\n\n## Weight Conversion\nAll weights are stored internally in kilograms (kg) as the canonical unit.\n\n### Request\n- `weight`: The numeric weight value\n- `weight_unit`: The unit of the input ('kg', 'lb', or 'lbs'). Defaults to user's preferred unit.\n\n### Response\n- `weight_kg`: Canonical weight in kilograms\n- `weight_display`: Weight converted to user's preferred unit\n- `weight_display_unit`: User's preferred unit ('kg' or 'lb')\n- `input_weight`: Original weight value entered\n- `input_weight_unit`: Original unit of input\n\n### Example\nIf user enters 225 lbs:\n- `weight_kg`: 102.06\n- `weight_display`: 225.0 (if user prefers imperial)\n- `input_weight`: 225.0\n- `input_weight_unit`: 'lb'"
+      "description": "Session set endpoints for logging individual sets within a session exercise.\n\n## Weight Handling\nAll weights are stored in kilograms (kg) as the canonical unit.\n\n### Request Fields\n- `actual_reps`: Number of reps performed\n- `actual_weight_kg`: Weight value (will be converted if weight_unit is 'lb')\n- `weight_unit`: Optional - 'kg' or 'lb'. If 'lb', the weight is converted to kg.\n- `actual_duration_seconds`: For timed/isometric exercises\n- `rpe_value_id`: Reference to RPE scale value\n- `was_failure`: Whether the set was taken to failure\n\n### Response Fields\n- `actual_weight_kg`: Weight in kilograms\n- `actual_weight_display`: Converted weight for display\n- `actual_weight_unit`: Display unit ('kg' or 'lb')"
     }
   ],
   "event": [

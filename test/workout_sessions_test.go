@@ -1,9 +1,7 @@
 package test
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/gavv/httpexpect/v2"
 )
@@ -21,9 +19,24 @@ func TestWorkoutSessionEndpoints(t *testing.T) {
 		testTrainerLogsForClient(t, e)
 	})
 
-	t.Run("Exercise and Set Logging", func(t *testing.T) {
+	t.Run("Session With Prescriptions Auto-Creates Structure", func(t *testing.T) {
 		CleanDatabase(t)
-		testExerciseAndSetLogging(t, e)
+		testSessionWithPrescriptions(t, e)
+	})
+
+	t.Run("Session Block Operations", func(t *testing.T) {
+		CleanDatabase(t)
+		testSessionBlockOperations(t, e)
+	})
+
+	t.Run("Session Exercise Operations", func(t *testing.T) {
+		CleanDatabase(t)
+		testSessionExerciseOperations(t, e)
+	})
+
+	t.Run("Session Set Operations", func(t *testing.T) {
+		CleanDatabase(t)
+		testSessionSetOperations(t, e)
 	})
 
 	t.Run("Authorization Checks", func(t *testing.T) {
@@ -31,9 +44,9 @@ func TestWorkoutSessionEndpoints(t *testing.T) {
 		testWorkoutSessionAuthorization(t, e)
 	})
 
-	t.Run("Weight Conversion", func(t *testing.T) {
+	t.Run("Session Logging Authorization", func(t *testing.T) {
 		CleanDatabase(t)
-		testWeightConversion(t, e)
+		testSessionLoggingAuthorization(t, e)
 	})
 }
 
@@ -61,7 +74,8 @@ func testUserWorkoutSessionFlow(t *testing.T, e *httpexpect.Expect) {
 		sessionID = data.Value("id").String().Raw()
 		data.Value("notes").String().IsEqual("Morning workout")
 		data.Value("started_at").String().NotEmpty()
-		data.Value("ended_at").IsNull()
+		data.Value("completed").Boolean().IsFalse()
+		data.Value("blocks").Array().Length().IsEqual(0) // No prescriptions, empty blocks
 	})
 
 	t.Run("Get Workout Session", func(t *testing.T) {
@@ -107,7 +121,8 @@ func testUserWorkoutSessionFlow(t *testing.T, e *httpexpect.Expect) {
 		response := e.PUT("/api/v1/workout-sessions/"+sessionID+"/end").
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"notes": "Completed workout",
+				"notes":              "Completed workout",
+				"perceived_intensity": 7,
 			}).
 			Expect().
 			Status(200).
@@ -117,7 +132,8 @@ func testUserWorkoutSessionFlow(t *testing.T, e *httpexpect.Expect) {
 		response.Value("success").Boolean().IsTrue()
 		data := response.Value("data").Object()
 		data.Value("ended_at").String().NotEmpty()
-		data.Value("duration_minutes").Number().Ge(0)
+		data.Value("completed").Boolean().IsTrue()
+		data.Value("perceived_intensity").Number().IsEqual(7)
 	})
 
 	t.Run("Delete Workout Session", func(t *testing.T) {
@@ -259,15 +275,6 @@ func testTrainerLogsForClient(t *testing.T, e *httpexpect.Expect) {
 			JSON().
 			Object()
 
-		// Get the other user's ID by logging in again
-		e.POST("/api/v1/auth/login").
-			WithJSON(map[string]interface{}{
-				"email":    "other@example.com",
-				"password": "OtherPass123!",
-			}).
-			Expect().
-			Status(200)
-
 		// Get token for other user to retrieve their ID
 		otherToken := otherResponse.Value("data").Object().Value("token").String().Raw()
 		otherUserResponse := e.GET("/api/v1/auth/profile").
@@ -295,11 +302,14 @@ func testTrainerLogsForClient(t *testing.T, e *httpexpect.Expect) {
 	})
 }
 
-func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
+func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 	// Create user
 	userToken := createTestUserAndGetToken(e, "user@example.com", "UserPass123!", "Test", "User")
 
-	// Create an exercise first
+	// Seed RPE scale
+	SeedTestGlobalRPEScale(t)
+
+	// Create an exercise
 	exerciseResponse := e.POST("/api/v1/exercises/").
 		WithHeader("Authorization", "Bearer "+userToken).
 		WithJSON(map[string]interface{}{
@@ -313,30 +323,88 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 
 	exerciseID := exerciseResponse.Value("data").Object().Value("id").String().Raw()
 
-	// Create workout session
-	sessionResponse := e.POST("/api/v1/workout-sessions").
+	// Create another exercise
+	exercise2Response := e.POST("/api/v1/exercises/").
 		WithHeader("Authorization", "Bearer "+userToken).
 		WithJSON(map[string]interface{}{
-			"notes": "Chest day",
+			"name":        "Squat",
+			"description": "Compound leg exercise",
 		}).
 		Expect().
 		Status(201).
 		JSON().
 		Object()
 
-	sessionID := sessionResponse.Value("data").Object().Value("id").String().Raw()
+	exercise2ID := exercise2Response.Value("data").Object().Value("id").String().Raw()
 
+	// Create a workout
+	workoutResponse := e.POST("/api/v1/workouts/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"title":       "Full Body Workout",
+			"description": "Test workout with prescriptions",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	workoutID := workoutResponse.Value("data").Object().Value("id").String().Raw()
+
+	// Add prescription group with exercises
+	rpeValueID := GetRPEValueID(t, 7)
+
+	e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"type":              "straight",
+			"group_order":       1,
+			"group_rounds":      1,
+			"rest_between_sets": 90,
+			"exercises": []map[string]interface{}{
+				{
+					"exercise_id":    exerciseID,
+					"exercise_order": 1,
+					"sets":           3,
+					"reps":           10,
+					"target_weight_kg": 80.0,
+					"rpe_value_id":   rpeValueID,
+				},
+			},
+		}).
+		Expect().
+		Status(201)
+
+	// Add another prescription group
+	e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"type":        "straight",
+			"group_order": 2,
+			"exercises": []map[string]interface{}{
+				{
+					"exercise_id":    exercise2ID,
+					"exercise_order": 1,
+					"sets":           4,
+					"reps":           8,
+					"target_weight_kg": 100.0,
+				},
+			},
+		}).
+		Expect().
+		Status(201)
+
+	var sessionID string
+	var blockID string
 	var exerciseLogID string
-	var setLogID string
+	var setID string
 
-	t.Run("Create Exercise Log", func(t *testing.T) {
-		response := e.POST("/api/v1/exercise-logs").
+	t.Run("Create Session From Workout Auto-Creates Structure", func(t *testing.T) {
+		response := e.POST("/api/v1/workout-sessions").
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"session_id":   sessionID,
-				"exercise_id":  exerciseID,
-				"order_number": 1,
-				"notes":        "Felt strong today",
+				"workout_id": workoutID,
+				"notes":      "Testing auto-creation",
 			}).
 			Expect().
 			Status(201).
@@ -346,13 +414,45 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 		response.Value("success").Boolean().IsTrue()
 
 		data := response.Value("data").Object()
-		exerciseLogID = data.Value("id").String().Raw()
-		data.Value("exercise_name").String().IsEqual("Bench Press")
-		data.Value("order_number").Number().IsEqual(1)
+		sessionID = data.Value("id").String().Raw()
+		data.Value("workout_id").String().IsEqual(workoutID)
+		data.Value("workout_title").String().IsEqual("Full Body Workout")
+
+		// Verify blocks were created
+		blocks := data.Value("blocks").Array()
+		blocks.Length().IsEqual(2)
+
+		// First block
+		block1 := blocks.Value(0).Object()
+		block1.Value("block_order").Number().IsEqual(1)
+		blockID = block1.Value("id").String().Raw()
+
+		exercises := block1.Value("exercises").Array()
+		exercises.Length().IsEqual(1)
+
+		ex1 := exercises.Value(0).Object()
+		ex1.Value("exercise_name").String().IsEqual("Bench Press")
+		exerciseLogID = ex1.Value("id").String().Raw()
+
+		sets := ex1.Value("sets").Array()
+		sets.Length().IsEqual(3) // 3 sets as prescribed
+
+		set1 := sets.Value(0).Object()
+		set1.Value("set_number").Number().IsEqual(1)
+		set1.Value("actual_reps").Number().IsEqual(10) // Pre-filled from prescription
+		set1.Value("actual_weight_kg").Number().IsEqual(80.0) // Pre-filled from prescription
+		setID = set1.Value("id").String().Raw()
+
+		// Second block
+		block2 := blocks.Value(1).Object()
+		block2.Value("block_order").Number().IsEqual(2)
+		block2Ex := block2.Value("exercises").Array().Value(0).Object()
+		block2Ex.Value("exercise_name").String().IsEqual("Squat")
+		block2Ex.Value("sets").Array().Length().IsEqual(4) // 4 sets as prescribed
 	})
 
-	t.Run("Get Exercise Log", func(t *testing.T) {
-		response := e.GET("/api/v1/exercise-logs/"+exerciseLogID).
+	t.Run("Complete Session Block", func(t *testing.T) {
+		response := e.PUT("/api/v1/session-blocks/"+blockID+"/complete").
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(200).
@@ -360,19 +460,65 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 			Object()
 
 		response.Value("success").Boolean().IsTrue()
-		response.Value("data").Object().Value("id").String().IsEqual(exerciseLogID)
+		data := response.Value("data").Object()
+		data.Value("completed_at").String().NotEmpty()
+		data.Value("skipped").Boolean().IsFalse()
 	})
 
-	t.Run("Create Set Log", func(t *testing.T) {
-		response := e.POST("/api/v1/set-logs").
+	t.Run("Complete Session Exercise", func(t *testing.T) {
+		response := e.PUT("/api/v1/session-exercises/"+exerciseLogID+"/complete").
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("completed_at").String().NotEmpty()
+	})
+
+	t.Run("Update Session Set", func(t *testing.T) {
+		response := e.PUT("/api/v1/session-sets/"+setID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"exercise_log_id": exerciseLogID,
-				"set_number":      1,
-				"weight":          100.0,
-				"weight_unit":     "kg",
-				"reps":            8,
-				"rpe":             7.5,
+				"actual_reps":      12, // Did more reps than prescribed
+				"actual_weight_kg": 85.0, // Heavier weight
+				"was_failure":      false,
+			}).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("actual_reps").Number().IsEqual(12)
+		data.Value("actual_weight_kg").Number().IsEqual(85.0)
+	})
+
+	t.Run("Complete Session Set", func(t *testing.T) {
+		response := e.PUT("/api/v1/session-sets/"+setID+"/complete").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"actual_reps": 12,
+			}).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("completed").Boolean().IsTrue()
+	})
+
+	t.Run("Add Extra Set To Exercise", func(t *testing.T) {
+		response := e.POST("/api/v1/session-exercises/"+exerciseLogID+"/sets").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"actual_reps":      8,
+				"actual_weight_kg": 90.0,
 			}).
 			Expect().
 			Status(201).
@@ -380,67 +526,17 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 			Object()
 
 		response.Value("success").Boolean().IsTrue()
-
 		data := response.Value("data").Object()
-		setLogID = data.Value("id").String().Raw()
-		data.Value("weight_kg").Number().IsEqual(100.0)
-		data.Value("weight_display").Number().IsEqual(100.0)
-		data.Value("weight_display_unit").String().IsEqual("kg")
-		data.Value("input_weight").Number().IsEqual(100.0)
-		data.Value("input_weight_unit").String().IsEqual("kg")
-		data.Value("reps").Number().IsEqual(8)
-		data.Value("rpe").Number().IsEqual(7.5)
+		data.Value("set_number").Number().IsEqual(4) // 4th set (extra)
+		data.Value("actual_reps").Number().IsEqual(8)
+		data.Value("actual_weight_kg").Number().IsEqual(90.0)
 	})
 
-	t.Run("Create Multiple Sets", func(t *testing.T) {
-		// Set 2
-		e.POST("/api/v1/set-logs").
+	t.Run("End Session With Complete", func(t *testing.T) {
+		response := e.PUT("/api/v1/workout-sessions/"+sessionID+"/end").
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"exercise_log_id": exerciseLogID,
-				"set_number":      2,
-				"weight":          100.0,
-				"weight_unit":     "kg",
-				"reps":            7,
-				"rpe":             8.0,
-			}).
-			Expect().
-			Status(201)
-
-		// Set 3
-		e.POST("/api/v1/set-logs").
-			WithHeader("Authorization", "Bearer "+userToken).
-			WithJSON(map[string]interface{}{
-				"exercise_log_id": exerciseLogID,
-				"set_number":      3,
-				"weight":          100.0,
-				"weight_unit":     "kg",
-				"reps":            6,
-				"rpe":             9.0,
-			}).
-			Expect().
-			Status(201)
-	})
-
-	t.Run("Get Exercise Log With Sets", func(t *testing.T) {
-		response := e.GET("/api/v1/exercise-logs/"+exerciseLogID).
-			WithHeader("Authorization", "Bearer "+userToken).
-			Expect().
-			Status(200).
-			JSON().
-			Object()
-
-		data := response.Value("data").Object()
-		data.Value("set_logs").Array().Length().IsEqual(3)
-	})
-
-	t.Run("Update Set Log", func(t *testing.T) {
-		response := e.PUT("/api/v1/set-logs/"+setLogID).
-			WithHeader("Authorization", "Bearer "+userToken).
-			WithJSON(map[string]interface{}{
-				"weight":      105.0,
-				"reps":        8,
-				"weight_unit": "kg",
+				"perceived_intensity": 8,
 			}).
 			Expect().
 			Status(200).
@@ -449,17 +545,100 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 
 		response.Value("success").Boolean().IsTrue()
 		data := response.Value("data").Object()
-		data.Value("weight_kg").Number().IsEqual(105.0)
-		data.Value("input_weight").Number().IsEqual(105.0)
+		data.Value("completed").Boolean().IsTrue()
+		data.Value("perceived_intensity").Number().IsEqual(8)
+	})
+}
+
+func testSessionSetOperations(t *testing.T, e *httpexpect.Expect) {
+	// Create user
+	userToken := createTestUserAndGetToken(e, "user@example.com", "UserPass123!", "Test", "User")
+
+	// Create an exercise
+	exerciseResponse := e.POST("/api/v1/exercises/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"name":        "Deadlift",
+			"description": "Compound back exercise",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	exerciseID := exerciseResponse.Value("data").Object().Value("id").String().Raw()
+
+	// Create a workout with prescription
+	workoutResponse := e.POST("/api/v1/workouts/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"title": "Back Day",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	workoutID := workoutResponse.Value("data").Object().Value("id").String().Raw()
+
+	e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"type":        "straight",
+			"group_order": 1,
+			"exercises": []map[string]interface{}{
+				{
+					"exercise_id":    exerciseID,
+					"exercise_order": 1,
+					"sets":           3,
+					"reps":           5,
+					"target_weight_kg": 140.0,
+				},
+			},
+		}).
+		Expect().
+		Status(201)
+
+	// Create session
+	sessionResponse := e.POST("/api/v1/workout-sessions").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"workout_id": workoutID,
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	// Get set ID from created session
+	sets := sessionResponse.Value("data").Object().
+		Value("blocks").Array().Value(0).Object().
+		Value("exercises").Array().Value(0).Object().
+		Value("sets").Array()
+
+	setID := sets.Value(0).Object().Value("id").String().Raw()
+
+	t.Run("Get Session Set", func(t *testing.T) {
+		response := e.GET("/api/v1/session-sets/"+setID).
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("set_number").Number().IsEqual(1)
 	})
 
-	t.Run("Update Exercise Log", func(t *testing.T) {
-		response := e.PUT("/api/v1/exercise-logs/"+exerciseLogID).
+	t.Run("Update Set With Weight Conversion", func(t *testing.T) {
+		// Update with lbs, should convert to kg
+		response := e.PUT("/api/v1/session-sets/"+setID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"notes":             "PR on bench press!",
-				"difficulty_rating": 8,
-				"difficulty_type":   "hard",
+				"actual_weight_kg": 315.0,
+				"weight_unit":      "lb",
+				"actual_reps":      5,
 			}).
 			Expect().
 			Status(200).
@@ -468,31 +647,322 @@ func testExerciseAndSetLogging(t *testing.T, e *httpexpect.Expect) {
 
 		response.Value("success").Boolean().IsTrue()
 		data := response.Value("data").Object()
-		data.Value("difficulty_rating").Number().IsEqual(8)
-		data.Value("difficulty_type").String().IsEqual("hard")
+		// 315 lbs ≈ 142.88 kg
+		data.Value("actual_weight_kg").Number().InDelta(142.88, 1.0)
 	})
 
-	t.Run("Delete Set Log", func(t *testing.T) {
-		e.DELETE("/api/v1/set-logs/"+setLogID).
+	t.Run("Delete Session Set", func(t *testing.T) {
+		// Delete the last set
+		lastSetID := sets.Value(2).Object().Value("id").String().Raw()
+
+		e.DELETE("/api/v1/session-sets/"+lastSetID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(204)
 
 		// Verify it's deleted
-		e.GET("/api/v1/set-logs/"+setLogID).
+		e.GET("/api/v1/session-sets/"+lastSetID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(404)
 	})
+}
 
-	t.Run("Delete Exercise Log", func(t *testing.T) {
-		e.DELETE("/api/v1/exercise-logs/"+exerciseLogID).
+func testSessionBlockOperations(t *testing.T, e *httpexpect.Expect) {
+	// Create user and setup
+	userToken := createTestUserAndGetToken(e, "user@example.com", "UserPass123!", "Test", "User")
+
+	// Create exercise
+	exerciseResponse := e.POST("/api/v1/exercises/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"name":        "Bench Press",
+			"description": "Chest exercise",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+	exerciseID := exerciseResponse.Value("data").Object().Value("id").String().Raw()
+
+	// Create workout with prescription
+	workoutResponse := e.POST("/api/v1/workouts/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"title": "Test Workout",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+	workoutID := workoutResponse.Value("data").Object().Value("id").String().Raw()
+
+	e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"type":        "straight",
+			"group_order": 1,
+			"exercises": []map[string]interface{}{
+				{
+					"exercise_id":    exerciseID,
+					"exercise_order": 1,
+					"sets":           3,
+					"reps":           10,
+				},
+			},
+		}).
+		Expect().
+		Status(201)
+
+	// Create session from workout
+	sessionResponse := e.POST("/api/v1/workout-sessions").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"workout_id": workoutID,
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	blockID := sessionResponse.Value("data").Object().
+		Value("blocks").Array().Value(0).Object().
+		Value("id").String().Raw()
+
+	t.Run("Get Session Block", func(t *testing.T) {
+		response := e.GET("/api/v1/session-blocks/"+blockID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
-			Status(204)
+			Status(200).
+			JSON().
+			Object()
 
-		// Verify it's deleted
-		e.GET("/api/v1/exercise-logs/"+exerciseLogID).
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("id").String().IsEqual(blockID)
+		data.Value("block_order").Number().IsEqual(1)
+		data.Value("exercises").Array().Length().IsEqual(1)
+	})
+
+	t.Run("Skip Session Block", func(t *testing.T) {
+		response := e.PUT("/api/v1/session-blocks/"+blockID+"/skip").
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("skipped").Boolean().IsTrue()
+		data.Value("completed_at").IsNull()
+	})
+
+	t.Run("Complete Session Block After Skip", func(t *testing.T) {
+		response := e.PUT("/api/v1/session-blocks/"+blockID+"/complete").
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("skipped").Boolean().IsFalse()
+		data.Value("completed_at").String().NotEmpty()
+	})
+
+	t.Run("Update Session Block RPE", func(t *testing.T) {
+		response := e.PUT("/api/v1/session-blocks/"+blockID+"/rpe").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"perceived_exertion": 8,
+			}).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("perceived_exertion").Number().IsEqual(8)
+	})
+
+	t.Run("Invalid Block ID Returns 404", func(t *testing.T) {
+		e.GET("/api/v1/session-blocks/11111111-1111-1111-1111-111111111111").
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(404)
+	})
+}
+
+func testSessionExerciseOperations(t *testing.T, e *httpexpect.Expect) {
+	// Create user and setup
+	userToken := createTestUserAndGetToken(e, "user@example.com", "UserPass123!", "Test", "User")
+	SeedTestGlobalRPEScale(t)
+
+	// Create exercise
+	exerciseResponse := e.POST("/api/v1/exercises/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"name":        "Squat",
+			"description": "Leg exercise",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+	exerciseID := exerciseResponse.Value("data").Object().Value("id").String().Raw()
+
+	// Create workout with prescription
+	workoutResponse := e.POST("/api/v1/workouts/").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"title": "Leg Day",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+	workoutID := workoutResponse.Value("data").Object().Value("id").String().Raw()
+
+	rpeValueID := GetRPEValueID(t, 7)
+
+	e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"type":        "straight",
+			"group_order": 1,
+			"exercises": []map[string]interface{}{
+				{
+					"exercise_id":      exerciseID,
+					"exercise_order":   1,
+					"sets":             3,
+					"reps":             8,
+					"target_weight_kg": 100.0,
+					"rpe_value_id":     rpeValueID,
+				},
+			},
+		}).
+		Expect().
+		Status(201)
+
+	// Create session from workout
+	sessionResponse := e.POST("/api/v1/workout-sessions").
+		WithHeader("Authorization", "Bearer "+userToken).
+		WithJSON(map[string]interface{}{
+			"workout_id": workoutID,
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	exerciseLogID := sessionResponse.Value("data").Object().
+		Value("blocks").Array().Value(0).Object().
+		Value("exercises").Array().Value(0).Object().
+		Value("id").String().Raw()
+
+	t.Run("Get Session Exercise", func(t *testing.T) {
+		response := e.GET("/api/v1/session-exercises/"+exerciseLogID).
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("id").String().IsEqual(exerciseLogID)
+		data.Value("exercise_name").String().IsEqual("Squat")
+		data.Value("sets").Array().Length().IsEqual(3)
+	})
+
+	t.Run("Skip Session Exercise", func(t *testing.T) {
+		response := e.PUT("/api/v1/session-exercises/"+exerciseLogID+"/skip").
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("skipped").Boolean().IsTrue()
+	})
+
+	t.Run("Complete Session Exercise", func(t *testing.T) {
+		response := e.PUT("/api/v1/session-exercises/"+exerciseLogID+"/complete").
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("skipped").Boolean().IsFalse()
+		data.Value("completed_at").String().NotEmpty()
+	})
+
+	t.Run("Update Session Exercise Notes", func(t *testing.T) {
+		response := e.PUT("/api/v1/session-exercises/"+exerciseLogID+"/notes").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"notes": "Felt strong today - PR attempt next week",
+			}).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("notes").String().IsEqual("Felt strong today - PR attempt next week")
+	})
+
+	t.Run("Add Extra Set To Exercise", func(t *testing.T) {
+		response := e.POST("/api/v1/session-exercises/"+exerciseLogID+"/sets").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"actual_reps":      6,
+				"actual_weight_kg": 110.0,
+				"rpe_value_id":     rpeValueID,
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("set_number").Number().IsEqual(4) // 4th set
+		data.Value("actual_reps").Number().IsEqual(6)
+		data.Value("actual_weight_kg").Number().IsEqual(110.0)
+	})
+
+	t.Run("Add Set With Weight In Lbs", func(t *testing.T) {
+		response := e.POST("/api/v1/session-exercises/"+exerciseLogID+"/sets").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"actual_reps":      5,
+				"actual_weight_kg": 225.0,
+				"weight_unit":      "lb",
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("set_number").Number().IsEqual(5)
+		// 225 lbs ≈ 102.06 kg
+		data.Value("actual_weight_kg").Number().InDelta(102.06, 1.0)
+	})
+
+	t.Run("Invalid Exercise ID Returns 404", func(t *testing.T) {
+		e.GET("/api/v1/session-exercises/11111111-1111-1111-1111-111111111111").
 			WithHeader("Authorization", "Bearer "+userToken).
 			Expect().
 			Status(404)
@@ -503,20 +973,6 @@ func testWorkoutSessionAuthorization(t *testing.T, e *httpexpect.Expect) {
 	// Create two users
 	user1Token := createTestUserAndGetToken(e, "user1@example.com", "User1Pass123!", "User", "One")
 	user2Token := createTestUserAndGetToken(e, "user2@example.com", "User2Pass123!", "User", "Two")
-
-	// Create an exercise for user1
-	exerciseResponse := e.POST("/api/v1/exercises/").
-		WithHeader("Authorization", "Bearer "+user1Token).
-		WithJSON(map[string]interface{}{
-			"name":        "Squat",
-			"description": "Compound leg exercise",
-		}).
-		Expect().
-		Status(201).
-		JSON().
-		Object()
-
-	exerciseID := exerciseResponse.Value("data").Object().Value("id").String().Raw()
 
 	// User 1 creates a session
 	sessionResponse := e.POST("/api/v1/workout-sessions").
@@ -530,37 +986,6 @@ func testWorkoutSessionAuthorization(t *testing.T, e *httpexpect.Expect) {
 		Object()
 
 	sessionID := sessionResponse.Value("data").Object().Value("id").String().Raw()
-
-	// User 1 creates an exercise log
-	exerciseLogResponse := e.POST("/api/v1/exercise-logs").
-		WithHeader("Authorization", "Bearer "+user1Token).
-		WithJSON(map[string]interface{}{
-			"session_id":   sessionID,
-			"exercise_id":  exerciseID,
-			"order_number": 1,
-		}).
-		Expect().
-		Status(201).
-		JSON().
-		Object()
-
-	exerciseLogID := exerciseLogResponse.Value("data").Object().Value("id").String().Raw()
-
-	// User 1 creates a set log
-	setLogResponse := e.POST("/api/v1/set-logs").
-		WithHeader("Authorization", "Bearer "+user1Token).
-		WithJSON(map[string]interface{}{
-			"exercise_log_id": exerciseLogID,
-			"set_number":      1,
-			"weight":          100.0,
-			"reps":            5,
-		}).
-		Expect().
-		Status(201).
-		JSON().
-		Object()
-
-	setLogID := setLogResponse.Value("data").Object().Value("id").String().Raw()
 
 	t.Run("User Cannot Access Other User's Session", func(t *testing.T) {
 		e.GET("/api/v1/workout-sessions/"+sessionID).
@@ -594,312 +1019,178 @@ func testWorkoutSessionAuthorization(t *testing.T, e *httpexpect.Expect) {
 		response.Value("success").Boolean().IsFalse()
 	})
 
-	t.Run("User Cannot Access Other User's Exercise Log", func(t *testing.T) {
-		e.GET("/api/v1/exercise-logs/"+exerciseLogID).
-			WithHeader("Authorization", "Bearer "+user2Token).
-			Expect().
-			Status(404)
-	})
-
-	t.Run("User Cannot Update Other User's Exercise Log", func(t *testing.T) {
-		response := e.PUT("/api/v1/exercise-logs/"+exerciseLogID).
-			WithHeader("Authorization", "Bearer "+user2Token).
-			WithJSON(map[string]interface{}{
-				"notes": "Hacked!",
-			}).
-			Expect().
-			Status(403).
-			JSON().
-			Object()
-
-		response.Value("success").Boolean().IsFalse()
-	})
-
-	t.Run("User Cannot Access Other User's Set Log", func(t *testing.T) {
-		e.GET("/api/v1/set-logs/"+setLogID).
-			WithHeader("Authorization", "Bearer "+user2Token).
-			Expect().
-			Status(404)
-	})
-
-	t.Run("User Cannot Update Other User's Set Log", func(t *testing.T) {
-		response := e.PUT("/api/v1/set-logs/"+setLogID).
-			WithHeader("Authorization", "Bearer "+user2Token).
-			WithJSON(map[string]interface{}{
-				"weight": 200.0,
-			}).
-			Expect().
-			Status(403).
-			JSON().
-			Object()
-
-		response.Value("success").Boolean().IsFalse()
-	})
-
-	t.Run("User Cannot Create Exercise Log In Other User's Session", func(t *testing.T) {
-		response := e.POST("/api/v1/exercise-logs").
-			WithHeader("Authorization", "Bearer "+user2Token).
-			WithJSON(map[string]interface{}{
-				"session_id":   sessionID,
-				"exercise_id":  exerciseID,
-				"order_number": 2,
-			}).
-			Expect().
-			Status(403).
-			JSON().
-			Object()
-
-		response.Value("success").Boolean().IsFalse()
-		response.Value("message").String().Contains("Not authorized")
-	})
-
-	t.Run("User Cannot Create Set Log In Other User's Exercise Log", func(t *testing.T) {
-		response := e.POST("/api/v1/set-logs").
-			WithHeader("Authorization", "Bearer "+user2Token).
-			WithJSON(map[string]interface{}{
-				"exercise_log_id": exerciseLogID,
-				"set_number":      2,
-				"weight":          50.0,
-				"reps":            10,
-			}).
-			Expect().
-			Status(403).
-			JSON().
-			Object()
-
-		response.Value("success").Boolean().IsFalse()
-		response.Value("message").String().Contains("Not authorized")
-	})
-
 	t.Run("Invalid Session ID Returns 404", func(t *testing.T) {
 		e.GET("/api/v1/workout-sessions/11111111-1111-1111-1111-111111111111").
 			WithHeader("Authorization", "Bearer "+user1Token).
 			Expect().
 			Status(404)
 	})
-
-	t.Run("Invalid Exercise Log ID Returns 404", func(t *testing.T) {
-		e.GET("/api/v1/exercise-logs/11111111-1111-1111-1111-111111111111").
-			WithHeader("Authorization", "Bearer "+user1Token).
-			Expect().
-			Status(404)
-	})
-
-	t.Run("Invalid Set Log ID Returns 404", func(t *testing.T) {
-		e.GET("/api/v1/set-logs/11111111-1111-1111-1111-111111111111").
-			WithHeader("Authorization", "Bearer "+user1Token).
-			Expect().
-			Status(404)
-	})
 }
 
-func testWeightConversion(t *testing.T, e *httpexpect.Expect) {
-	// Create a user and get token
-	userEmail := fmt.Sprintf("weight_test_%d@example.com", time.Now().UnixNano())
-	userToken := createTestUserAndGetToken(e, userEmail, "TestPassword123!", "Weight", "Tester")
+func testSessionLoggingAuthorization(t *testing.T, e *httpexpect.Expect) {
+	// Create two users
+	user1Token := createTestUserAndGetToken(e, "user1@example.com", "User1Pass123!", "User", "One")
+	user2Token := createTestUserAndGetToken(e, "user2@example.com", "User2Pass123!", "User", "Two")
 
-	// Create exercise for testing
+	// Create exercise
 	exerciseResponse := e.POST("/api/v1/exercises/").
-		WithHeader("Authorization", "Bearer "+userToken).
+		WithHeader("Authorization", "Bearer "+user1Token).
 		WithJSON(map[string]interface{}{
-			"name":        "Weight Test Squat",
-			"description": "Test exercise for weight conversion",
+			"name":        "Deadlift",
+			"description": "Back exercise",
 		}).
 		Expect().
 		Status(201).
 		JSON().
 		Object()
-
 	exerciseID := exerciseResponse.Value("data").Object().Value("id").String().Raw()
 
-	// Create a session
+	// User 1 creates workout with prescription
+	workoutResponse := e.POST("/api/v1/workouts/").
+		WithHeader("Authorization", "Bearer "+user1Token).
+		WithJSON(map[string]interface{}{
+			"title": "User 1 Workout",
+		}).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+	workoutID := workoutResponse.Value("data").Object().Value("id").String().Raw()
+
+	e.POST("/api/v1/workouts/"+workoutID+"/prescriptions").
+		WithHeader("Authorization", "Bearer "+user1Token).
+		WithJSON(map[string]interface{}{
+			"type":        "straight",
+			"group_order": 1,
+			"exercises": []map[string]interface{}{
+				{
+					"exercise_id":    exerciseID,
+					"exercise_order": 1,
+					"sets":           3,
+					"reps":           5,
+				},
+			},
+		}).
+		Expect().
+		Status(201)
+
+	// User 1 creates session
 	sessionResponse := e.POST("/api/v1/workout-sessions").
-		WithHeader("Authorization", "Bearer "+userToken).
+		WithHeader("Authorization", "Bearer "+user1Token).
 		WithJSON(map[string]interface{}{
-			"started_at": time.Now().Format(time.RFC3339),
-			"notes":      "Weight conversion test session",
+			"workout_id": workoutID,
 		}).
 		Expect().
 		Status(201).
 		JSON().
 		Object()
 
-	sessionID := sessionResponse.Value("data").Object().Value("id").String().Raw()
+	blocks := sessionResponse.Value("data").Object().Value("blocks").Array()
+	blockID := blocks.Value(0).Object().Value("id").String().Raw()
+	exerciseLogID := blocks.Value(0).Object().Value("exercises").Array().Value(0).Object().Value("id").String().Raw()
+	setID := blocks.Value(0).Object().Value("exercises").Array().Value(0).Object().Value("sets").Array().Value(0).Object().Value("id").String().Raw()
 
-	// Create an exercise log
-	exerciseLogResponse := e.POST("/api/v1/exercise-logs").
-		WithHeader("Authorization", "Bearer "+userToken).
-		WithJSON(map[string]interface{}{
-			"session_id":   sessionID,
-			"exercise_id":  exerciseID,
-			"order_number": 1,
-		}).
-		Expect().
-		Status(201).
-		JSON().
-		Object()
-
-	exerciseLogID := exerciseLogResponse.Value("data").Object().Value("id").String().Raw()
-
-	t.Run("Create Set Log With Kg", func(t *testing.T) {
-		response := e.POST("/api/v1/set-logs").
-			WithHeader("Authorization", "Bearer "+userToken).
-			WithJSON(map[string]interface{}{
-				"exercise_log_id": exerciseLogID,
-				"set_number":      1,
-				"weight":          100.0,
-				"weight_unit":     "kg",
-				"reps":            8,
-			}).
+	t.Run("User Cannot Access Other User's Block", func(t *testing.T) {
+		e.GET("/api/v1/session-blocks/"+blockID).
+			WithHeader("Authorization", "Bearer "+user2Token).
 			Expect().
-			Status(201).
-			JSON().
-			Object()
-
-		data := response.Value("data").Object()
-		// Weight should be stored as 100 kg
-		data.Value("weight_kg").Number().IsEqual(100.0)
-		data.Value("weight_display").Number().IsEqual(100.0)
-		data.Value("weight_display_unit").String().IsEqual("kg")
-		data.Value("input_weight").Number().IsEqual(100.0)
-		data.Value("input_weight_unit").String().IsEqual("kg")
+			Status(404)
 	})
 
-	t.Run("Create Set Log With Lbs", func(t *testing.T) {
-		response := e.POST("/api/v1/set-logs").
-			WithHeader("Authorization", "Bearer "+userToken).
-			WithJSON(map[string]interface{}{
-				"exercise_log_id": exerciseLogID,
-				"set_number":      2,
-				"weight":          225.0,
-				"weight_unit":     "lb",
-				"reps":            5,
-			}).
+	t.Run("User Cannot Complete Other User's Block", func(t *testing.T) {
+		e.PUT("/api/v1/session-blocks/"+blockID+"/complete").
+			WithHeader("Authorization", "Bearer "+user2Token).
 			Expect().
-			Status(201).
-			JSON().
-			Object()
-
-		data := response.Value("data").Object()
-		// 225 lbs should be converted to ~102.06 kg
-		data.Value("weight_kg").Number().InDelta(102.06, 0.1)
-		data.Value("input_weight").Number().IsEqual(225.0)
-		data.Value("input_weight_unit").String().IsEqual("lb")
+			Status(403)
 	})
 
-	t.Run("Create Set Log With Lbs Alias", func(t *testing.T) {
-		response := e.POST("/api/v1/set-logs").
-			WithHeader("Authorization", "Bearer "+userToken).
-			WithJSON(map[string]interface{}{
-				"exercise_log_id": exerciseLogID,
-				"set_number":      3,
-				"weight":          135.0,
-				"weight_unit":     "lbs",
-				"reps":            10,
-			}).
+	t.Run("User Cannot Skip Other User's Block", func(t *testing.T) {
+		e.PUT("/api/v1/session-blocks/"+blockID+"/skip").
+			WithHeader("Authorization", "Bearer "+user2Token).
 			Expect().
-			Status(201).
-			JSON().
-			Object()
-
-		data := response.Value("data").Object()
-		// 135 lbs should be converted to ~61.23 kg
-		data.Value("weight_kg").Number().InDelta(61.23, 0.1)
-		data.Value("input_weight").Number().IsEqual(135.0)
-		// lbs should be normalized to lb
-		data.Value("input_weight_unit").String().IsEqual("lb")
+			Status(403)
 	})
 
-	t.Run("Update Set Log With Different Unit", func(t *testing.T) {
-		// First create a set log
-		createResponse := e.POST("/api/v1/set-logs").
-			WithHeader("Authorization", "Bearer "+userToken).
+	t.Run("User Cannot Update Other User's Block RPE", func(t *testing.T) {
+		e.PUT("/api/v1/session-blocks/"+blockID+"/rpe").
+			WithHeader("Authorization", "Bearer "+user2Token).
 			WithJSON(map[string]interface{}{
-				"exercise_log_id": exerciseLogID,
-				"set_number":      4,
-				"weight":          50.0,
-				"weight_unit":     "kg",
-				"reps":            12,
+				"perceived_exertion": 5,
 			}).
 			Expect().
-			Status(201).
-			JSON().
-			Object()
-
-		setLogID := createResponse.Value("data").Object().Value("id").String().Raw()
-
-		// Update it with lbs
-		updateResponse := e.PUT("/api/v1/set-logs/"+setLogID).
-			WithHeader("Authorization", "Bearer "+userToken).
-			WithJSON(map[string]interface{}{
-				"weight":      110.0,
-				"weight_unit": "lb",
-				"reps":        10,
-			}).
-			Expect().
-			Status(200).
-			JSON().
-			Object()
-
-		data := updateResponse.Value("data").Object()
-		// 110 lbs should be converted to ~49.90 kg
-		data.Value("weight_kg").Number().InDelta(49.90, 0.1)
-		data.Value("input_weight").Number().IsEqual(110.0)
-		data.Value("input_weight_unit").String().IsEqual("lb")
+			Status(403)
 	})
 
-	t.Run("Get Set Log Returns Converted Values", func(t *testing.T) {
-		// Create a set with lbs
-		createResponse := e.POST("/api/v1/set-logs").
-			WithHeader("Authorization", "Bearer "+userToken).
-			WithJSON(map[string]interface{}{
-				"exercise_log_id": exerciseLogID,
-				"set_number":      5,
-				"weight":          200.0,
-				"weight_unit":     "lb",
-				"reps":            3,
-			}).
+	t.Run("User Cannot Access Other User's Exercise", func(t *testing.T) {
+		e.GET("/api/v1/session-exercises/"+exerciseLogID).
+			WithHeader("Authorization", "Bearer "+user2Token).
 			Expect().
-			Status(201).
-			JSON().
-			Object()
-
-		setLogID := createResponse.Value("data").Object().Value("id").String().Raw()
-
-		// Get the set log and verify conversion
-		getResponse := e.GET("/api/v1/set-logs/"+setLogID).
-			WithHeader("Authorization", "Bearer "+userToken).
-			Expect().
-			Status(200).
-			JSON().
-			Object()
-
-		data := getResponse.Value("data").Object()
-		// 200 lbs = ~90.72 kg
-		data.Value("weight_kg").Number().InDelta(90.72, 0.1)
-		data.Value("input_weight").Number().IsEqual(200.0)
-		data.Value("input_weight_unit").String().IsEqual("lb")
-		// Default user preference is kg (no fitness profile), so display should be kg
-		data.Value("weight_display_unit").String().IsEqual("kg")
+			Status(404)
 	})
 
-	t.Run("Zero Weight Is Allowed", func(t *testing.T) {
-		response := e.POST("/api/v1/set-logs").
-			WithHeader("Authorization", "Bearer "+userToken).
+	t.Run("User Cannot Complete Other User's Exercise", func(t *testing.T) {
+		e.PUT("/api/v1/session-exercises/"+exerciseLogID+"/complete").
+			WithHeader("Authorization", "Bearer "+user2Token).
+			Expect().
+			Status(403)
+	})
+
+	t.Run("User Cannot Skip Other User's Exercise", func(t *testing.T) {
+		e.PUT("/api/v1/session-exercises/"+exerciseLogID+"/skip").
+			WithHeader("Authorization", "Bearer "+user2Token).
+			Expect().
+			Status(403)
+	})
+
+	t.Run("User Cannot Update Other User's Exercise Notes", func(t *testing.T) {
+		e.PUT("/api/v1/session-exercises/"+exerciseLogID+"/notes").
+			WithHeader("Authorization", "Bearer "+user2Token).
 			WithJSON(map[string]interface{}{
-				"exercise_log_id": exerciseLogID,
-				"set_number":      6,
-				"weight":          0,
-				"weight_unit":     "kg",
-				"reps":            20,
+				"notes": "Hacked!",
 			}).
 			Expect().
-			Status(201).
-			JSON().
-			Object()
+			Status(403)
+	})
 
-		data := response.Value("data").Object()
-		data.Value("weight_kg").Number().IsEqual(0)
-		data.Value("input_weight").Number().IsEqual(0)
+	t.Run("User Cannot Add Set To Other User's Exercise", func(t *testing.T) {
+		e.POST("/api/v1/session-exercises/"+exerciseLogID+"/sets").
+			WithHeader("Authorization", "Bearer "+user2Token).
+			WithJSON(map[string]interface{}{
+				"actual_reps":      10,
+				"actual_weight_kg": 50.0,
+			}).
+			Expect().
+			Status(403)
+	})
+
+	t.Run("User Cannot Access Other User's Set", func(t *testing.T) {
+		e.GET("/api/v1/session-sets/"+setID).
+			WithHeader("Authorization", "Bearer "+user2Token).
+			Expect().
+			Status(404)
+	})
+
+	t.Run("User Cannot Update Other User's Set", func(t *testing.T) {
+		e.PUT("/api/v1/session-sets/"+setID).
+			WithHeader("Authorization", "Bearer "+user2Token).
+			WithJSON(map[string]interface{}{
+				"actual_reps": 100,
+			}).
+			Expect().
+			Status(403)
+	})
+
+	t.Run("User Cannot Complete Other User's Set", func(t *testing.T) {
+		e.PUT("/api/v1/session-sets/"+setID+"/complete").
+			WithHeader("Authorization", "Bearer "+user2Token).
+			Expect().
+			Status(403)
+	})
+
+	t.Run("User Cannot Delete Other User's Set", func(t *testing.T) {
+		e.DELETE("/api/v1/session-sets/"+setID).
+			WithHeader("Authorization", "Bearer "+user2Token).
+			Expect().
+			Status(403)
 	})
 }

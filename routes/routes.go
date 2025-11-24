@@ -276,22 +276,32 @@ func SetupRoutes(r *gin.Engine) {
 				workoutSessions.DELETE("/:id", controllers.DeleteWorkoutSession)
 			}
 
-			// Exercise Logs
-			exerciseLogs := protected.Group("/exercise-logs")
+			// Session Blocks
+			sessionBlocks := protected.Group("/session-blocks")
 			{
-				exerciseLogs.POST("", controllers.CreateExerciseLog)
-				exerciseLogs.GET("/:id", controllers.GetExerciseLog)
-				exerciseLogs.PUT("/:id", controllers.UpdateExerciseLog)
-				exerciseLogs.DELETE("/:id", controllers.DeleteExerciseLog)
+				sessionBlocks.GET("/:id", controllers.GetSessionBlock)
+				sessionBlocks.PUT("/:id/complete", controllers.CompleteSessionBlock)
+				sessionBlocks.PUT("/:id/skip", controllers.SkipSessionBlock)
+				sessionBlocks.PUT("/:id/rpe", controllers.UpdateSessionBlockRPE)
 			}
 
-			// Set Logs
-			setLogs := protected.Group("/set-logs")
+			// Session Exercises
+			sessionExercises := protected.Group("/session-exercises")
 			{
-				setLogs.POST("", controllers.CreateSetLog)
-				setLogs.GET("/:id", controllers.GetSetLog)
-				setLogs.PUT("/:id", controllers.UpdateSetLog)
-				setLogs.DELETE("/:id", controllers.DeleteSetLog)
+				sessionExercises.GET("/:id", controllers.GetSessionExercise)
+				sessionExercises.PUT("/:id/complete", controllers.CompleteSessionExercise)
+				sessionExercises.PUT("/:id/skip", controllers.SkipSessionExercise)
+				sessionExercises.PUT("/:id/notes", controllers.UpdateSessionExerciseNotes)
+				sessionExercises.POST("/:id/sets", controllers.AddSetToExercise)
+			}
+
+			// Session Sets
+			sessionSets := protected.Group("/session-sets")
+			{
+				sessionSets.GET("/:id", controllers.GetSessionSet)
+				sessionSets.PUT("/:id", controllers.UpdateSessionSet)
+				sessionSets.PUT("/:id/complete", controllers.CompleteSessionSet)
+				sessionSets.DELETE("/:id", controllers.DeleteSessionSet)
 			}
 
 			// Translations (Admin only)
