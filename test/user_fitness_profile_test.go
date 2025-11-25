@@ -55,11 +55,14 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Successful Creation with Required Fields", func(t *testing.T) {
 		profileData := map[string]interface{}{
-			"date_of_birth":     "1990-05-15",
-			"gender":            "male",
-			"height_cm":         180.5,
-			"current_weight_kg": 80.0,
-			"fitness_goal_ids":  muscleGainIDs,
+			"date_of_birth": "1990-05-15",
+			"gender":        "male",
+			"height_cm":     180.5,
+			"current_weight": map[string]interface{}{
+				"weight_value": 80.0,
+				"weight_unit":  "kg",
+			},
+			"fitness_goal_ids": muscleGainIDs,
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile").
@@ -80,9 +83,10 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("gender").String().IsEqual("male")
 		data.Value("height_cm").Number().IsEqual(180.5)
 		data.Value("height_ft_in").String().NotEmpty()
-		data.Value("current_weight_kg").Number().IsEqual(80.0)
-		data.Value("current_weight_lbs").Number().Gt(0)
-		data.Value("preferred_weight_unit").String().IsEqual("kg")
+		// Check current_weight response format
+		currentWeight := data.Value("current_weight").Object()
+		currentWeight.Value("weight_value").Number().IsEqual(80.0)
+		currentWeight.Value("weight_unit").String().IsEqual("kg")
 		data.Value("target_weekly_workouts").Number().IsEqual(3)
 		data.Value("activity_level").String().IsEqual("moderate")
 		data.Value("training_locations").Array().Length().IsEqual(1)
@@ -97,11 +101,14 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Duplicate Profile Creation", func(t *testing.T) {
 		profileData := map[string]interface{}{
-			"date_of_birth":     "1990-05-15",
-			"gender":            "female",
-			"height_cm":         165.0,
-			"current_weight_kg": 60.0,
-			"fitness_goal_ids":  weightLossIDs,
+			"date_of_birth": "1990-05-15",
+			"gender":        "female",
+			"height_cm":     165.0,
+			"current_weight": map[string]interface{}{
+				"weight_value": 60.0,
+				"weight_unit":  "kg",
+			},
+			"fitness_goal_ids": weightLossIDs,
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile").
@@ -123,13 +130,18 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		multiGoalIDs := GetFitnessGoalIDs(t, "weight_loss", "endurance")
 
 		profileData := map[string]interface{}{
-			"date_of_birth":                   "1985-08-20",
-			"gender":                          "female",
-			"height_cm":                       165.0,
-			"current_weight_kg":               70.0,
-			"fitness_goal_ids":                multiGoalIDs,
-			"preferred_weight_unit":           "lb",
-			"target_weight_kg":                60.0,
+			"date_of_birth": "1985-08-20",
+			"gender":        "female",
+			"height_cm":     165.0,
+			"current_weight": map[string]interface{}{
+				"weight_value": 154.32, // ~70kg in lbs
+				"weight_unit":  "lb",
+			},
+			"fitness_goal_ids": multiGoalIDs,
+			"target_weight": map[string]interface{}{
+				"weight_value": 132.28, // ~60kg in lbs
+				"weight_unit":  "lb",
+			},
 			"target_weekly_workouts":          5,
 			"activity_level":                  "active",
 			"training_locations":              []string{"home", "gym"},
@@ -150,9 +162,11 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		response.Value("success").Boolean().IsTrue()
 
 		data := response.Value("data").Object()
-		data.Value("preferred_weight_unit").String().IsEqual("lb")
-		data.Value("target_weight_kg").Number().IsEqual(60.0)
-		data.Value("target_weight_lbs").Number().Gt(0)
+		// User should have lb preference set in users table  (managed separately from profile now)
+		// Check target_weight response format - should be in user's preferred unit (lb)
+		targetWeight := data.Value("target_weight").Object()
+		targetWeight.Value("weight_value").Number().InRange(132, 133) // ~132.28 lbs
+		targetWeight.Value("weight_unit").String().IsEqual("lb")
 		data.Value("target_weekly_workouts").Number().IsEqual(5)
 		data.Value("activity_level").String().IsEqual("active")
 		data.Value("training_locations").Array().Length().IsEqual(2)
