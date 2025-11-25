@@ -61,12 +61,16 @@ func InitializeDB() {
 // AutoMigrate uses GORM's AutoMigrate feature (legacy/development mode)
 func AutoMigrate() {
 	err := DB.AutoMigrate(
+		// Core user & auth (no dependencies)
 		&models.User{},
 		&models.Role{},
 		&models.Permission{},
 		&models.RolePermission{},
 		&models.RoleInheritance{},
 		&models.UserRole{},
+		&models.Translation{},
+
+		// Trainer system
 		&models.Specialty{},
 		&models.TrainerProfile{},
 		&models.TrainerSpecialty{},
@@ -74,32 +78,45 @@ func AutoMigrate() {
 		&models.TrainerClientLink{},
 		&models.TrainerInvitation{},
 		&models.Friendship{},
+
+		// Exercise reference data
 		&models.MuscleGroup{},
+		&models.Equipment{},
 		&models.Exercise{},
 		&models.ExerciseMuscleGroup{},
-		&models.Equipment{},
 		&models.ExerciseEquipment{},
 		&models.UserEquipment{},
+
+		// Fitness reference data
 		&models.FitnessLevel{},
 		&models.FitnessGoal{},
-		&models.UserFitnessGoal{},
+
+		// User fitness profile (must be before UserFitnessGoal)
 		&models.UserFitnessProfile{},
+		&models.UserFitnessGoal{},  // FK to UserFitnessProfile
 		&models.WeightLog{},
+
+		// RPE scales
 		&models.RPEScale{},
 		&models.RPEScaleValue{},
+
+		// Workout plans & workouts
 		&models.WorkoutPlan{},
 		&models.WorkoutPlanItem{},
 		&models.Workout{},
 		&models.WorkoutPrescription{},
 		&models.PlanEnrollment{},
+
+		// Workout sessions
 		&models.WorkoutSession{},
 		&models.SessionBlock{},
 		&models.SessionExercise{},
 		&models.SessionSet{},
+
+		// Social features
 		&models.SharedWorkout{},
 		&models.WorkoutComment{},
 		&models.WorkoutCommentReaction{},
-		&models.Translation{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
