@@ -391,11 +391,21 @@ func BuildSessionResponse(session WorkoutSession, weightUnit string) WorkoutSess
 			// Include prescription details if available
 			if exercise.Prescription != nil {
 				exerciseResp.Prescription = &PrescriptionBrief{
-					Sets:           exercise.Prescription.Sets,
-					Reps:           exercise.Prescription.Reps,
-					HoldSeconds:    exercise.Prescription.HoldSeconds,
-					WeightKg:       exercise.Prescription.WeightKg,
-					TargetWeightKg: exercise.Prescription.TargetWeightKg,
+					Sets:        exercise.Prescription.Sets,
+					Reps:        exercise.Prescription.Reps,
+					HoldSeconds: exercise.Prescription.HoldSeconds,
+				}
+				// Convert target weight to user's preferred unit
+				if exercise.Prescription.TargetWeightKg != nil {
+					convertedValue := *exercise.Prescription.TargetWeightKg
+					if weightUnit == "lb" {
+						convertedValue = convertedValue * 2.20462262185
+					}
+					unit := weightUnit
+					exerciseResp.Prescription.TargetWeight = &WeightOutput{
+						WeightValue: &convertedValue,
+						WeightUnit:  &unit,
+					}
 				}
 			}
 
@@ -406,7 +416,6 @@ func BuildSessionResponse(session WorkoutSession, weightUnit string) WorkoutSess
 					SetNumber:             set.SetNumber,
 					Completed:             set.Completed,
 					ActualReps:            set.ActualReps,
-					ActualWeightKg:        set.ActualWeightKg,
 					ActualDurationSeconds: set.ActualDurationSeconds,
 					RPEValueID:            set.RPEValueID,
 					WasFailure:            set.WasFailure,
@@ -414,15 +423,16 @@ func BuildSessionResponse(session WorkoutSession, weightUnit string) WorkoutSess
 					CreatedAt:             set.CreatedAt,
 				}
 
-				// Convert weight for display
+				// Convert weight to user's preferred unit
 				if set.ActualWeightKg != nil {
+					convertedValue := *set.ActualWeightKg
 					if weightUnit == "lb" {
-						converted := *set.ActualWeightKg * 2.20462262185
-						setResp.ActualWeightDisplay = &converted
-						setResp.ActualWeightUnit = "lb"
-					} else {
-						setResp.ActualWeightDisplay = set.ActualWeightKg
-						setResp.ActualWeightUnit = "kg"
+						convertedValue = convertedValue * 2.20462262185
+					}
+					unit := weightUnit
+					setResp.ActualWeight = &WeightOutput{
+						WeightValue: &convertedValue,
+						WeightUnit:  &unit,
 					}
 				}
 
@@ -448,8 +458,8 @@ func BuildSessionResponse(session WorkoutSession, weightUnit string) WorkoutSess
 	return response
 }
 
-// ToResponse converts a SessionBlock to a response (with default kg weight unit)
-func (sb *SessionBlock) ToResponse() SessionBlockResponse {
+// ToResponse converts a SessionBlock to a response with weight converted to user's preferred unit
+func (sb *SessionBlock) ToResponse(preferredWeightUnit string) SessionBlockResponse {
 	blockResp := SessionBlockResponse{
 		ID:                sb.ID,
 		GroupID:           sb.GroupID,
@@ -474,14 +484,14 @@ func (sb *SessionBlock) ToResponse() SessionBlockResponse {
 
 	// Build nested exercise responses
 	for _, exercise := range sb.SessionExercises {
-		blockResp.Exercises = append(blockResp.Exercises, exercise.ToResponse())
+		blockResp.Exercises = append(blockResp.Exercises, exercise.ToResponse(preferredWeightUnit))
 	}
 
 	return blockResp
 }
 
-// ToResponse converts a SessionExercise to a response (with default kg weight unit)
-func (se *SessionExercise) ToResponse() SessionExerciseResponse {
+// ToResponse converts a SessionExercise to a response with weight converted to user's preferred unit
+func (se *SessionExercise) ToResponse(preferredWeightUnit string) SessionExerciseResponse {
 	exerciseResp := SessionExerciseResponse{
 		ID:             se.ID,
 		PrescriptionID: se.PrescriptionID,
@@ -498,30 +508,39 @@ func (se *SessionExercise) ToResponse() SessionExerciseResponse {
 	// Include prescription details if available
 	if se.Prescription != nil {
 		exerciseResp.Prescription = &PrescriptionBrief{
-			Sets:           se.Prescription.Sets,
-			Reps:           se.Prescription.Reps,
-			HoldSeconds:    se.Prescription.HoldSeconds,
-			WeightKg:       se.Prescription.WeightKg,
-			TargetWeightKg: se.Prescription.TargetWeightKg,
+			Sets:        se.Prescription.Sets,
+			Reps:        se.Prescription.Reps,
+			HoldSeconds: se.Prescription.HoldSeconds,
+		}
+		// Convert target weight to user's preferred unit
+		if se.Prescription.TargetWeightKg != nil {
+			convertedValue := *se.Prescription.TargetWeightKg
+			if preferredWeightUnit == "lb" {
+				convertedValue = convertedValue * 2.20462262185
+			}
+			unit := preferredWeightUnit
+			exerciseResp.Prescription.TargetWeight = &WeightOutput{
+				WeightValue: &convertedValue,
+				WeightUnit:  &unit,
+			}
 		}
 	}
 
 	// Build nested set responses
 	for _, set := range se.SessionSets {
-		exerciseResp.Sets = append(exerciseResp.Sets, set.ToResponse())
+		exerciseResp.Sets = append(exerciseResp.Sets, set.ToResponse(preferredWeightUnit))
 	}
 
 	return exerciseResp
 }
 
 // ToResponse converts a SessionSet to a response (with default kg weight unit)
-func (ss *SessionSet) ToResponse() SessionSetResponse {
+func (ss *SessionSet) ToResponse(preferredWeightUnit string) SessionSetResponse {
 	setResp := SessionSetResponse{
 		ID:                    ss.ID,
 		SetNumber:             ss.SetNumber,
 		Completed:             ss.Completed,
 		ActualReps:            ss.ActualReps,
-		ActualWeightKg:        ss.ActualWeightKg,
 		ActualDurationSeconds: ss.ActualDurationSeconds,
 		RPEValueID:            ss.RPEValueID,
 		WasFailure:            ss.WasFailure,
@@ -529,10 +548,20 @@ func (ss *SessionSet) ToResponse() SessionSetResponse {
 		CreatedAt:             ss.CreatedAt,
 	}
 
-	// Default to kg for display
+	// Convert weight to user's preferred unit
 	if ss.ActualWeightKg != nil {
-		setResp.ActualWeightDisplay = ss.ActualWeightKg
-		setResp.ActualWeightUnit = "kg"
+		convertedValue := *ss.ActualWeightKg
+		if preferredWeightUnit == "lb" {
+			convertedValue = convertedValue * 2.20462262185
+		}
+		unit := preferredWeightUnit
+		if unit == "" {
+			unit = "kg" // default
+		}
+		setResp.ActualWeight = &WeightOutput{
+			WeightValue: &convertedValue,
+			WeightUnit:  &unit,
+		}
 	}
 
 	// Include RPE value details if available

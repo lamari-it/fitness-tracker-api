@@ -1,9 +1,8 @@
 package utils
 
 import (
+	"fit-flow-api/models"
 	"math"
-
-	"github.com/peteratkins85/fit-flow-api/models"
 )
 
 // Weight conversion constants
