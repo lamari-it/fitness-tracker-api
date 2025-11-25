@@ -43,7 +43,10 @@ func GetSessionSet(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, "Session set retrieved successfully", set.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.SuccessResponse(c, "Session set retrieved successfully", set.ToResponse(preferredWeightUnit))
 }
 
 // UpdateSessionSet updates a session set
@@ -90,13 +93,12 @@ func UpdateSessionSet(c *gin.Context) {
 		set.ActualReps = req.ActualReps
 	}
 
-	if req.ActualWeightKg != nil {
-		actualWeightKg := *req.ActualWeightKg
-		// Convert from lb to kg if needed
-		if req.WeightUnit != nil && *req.WeightUnit == "lb" {
-			actualWeightKg = actualWeightKg * 0.453592
-		}
-		set.ActualWeightKg = &actualWeightKg
+	if req.ActualWeight != nil {
+		// Process weight input using unified weight system
+		actualWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.ActualWeight)
+		set.ActualWeightKg = actualWeightKg
+		set.OriginalActualWeightValue = originalValue
+		set.OriginalActualWeightUnit = originalUnit
 	}
 
 	if req.ActualDurationSeconds != nil {
@@ -127,7 +129,10 @@ func UpdateSessionSet(c *gin.Context) {
 	// Reload with RPE value
 	database.DB.Preload("RPEValue").First(&set, "id = ?", set.ID)
 
-	utils.SuccessResponse(c, "Session set updated successfully", set.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.SuccessResponse(c, "Session set updated successfully", set.ToResponse(preferredWeightUnit))
 }
 
 // CompleteSessionSet marks a session set as complete
@@ -171,13 +176,12 @@ func CompleteSessionSet(c *gin.Context) {
 			set.ActualReps = req.ActualReps
 		}
 
-		if req.ActualWeightKg != nil {
-			actualWeightKg := *req.ActualWeightKg
-			// Convert from lb to kg if needed
-			if req.WeightUnit != nil && *req.WeightUnit == "lb" {
-				actualWeightKg = actualWeightKg * 0.453592
-			}
-			set.ActualWeightKg = &actualWeightKg
+		if req.ActualWeight != nil {
+			// Process weight input using unified weight system
+			actualWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.ActualWeight)
+			set.ActualWeightKg = actualWeightKg
+			set.OriginalActualWeightValue = originalValue
+			set.OriginalActualWeightUnit = originalUnit
 		}
 
 		if req.ActualDurationSeconds != nil {
@@ -208,7 +212,10 @@ func CompleteSessionSet(c *gin.Context) {
 	// Reload with RPE value
 	database.DB.Preload("RPEValue").First(&set, "id = ?", set.ID)
 
-	utils.SuccessResponse(c, "Session set completed successfully", set.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.SuccessResponse(c, "Session set completed successfully", set.ToResponse(preferredWeightUnit))
 }
 
 // DeleteSessionSet deletes a session set
