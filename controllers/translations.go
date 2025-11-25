@@ -6,7 +6,6 @@ import (
 	"fit-flow-api/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // CreateTranslation creates a new translation
@@ -58,9 +57,8 @@ func GetTranslations(c *gin.Context) {
 	}
 
 	if queryParams.ResourceID != "" {
-		resourceID, err := uuid.Parse(queryParams.ResourceID)
-		if err != nil {
-			utils.BadRequestResponse(c, "Invalid resource ID format.", nil)
+		resourceID, ok := utils.ParseUUID(c, queryParams.ResourceID, "resource")
+		if !ok {
 			return
 		}
 		query = query.Where("resource_id = ?", resourceID)
@@ -96,9 +94,8 @@ func GetTranslation(c *gin.Context) {
 		return
 	}
 
-	translationID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid ID format.", nil)
+	translationID, ok := utils.ParseUUID(c, params.ID, "translation")
+	if !ok {
 		return
 	}
 
@@ -119,9 +116,8 @@ func UpdateTranslation(c *gin.Context) {
 		return
 	}
 
-	translationID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid ID format.", nil)
+	translationID, ok := utils.ParseUUID(c, params.ID, "translation")
+	if !ok {
 		return
 	}
 
@@ -160,9 +156,8 @@ func DeleteTranslation(c *gin.Context) {
 		return
 	}
 
-	translationID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid ID format.", nil)
+	translationID, ok := utils.ParseUUID(c, params.ID, "translation")
+	if !ok {
 		return
 	}
 
@@ -182,23 +177,19 @@ func DeleteTranslation(c *gin.Context) {
 
 // GetResourceTranslations retrieves all translations for a specific resource
 func GetResourceTranslations(c *gin.Context) {
-	var params struct {
-		ResourceType string `uri:"resource_type" binding:"required,max=50"`
-		ResourceID   string `uri:"resource_id" binding:"required,uuid"`
-	}
-	if err := c.ShouldBindUri(&params); err != nil {
-		utils.HandleBindingError(c, err)
+	resourceType := c.Param("resource_type")
+	if resourceType == "" {
+		utils.BadRequestResponse(c, "Resource type is required.", nil)
 		return
 	}
 
-	resourceID, err := uuid.Parse(params.ResourceID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid resource ID format.", nil)
+	resourceID, ok := utils.ParseUUIDParam(c, "resource_id", "resource")
+	if !ok {
 		return
 	}
 
 	var translations []models.Translation
-	if err := database.DB.Where("resource_type = ? AND resource_id = ?", params.ResourceType, resourceID).Find(&translations).Error; err != nil {
+	if err := database.DB.Where("resource_type = ? AND resource_id = ?", resourceType, resourceID).Find(&translations).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to retrieve resource translations.")
 		return
 	}

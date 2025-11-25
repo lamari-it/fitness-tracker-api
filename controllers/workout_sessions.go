@@ -258,9 +258,8 @@ func GetWorkoutSessions(c *gin.Context) {
 	var targetUserID uuid.UUID
 
 	if clientIDStr != "" {
-		clientID, err := uuid.Parse(clientIDStr)
-		if err != nil {
-			utils.BadRequestResponse(c, "Invalid client_id format", nil)
+		clientID, ok := utils.ParseUUID(c, clientIDStr, "client")
+		if !ok {
 			return
 		}
 
