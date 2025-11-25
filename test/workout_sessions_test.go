@@ -121,7 +121,7 @@ func testUserWorkoutSessionFlow(t *testing.T, e *httpexpect.Expect) {
 		response := e.PUT("/api/v1/workout-sessions/"+sessionID+"/end").
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"notes":              "Completed workout",
+				"notes":               "Completed workout",
 				"perceived_intensity": 7,
 			}).
 			Expect().
@@ -363,12 +363,12 @@ func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 			"rest_between_sets": 90,
 			"exercises": []map[string]interface{}{
 				{
-					"exercise_id":    exerciseID,
-					"exercise_order": 1,
-					"sets":           3,
-					"reps":           10,
+					"exercise_id":      exerciseID,
+					"exercise_order":   1,
+					"sets":             3,
+					"reps":             10,
 					"target_weight_kg": 80.0,
-					"rpe_value_id":   rpeValueID,
+					"rpe_value_id":     rpeValueID,
 				},
 			},
 		}).
@@ -383,10 +383,10 @@ func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 			"group_order": 2,
 			"exercises": []map[string]interface{}{
 				{
-					"exercise_id":    exercise2ID,
-					"exercise_order": 1,
-					"sets":           4,
-					"reps":           8,
+					"exercise_id":      exercise2ID,
+					"exercise_order":   1,
+					"sets":             4,
+					"reps":             8,
 					"target_weight_kg": 100.0,
 				},
 			},
@@ -439,7 +439,7 @@ func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 
 		set1 := sets.Value(0).Object()
 		set1.Value("set_number").Number().IsEqual(1)
-		set1.Value("actual_reps").Number().IsEqual(10) // Pre-filled from prescription
+		set1.Value("actual_reps").Number().IsEqual(10)        // Pre-filled from prescription
 		set1.Value("actual_weight_kg").Number().IsEqual(80.0) // Pre-filled from prescription
 		setID = set1.Value("id").String().Raw()
 
@@ -482,7 +482,7 @@ func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 		response := e.PUT("/api/v1/session-sets/"+setID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"actual_reps":      12, // Did more reps than prescribed
+				"actual_reps":      12,   // Did more reps than prescribed
 				"actual_weight_kg": 85.0, // Heavier weight
 				"was_failure":      false,
 			}).
@@ -588,10 +588,10 @@ func testSessionSetOperations(t *testing.T, e *httpexpect.Expect) {
 			"group_order": 1,
 			"exercises": []map[string]interface{}{
 				{
-					"exercise_id":    exerciseID,
-					"exercise_order": 1,
-					"sets":           3,
-					"reps":           5,
+					"exercise_id":      exerciseID,
+					"exercise_order":   1,
+					"sets":             3,
+					"reps":             5,
 					"target_weight_kg": 140.0,
 				},
 			},
