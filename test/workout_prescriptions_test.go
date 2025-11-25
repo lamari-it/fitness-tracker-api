@@ -222,8 +222,11 @@ func testBasicWorkoutPrescriptionFlow(t *testing.T, e *httpexpect.Expect) {
 						"exercise_order": 1,
 						"sets":           5,
 						"reps":           5,
-						"weight_kg":      80.0,
-						"rpe_value_id":   rpeValue9ID,
+						"target_weight": map[string]interface{}{
+							"weight_value": 80.0,
+							"weight_unit":  "kg",
+						},
+						"rpe_value_id": rpeValue9ID,
 					},
 				},
 			}).
@@ -242,7 +245,9 @@ func testBasicWorkoutPrescriptionFlow(t *testing.T, e *httpexpect.Expect) {
 		exercises.Length().IsEqual(1)
 		exercises.Value(0).Object().Value("sets").Number().IsEqual(5)
 		exercises.Value(0).Object().Value("reps").Number().IsEqual(5)
-		exercises.Value(0).Object().Value("weight_kg").Number().IsEqual(80.0)
+		targetWeight := exercises.Value(0).Object().Value("target_weight").Object()
+		targetWeight.Value("weight_value").Number().IsEqual(80.0)
+		targetWeight.Value("weight_unit").String().IsEqual("kg")
 		exercises.Value(0).Object().Value("rpe_value_id").String().IsEqual(rpeValue9ID)
 	})
 
@@ -260,7 +265,7 @@ func testBasicWorkoutPrescriptionFlow(t *testing.T, e *httpexpect.Expect) {
 						"exercise_order": 1,
 						"sets":           3,
 						"reps":           10,
-						"weight_kg":      20.0,
+						"target_weight": map[string]interface{}{"weight_value": 20.0, "weight_unit": "kg"},
 					},
 				},
 			}).
@@ -388,14 +393,14 @@ func testPrescriptionTypes(t *testing.T, e *httpexpect.Expect) {
 						"exercise_order": 1,
 						"sets":           3,
 						"reps":           10,
-						"weight_kg":      50.0,
+						"target_weight": map[string]interface{}{"weight_value": 50.0, "weight_unit": "kg"},
 					},
 					{
 						"exercise_id":    exercise2ID,
 						"exercise_order": 2,
 						"sets":           3,
 						"reps":           12,
-						"weight_kg":      10.0,
+						"target_weight": map[string]interface{}{"weight_value": 10.0, "weight_unit": "kg"},
 					},
 				},
 			}).
@@ -466,19 +471,19 @@ func testPrescriptionTypes(t *testing.T, e *httpexpect.Expect) {
 						"exercise_id":    exercise1ID,
 						"exercise_order": 1,
 						"reps":           8,
-						"weight_kg":      80.0,
+						"target_weight": map[string]interface{}{"weight_value": 80.0, "weight_unit": "kg"},
 					},
 					{
 						"exercise_id":    exercise1ID,
 						"exercise_order": 2,
 						"reps":           10,
-						"weight_kg":      60.0,
+						"target_weight": map[string]interface{}{"weight_value": 60.0, "weight_unit": "kg"},
 					},
 					{
 						"exercise_id":    exercise1ID,
 						"exercise_order": 3,
 						"reps":           12,
-						"weight_kg":      40.0,
+						"target_weight": map[string]interface{}{"weight_value": 40.0, "weight_unit": "kg"},
 					},
 				},
 			}).
@@ -830,7 +835,7 @@ func testAddExerciseToPrescriptionGroup(t *testing.T, e *httpexpect.Expect) {
 				"exercise_id": exercise2ID,
 				"sets":        3,
 				"reps":        12,
-				"weight_kg":   25.0,
+				"target_weight": map[string]interface{}{"weight_value": 25.0, "weight_unit": "kg"},
 			}).
 			Expect().
 			Status(201).
@@ -1483,7 +1488,7 @@ func testIsometricHoldSupport(t *testing.T, e *httpexpect.Expect) {
 						"exercise_order": 1,
 						"sets":           3,
 						"hold_seconds":   45,
-						"weight_kg":      10.0,
+						"target_weight": map[string]interface{}{"weight_value": 10.0, "weight_unit": "kg"},
 					},
 				},
 			}).
@@ -1494,11 +1499,13 @@ func testIsometricHoldSupport(t *testing.T, e *httpexpect.Expect) {
 
 		response.Value("success").Boolean().IsTrue()
 
-		// Verify both hold_seconds and weight_kg are returned
+		// Verify both hold_seconds and target_weight are returned
 		data := response.Value("data").Object()
 		exercises := data.Value("exercises").Array()
 		exercises.Value(0).Object().Value("hold_seconds").Number().IsEqual(45)
-		exercises.Value(0).Object().Value("weight_kg").Number().IsEqual(10.0)
+		targetWeight := exercises.Value(0).Object().Value("target_weight").Object()
+		targetWeight.Value("weight_value").Number().IsEqual(10.0)
+		targetWeight.Value("weight_unit").String().IsEqual("kg")
 	})
 
 	t.Run("Duplicate Workout Preserves Hold Seconds", func(t *testing.T) {

@@ -242,6 +242,8 @@ type RPEValueBrief struct {
 // ===== Helper Functions =====
 
 // GroupPrescriptionsByGroupID groups prescriptions by their GroupID for response formatting
+// Note: This function requires a second pass to populate TargetWeight fields
+// Use PopulatePrescriptionWeights() after calling this function
 func GroupPrescriptionsByGroupID(prescriptions []WorkoutPrescription) []PrescriptionGroupResponse {
 	if len(prescriptions) == 0 {
 		return []PrescriptionGroupResponse{}
@@ -307,6 +309,43 @@ func GroupPrescriptionsByGroupID(prescriptions []WorkoutPrescription) []Prescrip
 	}
 
 	return result
+}
+
+// PopulatePrescriptionWeights populates the TargetWeight fields in prescription responses
+// by converting from canonical kg storage to the user's preferred unit
+func PopulatePrescriptionWeights(groupedResponse []PrescriptionGroupResponse, prescriptions []WorkoutPrescription, preferredWeightUnit string) {
+	// Create a map of prescription ID to prescription for quick lookup
+	prescriptionMap := make(map[uuid.UUID]WorkoutPrescription)
+	for _, p := range prescriptions {
+		prescriptionMap[p.ID] = p
+	}
+
+	// Iterate through grouped response and populate target weights
+	for i := range groupedResponse {
+		for j := range groupedResponse[i].Exercises {
+			exercise := &groupedResponse[i].Exercises[j]
+			if prescription, exists := prescriptionMap[exercise.ID]; exists {
+				if prescription.TargetWeightKg != nil {
+					// Convert from canonical kg to user's preferred unit
+					var weightValue float64
+					var weightUnit string
+
+					if preferredWeightUnit == "lb" {
+						weightValue = *prescription.TargetWeightKg * 2.20462262
+						weightUnit = "lb"
+					} else {
+						weightValue = *prescription.TargetWeightKg
+						weightUnit = "kg"
+					}
+
+					exercise.TargetWeight = &WeightOutput{
+						WeightValue: &weightValue,
+						WeightUnit:  &weightUnit,
+					}
+				}
+			}
+		}
+	}
 }
 
 // GetNextGroupOrder returns the next available group order for a workout
