@@ -532,8 +532,11 @@ func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 		response := e.POST("/api/v1/session-exercises/"+exerciseLogID+"/sets").
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"actual_reps":      8,
-				"actual_weight_kg": 90.0,
+				"actual_reps": 8,
+				"actual_weight": map[string]interface{}{
+					"weight_value": 90.0,
+					"weight_unit":  "kg",
+				},
 			}).
 			Expect().
 			Status(201).
@@ -544,7 +547,9 @@ func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 		data := response.Value("data").Object()
 		data.Value("set_number").Number().IsEqual(4) // 4th set (extra)
 		data.Value("actual_reps").Number().IsEqual(8)
-		data.Value("actual_weight_kg").Number().IsEqual(90.0)
+		actualWeight := data.Value("actual_weight").Object()
+		actualWeight.Value("weight_value").Number().IsEqual(90.0)
+		actualWeight.Value("weight_unit").String().IsEqual("kg")
 	})
 
 	t.Run("End Session With Complete", func(t *testing.T) {
@@ -603,11 +608,14 @@ func testSessionSetOperations(t *testing.T, e *httpexpect.Expect) {
 			"group_order": 1,
 			"exercises": []map[string]interface{}{
 				{
-					"exercise_id":      exerciseID,
-					"exercise_order":   1,
-					"sets":             3,
-					"reps":             5,
-					"target_weight_kg": 140.0,
+					"exercise_id":    exerciseID,
+					"exercise_order": 1,
+					"sets":           3,
+					"reps":           5,
+					"target_weight": map[string]interface{}{
+						"weight_value": 140.0,
+						"weight_unit":  "kg",
+					},
 				},
 			},
 		}).
@@ -651,9 +659,11 @@ func testSessionSetOperations(t *testing.T, e *httpexpect.Expect) {
 		response := e.PUT("/api/v1/session-sets/"+setID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"actual_weight_kg": 315.0,
-				"weight_unit":      "lb",
-				"actual_reps":      5,
+				"actual_weight": map[string]interface{}{
+					"weight_value": 315.0,
+					"weight_unit":  "lb",
+				},
+				"actual_reps": 5,
 			}).
 			Expect().
 			Status(200).
@@ -662,8 +672,10 @@ func testSessionSetOperations(t *testing.T, e *httpexpect.Expect) {
 
 		response.Value("success").Boolean().IsTrue()
 		data := response.Value("data").Object()
-		// 315 lbs ≈ 142.88 kg
-		data.Value("actual_weight_kg").Number().InDelta(142.88, 1.0)
+		// 315 lbs ≈ 142.88 kg, but response should be in kg (user preference)
+		actualWeight := data.Value("actual_weight").Object()
+		actualWeight.Value("weight_value").Number().InDelta(142.88, 1.0)
+		actualWeight.Value("weight_unit").String().IsEqual("kg")
 	})
 
 	t.Run("Delete Session Set", func(t *testing.T) {
@@ -850,12 +862,15 @@ func testSessionExerciseOperations(t *testing.T, e *httpexpect.Expect) {
 			"group_order": 1,
 			"exercises": []map[string]interface{}{
 				{
-					"exercise_id":      exerciseID,
-					"exercise_order":   1,
-					"sets":             3,
-					"reps":             8,
-					"target_weight_kg": 100.0,
-					"rpe_value_id":     rpeValueID,
+					"exercise_id":    exerciseID,
+					"exercise_order": 1,
+					"sets":           3,
+					"reps":           8,
+					"target_weight": map[string]interface{}{
+						"weight_value": 100.0,
+						"weight_unit":  "kg",
+					},
+					"rpe_value_id": rpeValueID,
 				},
 			},
 		}).
@@ -940,9 +955,12 @@ func testSessionExerciseOperations(t *testing.T, e *httpexpect.Expect) {
 		response := e.POST("/api/v1/session-exercises/"+exerciseLogID+"/sets").
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"actual_reps":      6,
-				"actual_weight_kg": 110.0,
-				"rpe_value_id":     rpeValueID,
+				"actual_reps": 6,
+				"actual_weight": map[string]interface{}{
+					"weight_value": 110.0,
+					"weight_unit":  "kg",
+				},
+				"rpe_value_id": rpeValueID,
 			}).
 			Expect().
 			Status(201).
@@ -953,16 +971,20 @@ func testSessionExerciseOperations(t *testing.T, e *httpexpect.Expect) {
 		data := response.Value("data").Object()
 		data.Value("set_number").Number().IsEqual(4) // 4th set
 		data.Value("actual_reps").Number().IsEqual(6)
-		data.Value("actual_weight_kg").Number().IsEqual(110.0)
+		actualWeight := data.Value("actual_weight").Object()
+		actualWeight.Value("weight_value").Number().IsEqual(110.0)
+		actualWeight.Value("weight_unit").String().IsEqual("kg")
 	})
 
 	t.Run("Add Set With Weight In Lbs", func(t *testing.T) {
 		response := e.POST("/api/v1/session-exercises/"+exerciseLogID+"/sets").
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"actual_reps":      5,
-				"actual_weight_kg": 225.0,
-				"weight_unit":      "lb",
+				"actual_reps": 5,
+				"actual_weight": map[string]interface{}{
+					"weight_value": 225.0,
+					"weight_unit":  "lb",
+				},
 			}).
 			Expect().
 			Status(201).
@@ -972,8 +994,10 @@ func testSessionExerciseOperations(t *testing.T, e *httpexpect.Expect) {
 		response.Value("success").Boolean().IsTrue()
 		data := response.Value("data").Object()
 		data.Value("set_number").Number().IsEqual(5)
-		// 225 lbs ≈ 102.06 kg
-		data.Value("actual_weight_kg").Number().InDelta(102.06, 1.0)
+		// 225 lbs ≈ 102.06 kg, response should be in kg (user preference)
+		actualWeight := data.Value("actual_weight").Object()
+		actualWeight.Value("weight_value").Number().InDelta(102.06, 1.0)
+		actualWeight.Value("weight_unit").String().IsEqual("kg")
 	})
 
 	t.Run("Invalid Exercise ID Returns 404", func(t *testing.T) {
@@ -1171,8 +1195,11 @@ func testSessionLoggingAuthorization(t *testing.T, e *httpexpect.Expect) {
 		e.POST("/api/v1/session-exercises/"+exerciseLogID+"/sets").
 			WithHeader("Authorization", "Bearer "+user2Token).
 			WithJSON(map[string]interface{}{
-				"actual_reps":      10,
-				"actual_weight_kg": 50.0,
+				"actual_reps": 10,
+				"actual_weight": map[string]interface{}{
+					"weight_value": 50.0,
+					"weight_unit":  "kg",
+				},
 			}).
 			Expect().
 			Status(403)
