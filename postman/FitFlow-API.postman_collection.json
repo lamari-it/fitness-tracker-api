@@ -1904,7 +1904,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"date_of_birth\": \"1990-05-15\",\n  \"gender\": \"male\",\n  \"height_cm\": 180.5,\n  \"current_weight_kg\": 80,\n  \"fitness_goal_ids\": [\"{{fitness_goal_muscle_gain_id}}\", \"{{fitness_goal_strength_id}}\"],\n  \"preferred_weight_unit\": \"kg\",\n  \"target_weight_kg\": 85,\n  \"target_weekly_workouts\": 4,\n  \"activity_level\": \"active\",\n  \"training_locations\": [\"gym\", \"home\"],\n  \"preferred_workout_duration_mins\": 60,\n  \"available_days\": [\"monday\", \"wednesday\", \"friday\", \"saturday\"],\n  \"health_conditions\": \"None\",\n  \"injuries_notes\": \"Minor shoulder strain - recovering\"\n}"
+              "raw": "{\n  \"date_of_birth\": \"1990-05-15\",\n  \"gender\": \"male\",\n  \"height_cm\": 180.5,\n  \"current_weight\": {\n    \"weight_value\": 80,\n    \"weight_unit\": \"kg\"\n  },\n  \"fitness_goal_ids\": [\"{{fitness_goal_muscle_gain_id}}\", \"{{fitness_goal_strength_id}}\"],\n  \"preferred_weight_unit\": \"kg\",\n  \"target_weight\": {\n    \"weight_value\": 85,\n    \"weight_unit\": \"kg\"\n  },\n  \"target_weekly_workouts\": 4,\n  \"activity_level\": \"active\",\n  \"training_locations\": [\"gym\", \"home\"],\n  \"preferred_workout_duration_mins\": 60,\n  \"available_days\": [\"monday\", \"wednesday\", \"friday\", \"saturday\"],\n  \"health_conditions\": \"None\",\n  \"injuries_notes\": \"Minor shoulder strain - recovering\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/user/fitness-profile",
@@ -1918,7 +1918,7 @@
                 "fitness-profile"
               ]
             },
-            "description": "Create fitness profile for the authenticated user. Required fields: date_of_birth, gender, height_cm, current_weight_kg, fitness_goal_ids (array of UUID). Optional fields have defaults. First get fitness goal IDs from GET /fitness-goals endpoint."
+            "description": "Create fitness profile for the authenticated user. Required fields: date_of_birth, gender, height_cm, current_weight (with weight_value and weight_unit), fitness_goal_ids (array of UUID). Optional fields have defaults. First get fitness goal IDs from GET /fitness-goals endpoint."
           },
           "response": []
         },
@@ -1964,7 +1964,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"current_weight_kg\": 82,\n  \"fitness_goal_ids\": [\"{{fitness_goal_strength_id}}\"],\n  \"target_weekly_workouts\": 5,\n  \"activity_level\": \"very_active\",\n  \"training_locations\": [\"gym\"],\n  \"available_days\": [\"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\"]\n}"
+              "raw": "{\n  \"current_weight\": {\n    \"weight_value\": 82,\n    \"weight_unit\": \"kg\"\n  },\n  \"fitness_goal_ids\": [\"{{fitness_goal_strength_id}}\"],\n  \"target_weekly_workouts\": 5,\n  \"activity_level\": \"very_active\",\n  \"training_locations\": [\"gym\"],\n  \"available_days\": [\"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\"]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/user/fitness-profile",
@@ -2024,7 +2024,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"weight_kg\": 81.5\n}"
+              "raw": "{\n  \"weight\": {\n    \"weight_value\": 81.5,\n    \"weight_unit\": \"kg\"\n  }\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/user/fitness-profile/log-weight",
@@ -2039,7 +2039,7 @@
                 "log-weight"
               ]
             },
-            "description": "Quick endpoint to log current weight (updates current_weight_kg in fitness profile)"
+            "description": "Quick endpoint to log current weight (updates current_weight (with weight_value and weight_unit) in fitness profile)"
           },
           "response": []
         }
@@ -2061,7 +2061,7 @@
                   "    pm.environment.set('weight_log_id', jsonData.data.id);",
                   "    pm.test('Weight log created successfully', function () {",
                   "        pm.expect(jsonData.data.id).to.be.a('string');",
-                  "        pm.expect(jsonData.data.weight_kg).to.be.a('number');",
+                  "        pm.expect(jsonData.data.weight (with weight_value and weight_unit)).to.be.a('number');",
                   "    });",
                   "}"
                 ],
@@ -2083,7 +2083,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"weight_kg\": 80.5,\n  \"notes\": \"Morning weigh-in\"\n}"
+              "raw": "{\n  \"weight\": {\n    \"weight_value\": 80.5,\n    \"weight_unit\": \"kg\"\n  },\n  \"notes\": \"Morning weigh-in\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/user/weight-logs",
@@ -2097,7 +2097,7 @@
                 "weight-logs"
               ]
             },
-            "description": "Create a new weight log entry. Also updates current_weight_kg in fitness profile if one exists."
+            "description": "Create a new weight log entry. Also updates current_weight (with weight_value and weight_unit) in fitness profile if one exists."
           },
           "response": []
         },
@@ -2194,7 +2194,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"weight_kg\": 80.0,\n  \"notes\": \"Updated notes\"\n}"
+              "raw": "{\n  \"weight\": {\n    \"weight_value\": 80.0,\n    \"weight_unit\": \"kg\"\n  },\n  \"notes\": \"Updated notes\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/user/weight-logs/{{weight_log_id}}",
@@ -3204,7 +3204,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"straight\",\n  \"group_order\": 1,\n  \"group_name\": \"Bench Press\",\n  \"rest_between_sets\": 120,\n  \"group_notes\": \"Focus on controlled movement\",\n  \"exercises\": [\n    {\n      \"exercise_id\": \"{{exercise_id}}\",\n      \"exercise_order\": 1,\n      \"sets\": 4,\n      \"reps\": 8,\n      \"weight_kg\": 60.0,\n      \"rpe_value_id\": \"{{rpe_value_id}}\",\n      \"notes\": \"Warm up first\"\n    }\n  ]\n}"
+              "raw": "{\n  \"type\": \"straight\",\n  \"group_order\": 1,\n  \"group_name\": \"Bench Press\",\n  \"rest_between_sets\": 120,\n  \"group_notes\": \"Focus on controlled movement\",\n  \"exercises\": [\n    {\n      \"exercise_id\": \"{{exercise_id}}\",\n      \"exercise_order\": 1,\n      \"sets\": 4,\n      \"reps\": 8,\n      \"weight\": {\n    \"weight_value\": 60.0,\n    \"weight_unit\": \"kg\"\n  },\n      \"rpe_value_id\": \"{{rpe_value_id}}\",\n      \"notes\": \"Warm up first\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions",
@@ -3299,7 +3299,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"pyramid\",\n  \"group_name\": \"Heavy Bench Press\",\n  \"rest_between_sets\": 180,\n  \"exercises\": [\n    {\n      \"exercise_id\": \"{{exercise_id}}\",\n      \"exercise_order\": 1,\n      \"sets\": 5,\n      \"reps\": 5,\n      \"weight_kg\": 80.0,\n      \"rpe_value_id\": \"{{rpe_value_id}}\"\n    }\n  ]\n}"
+              "raw": "{\n  \"type\": \"pyramid\",\n  \"group_name\": \"Heavy Bench Press\",\n  \"rest_between_sets\": 180,\n  \"exercises\": [\n    {\n      \"exercise_id\": \"{{exercise_id}}\",\n      \"exercise_order\": 1,\n      \"sets\": 5,\n      \"reps\": 5,\n      \"weight\": {\n    \"weight_value\": 80.0,\n    \"weight_unit\": \"kg\"\n  },\n      \"rpe_value_id\": \"{{rpe_value_id}}\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions/{{prescription_group_id}}",
@@ -3351,7 +3351,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"exercise_id\": \"{{exercise_id}}\",\n  \"sets\": 3,\n  \"reps\": 12,\n  \"weight_kg\": 40.0,\n  \"rpe_value_id\": \"{{rpe_value_id}}\"\n}"
+              "raw": "{\n  \"exercise_id\": \"{{exercise_id}}\",\n  \"sets\": 3,\n  \"reps\": 12,\n  \"weight\": {\n    \"weight_value\": 40.0,\n    \"weight_unit\": \"kg\"\n  },\n  \"rpe_value_id\": \"{{rpe_value_id}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions/{{prescription_group_id}}/exercises",
@@ -3501,7 +3501,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"straight\",\n  \"group_order\": 2,\n  \"group_name\": \"Core Holds\",\n  \"rest_between_sets\": 60,\n  \"group_notes\": \"Focus on maintaining proper form\",\n  \"exercises\": [\n    {\n      \"exercise_id\": \"{{exercise_id}}\",\n      \"exercise_order\": 1,\n      \"sets\": 3,\n      \"hold_seconds\": 60,\n      \"weight_kg\": 0,\n      \"notes\": \"Keep core tight\"\n    }\n  ]\n}"
+              "raw": "{\n  \"type\": \"straight\",\n  \"group_order\": 2,\n  \"group_name\": \"Core Holds\",\n  \"rest_between_sets\": 60,\n  \"group_notes\": \"Focus on maintaining proper form\",\n  \"exercises\": [\n    {\n      \"exercise_id\": \"{{exercise_id}}\",\n      \"exercise_order\": 1,\n      \"sets\": 3,\n      \"hold_seconds\": 60,\n      \"weight\": {\n    \"weight_value\": 0,\n    \"weight_unit\": \"kg\"\n  },\n      \"notes\": \"Keep core tight\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}/prescriptions",
@@ -6270,7 +6270,7 @@
                   "                    exercise_order: 1,",
                   "                    sets: 3,",
                   "                    reps: 10,",
-                  "                    target_weight_kg: 50.0",
+                  "                    target_weight (with weight_value and weight_unit): 50.0",
                   "                }]",
                   "            })",
                   "        }",
@@ -6990,7 +6990,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"actual_reps\": 8,\n  \"actual_weight_kg\": 100.0\n}"
+              "raw": "{\n  \"actual_reps\": 8,\n  \"actual_weight\": {\n    \"weight_value\": 100.0,\n    \"weight_unit\": \"kg\"\n  }\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/session-exercises/{{session_exercise_id}}/sets",
@@ -7057,7 +7057,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"actual_reps\": 10,\n  \"actual_weight_kg\": 85.0,\n  \"was_failure\": false\n}"
+              "raw": "{\n  \"actual_reps\": 10,\n  \"actual_weight\": {\n    \"weight_value\": 85.0,\n    \"weight_unit\": \"kg\"\n  },\n  \"was_failure\": false\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/session-sets/{{session_set_id}}",
@@ -7091,7 +7091,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"actual_reps\": 5,\n  \"actual_weight_kg\": 225.0,\n  \"weight_unit\": \"lb\"\n}"
+              "raw": "{\n  \"actual_reps\": 5,\n  \"actual_weight\": {\n    \"weight_value\": 225.0,\n    \"weight_unit\": \"kg\"\n  },\n  \"weight_unit\": \"lb\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/session-sets/{{session_set_id}}",
@@ -7125,7 +7125,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"actual_reps\": 8,\n  \"actual_weight_kg\": 100.0\n}"
+              "raw": "{\n  \"actual_reps\": 8,\n  \"actual_weight\": {\n    \"weight_value\": 100.0,\n    \"weight_unit\": \"kg\"\n  }\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/session-sets/{{session_set_id}}/complete",
@@ -7171,7 +7171,7 @@
           "response": []
         }
       ],
-      "description": "Session set endpoints for logging individual sets within a session exercise.\n\n## Weight Handling\nAll weights are stored in kilograms (kg) as the canonical unit.\n\n### Request Fields\n- `actual_reps`: Number of reps performed\n- `actual_weight_kg`: Weight value (will be converted if weight_unit is 'lb')\n- `weight_unit`: Optional - 'kg' or 'lb'. If 'lb', the weight is converted to kg.\n- `actual_duration_seconds`: For timed/isometric exercises\n- `rpe_value_id`: Reference to RPE scale value\n- `was_failure`: Whether the set was taken to failure\n\n### Response Fields\n- `actual_weight_kg`: Weight in kilograms\n- `actual_weight_display`: Converted weight for display\n- `actual_weight_unit`: Display unit ('kg' or 'lb')"
+      "description": "Session set endpoints for logging individual sets within a session exercise.\n\n## Weight Handling\nAll weights are stored in kilograms (kg) as the canonical unit.\n\n### Request Fields\n- `actual_reps`: Number of reps performed\n- `actual_weight (with weight_value and weight_unit)`: Weight value (will be converted if weight_unit is 'lb')\n- `weight_unit`: Optional - 'kg' or 'lb'. If 'lb', the weight is converted to kg.\n- `actual_duration_seconds`: For timed/isometric exercises\n- `rpe_value_id`: Reference to RPE scale value\n- `was_failure`: Whether the set was taken to failure\n\n### Response Fields\n- `actual_weight (with weight_value and weight_unit)`: Weight in kilograms\n- `actual_weight_display`: Converted weight for display\n- `actual_weight_unit`: Display unit ('kg' or 'lb')"
     }
   ],
   "event": [
