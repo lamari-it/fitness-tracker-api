@@ -1526,4 +1526,3 @@ func testIsometricHoldSupport(t *testing.T, e *httpexpect.Expect) {
 		firstGroupExercises.Value(0).Object().Value("hold_seconds").Number().IsEqual(60)
 	})
 }
-

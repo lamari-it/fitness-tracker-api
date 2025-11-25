@@ -71,18 +71,18 @@ func (sb *SessionBlock) BeforeCreate(tx *gorm.DB) (err error) {
 
 // SessionExercise represents an exercise instance within a session block
 type SessionExercise struct {
-	ID              uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	SessionBlockID  uuid.UUID      `gorm:"type:uuid;not null;index" json:"session_block_id"`
-	PrescriptionID  *uuid.UUID     `gorm:"type:uuid;index" json:"prescription_id,omitempty"` // Reference to workout_prescriptions
-	ExerciseID      uuid.UUID      `gorm:"type:uuid;not null;index" json:"exercise_id"`
-	ExerciseOrder   int            `gorm:"not null" json:"exercise_order"`
-	StartedAt       *time.Time     `json:"started_at,omitempty"`
-	CompletedAt     *time.Time     `json:"completed_at,omitempty"`
-	Skipped         bool           `gorm:"default:false" json:"skipped"`
-	Notes           string         `gorm:"type:text" json:"notes"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
-	DeletedAt       gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID             uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	SessionBlockID uuid.UUID      `gorm:"type:uuid;not null;index" json:"session_block_id"`
+	PrescriptionID *uuid.UUID     `gorm:"type:uuid;index" json:"prescription_id,omitempty"` // Reference to workout_prescriptions
+	ExerciseID     uuid.UUID      `gorm:"type:uuid;not null;index" json:"exercise_id"`
+	ExerciseOrder  int            `gorm:"not null" json:"exercise_order"`
+	StartedAt      *time.Time     `json:"started_at,omitempty"`
+	CompletedAt    *time.Time     `json:"completed_at,omitempty"`
+	Skipped        bool           `gorm:"default:false" json:"skipped"`
+	Notes          string         `gorm:"type:text" json:"notes"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relations
 	SessionBlock SessionBlock         `gorm:"foreignKey:SessionBlockID;constraint:OnDelete:CASCADE" json:"session_block,omitempty"`
