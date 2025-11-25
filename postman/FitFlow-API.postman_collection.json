@@ -1827,6 +1827,106 @@
       "description": "Fitness goal management endpoints"
     },
     {
+      "name": "User Settings",
+      "item": [
+        {
+          "name": "Get User Settings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('User settings retrieved successfully', function () {",
+                  "        pm.expect(jsonData.data.preferred_weight_unit).to.be.oneOf(['kg', 'lb']);",
+                  "        pm.expect(jsonData.data.preferred_height_unit).to.be.oneOf(['cm', 'ft']);",
+                  "        pm.expect(jsonData.data.preferred_distance_unit).to.be.oneOf(['km', 'mi']);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/settings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "settings"
+              ]
+            },
+            "description": "Get current user's settings including unit preferences (weight, height, distance)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Settings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('User settings updated successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferred_weight_unit\": \"lb\",\n  \"preferred_height_unit\": \"ft\",\n  \"preferred_distance_unit\": \"mi\",\n  \"first_name\": \"Updated\",\n  \"last_name\": \"Name\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/settings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "settings"
+              ]
+            },
+            "description": "Update user settings. All fields are optional. Valid values: preferred_weight_unit (kg, lb), preferred_height_unit (cm, ft), preferred_distance_unit (km, mi)"
+          },
+          "response": []
+        }
+      ],
+      "description": "User settings and preferences endpoints"
+    },
+    {
       "name": "User Fitness Settings",
       "item": [
         {

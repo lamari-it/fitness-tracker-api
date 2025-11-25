@@ -56,6 +56,15 @@ type UserResponse struct {
 	UpdatedAt             time.Time             `json:"updated_at"`
 }
 
+// UpdateUserSettingsRequest is used for updating user preferences
+type UpdateUserSettingsRequest struct {
+	PreferredWeightUnit   string `json:"preferred_weight_unit" binding:"omitempty,oneof=kg lb"`
+	PreferredHeightUnit   string `json:"preferred_height_unit" binding:"omitempty,oneof=cm ft"`
+	PreferredDistanceUnit string `json:"preferred_distance_unit" binding:"omitempty,oneof=km mi"`
+	FirstName             string `json:"first_name" binding:"omitempty,min=1,max=100"`
+	LastName              string `json:"last_name" binding:"omitempty,min=1,max=100"`
+}
+
 func (u *User) ToResponse() UserResponse {
 	response := UserResponse{
 		ID:                    u.ID,

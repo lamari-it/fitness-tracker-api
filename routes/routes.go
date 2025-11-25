@@ -121,6 +121,13 @@ func SetupRoutes(r *gin.Engine) {
 				fitnessGoals.DELETE("/:id", controllers.DeleteFitnessGoal)
 			}
 
+			// User Settings
+			userSettings := protected.Group("/user/settings")
+			{
+				userSettings.GET("", controllers.GetUserSettings)
+				userSettings.PUT("", controllers.UpdateUserSettings)
+			}
+
 			// User Fitness Settings
 			userFitness := protected.Group("/user/fitness")
 			{
