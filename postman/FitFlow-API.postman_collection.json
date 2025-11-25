@@ -1960,7 +1960,7 @@
                 "level"
               ]
             },
-            "description": "Set user's fitness level"
+            "description": "Set user's fitness level. Note: This updates the fitness_level_id on the user's fitness profile. A fitness profile must exist first."
           },
           "response": []
         }
@@ -2004,7 +2004,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"date_of_birth\": \"1990-05-15\",\n  \"gender\": \"male\",\n  \"height_cm\": 180.5,\n  \"current_weight\": {\n    \"weight_value\": 80,\n    \"weight_unit\": \"kg\"\n  },\n  \"fitness_goal_ids\": [\"{{fitness_goal_muscle_gain_id}}\", \"{{fitness_goal_strength_id}}\"],\n  \"preferred_weight_unit\": \"kg\",\n  \"target_weight\": {\n    \"weight_value\": 85,\n    \"weight_unit\": \"kg\"\n  },\n  \"target_weekly_workouts\": 4,\n  \"activity_level\": \"active\",\n  \"training_locations\": [\"gym\", \"home\"],\n  \"preferred_workout_duration_mins\": 60,\n  \"available_days\": [\"monday\", \"wednesday\", \"friday\", \"saturday\"],\n  \"health_conditions\": \"None\",\n  \"injuries_notes\": \"Minor shoulder strain - recovering\"\n}"
+              "raw": "{\n  \"date_of_birth\": \"1990-05-15\",\n  \"gender\": \"male\",\n  \"height_cm\": 180.5,\n  \"current_weight\": {\n    \"weight_value\": 80,\n    \"weight_unit\": \"kg\"\n  },\n  \"fitness_goal_ids\": [\"{{fitness_goal_muscle_gain_id}}\", \"{{fitness_goal_strength_id}}\"],\n  \"fitness_level_id\": \"{{fitness_level_id}}\",\n  \"target_weight\": {\n    \"weight_value\": 85,\n    \"weight_unit\": \"kg\"\n  },\n  \"target_weekly_workouts\": 4,\n  \"activity_level\": \"active\",\n  \"training_locations\": [\"gym\", \"home\"],\n  \"preferred_workout_duration_mins\": 60,\n  \"available_days\": [\"monday\", \"wednesday\", \"friday\", \"saturday\"],\n  \"health_conditions\": \"None\",\n  \"injuries_notes\": \"Minor shoulder strain - recovering\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/user/fitness-profile",
@@ -2064,7 +2064,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"current_weight\": {\n    \"weight_value\": 82,\n    \"weight_unit\": \"kg\"\n  },\n  \"fitness_goal_ids\": [\"{{fitness_goal_strength_id}}\"],\n  \"target_weekly_workouts\": 5,\n  \"activity_level\": \"very_active\",\n  \"training_locations\": [\"gym\"],\n  \"available_days\": [\"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\"]\n}"
+              "raw": "{\n  \"current_weight\": {\n    \"weight_value\": 82,\n    \"weight_unit\": \"kg\"\n  },\n  \"fitness_goal_ids\": [\"{{fitness_goal_strength_id}}\"],\n  \"fitness_level_id\": \"{{fitness_level_id}}\",\n  \"target_weekly_workouts\": 5,\n  \"activity_level\": \"very_active\",\n  \"training_locations\": [\"gym\"],\n  \"available_days\": [\"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\"]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/user/fitness-profile",
