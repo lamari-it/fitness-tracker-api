@@ -6,7 +6,6 @@ import (
 	"fit-flow-api/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // CreateEquipment creates a new equipment item
@@ -98,9 +97,8 @@ func GetEquipmentByID(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	id, ok := utils.ParseUUID(c, params.ID, "equipment")
+	if !ok {
 		return
 	}
 
@@ -138,9 +136,8 @@ func UpdateEquipment(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	id, ok := utils.ParseUUID(c, params.ID, "equipment")
+	if !ok {
 		return
 	}
 
@@ -206,9 +203,8 @@ func DeleteEquipment(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	id, ok := utils.ParseUUID(c, params.ID, "equipment")
+	if !ok {
 		return
 	}
 
@@ -236,10 +232,8 @@ func DeleteEquipment(c *gin.Context) {
 
 // AssignEquipmentToExercise assigns equipment to an exercise
 func AssignEquipmentToExercise(c *gin.Context) {
-	exerciseIDStr := c.Param("exercise_id")
-	exerciseID, err := uuid.Parse(exerciseIDStr)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid exercise UUID format", nil)
+	exerciseID, ok := utils.ParseUUIDParam(c, "exercise_id", "exercise")
+	if !ok {
 		return
 	}
 
@@ -291,17 +285,13 @@ func AssignEquipmentToExercise(c *gin.Context) {
 
 // RemoveEquipmentFromExercise removes equipment from an exercise
 func RemoveEquipmentFromExercise(c *gin.Context) {
-	exerciseIDStr := c.Param("exercise_id")
-	exerciseID, err := uuid.Parse(exerciseIDStr)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid exercise UUID format", nil)
+	exerciseID, ok := utils.ParseUUIDParam(c, "exercise_id", "exercise")
+	if !ok {
 		return
 	}
 
-	equipmentIDStr := c.Param("equipment_id")
-	equipmentID, err := uuid.Parse(equipmentIDStr)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid equipment UUID format", nil)
+	equipmentID, ok := utils.ParseUUIDParam(c, "equipment_id", "equipment")
+	if !ok {
 		return
 	}
 
@@ -322,11 +312,8 @@ func RemoveEquipmentFromExercise(c *gin.Context) {
 
 // GetExerciseEquipment gets all equipment for an exercise
 func GetExerciseEquipment(c *gin.Context) {
-	var params struct {
-		ExerciseID string `uri:"exercise_id" binding:"required,uuid"`
-	}
-	if err := c.ShouldBindUri(&params); err != nil {
-		utils.HandleBindingError(c, err)
+	exerciseID, ok := utils.ParseUUIDParam(c, "exercise_id", "exercise")
+	if !ok {
 		return
 	}
 
@@ -338,12 +325,6 @@ func GetExerciseEquipment(c *gin.Context) {
 
 	// Set default pagination values
 	SetDefaultPagination(&queryParams)
-
-	exerciseID, err := uuid.Parse(params.ExerciseID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid exercise UUID format", nil)
-		return
-	}
 
 	offset := (queryParams.Page - 1) * queryParams.Limit
 

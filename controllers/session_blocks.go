@@ -1,10 +1,11 @@
 package controllers
 
 import (
+	"time"
+
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -18,14 +19,13 @@ func GetSessionBlock(c *gin.Context) {
 		return
 	}
 
-	blockID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	blockID, ok := utils.ParseUUID(c, params.ID, "session block")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -59,14 +59,13 @@ func CompleteSessionBlock(c *gin.Context) {
 		return
 	}
 
-	blockID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	blockID, ok := utils.ParseUUID(c, params.ID, "session block")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -112,14 +111,13 @@ func SkipSessionBlock(c *gin.Context) {
 		return
 	}
 
-	blockID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	blockID, ok := utils.ParseUUID(c, params.ID, "session block")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -164,14 +162,13 @@ func UpdateSessionBlockRPE(c *gin.Context) {
 		return
 	}
 
-	blockID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	blockID, ok := utils.ParseUUID(c, params.ID, "session block")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -216,32 +213,21 @@ func UpdateSessionBlockRPE(c *gin.Context) {
 
 // Helper functions
 
-func getAuthUserID(c *gin.Context) (uuid.UUID, error) {
-	authUserIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return uuid.Nil, nil
-	}
-
-	authUserID, ok := authUserIDVal.(uuid.UUID)
-	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
-		return uuid.Nil, nil
-	}
-
-	return authUserID, nil
-}
-
+// isAuthorizedForSession checks if user owns or created the session.
 func isAuthorizedForSession(session models.WorkoutSession, authUserID uuid.UUID) bool {
 	isOwner := session.UserID == authUserID
 	isCreator := session.CreatedByID != nil && *session.CreatedByID == authUserID
 	return isOwner || isCreator
 }
 
+// getUserPreferredWeightUnit retrieves user's preferred weight unit.
 func getUserPreferredWeightUnit(c *gin.Context, userID uuid.UUID) string {
 	var user models.User
 	if err := database.DB.Select("preferred_weight_unit").First(&user, "id = ?", userID).Error; err != nil {
 		return "kg" // default fallback
+	}
+	if user.PreferredWeightUnit == "" {
+		return "kg"
 	}
 	return user.PreferredWeightUnit
 }

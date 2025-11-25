@@ -192,7 +192,10 @@ func GetExercise(c *gin.Context) {
 		return
 	}
 
-	exerciseID, _ := uuid.Parse(params.ID)
+	exerciseID, ok := utils.ParseUUID(c, params.ID, "exercise")
+	if !ok {
+		return
+	}
 
 	var exercise models.Exercise
 	if err := database.DB.Where("id = ?", exerciseID).
@@ -226,9 +229,8 @@ func GetExerciseBySlug(c *gin.Context) {
 }
 
 func UpdateExercise(c *gin.Context) {
-	exerciseID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
+	exerciseID, ok := utils.ParseUUIDParam(c, "id", "exercise")
+	if !ok {
 		return
 	}
 
@@ -273,9 +275,8 @@ func UpdateExercise(c *gin.Context) {
 }
 
 func DeleteExercise(c *gin.Context) {
-	exerciseID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
+	exerciseID, ok := utils.ParseUUIDParam(c, "id", "exercise")
+	if !ok {
 		return
 	}
 

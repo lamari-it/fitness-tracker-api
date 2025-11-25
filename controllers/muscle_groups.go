@@ -100,9 +100,8 @@ func GetMuscleGroup(c *gin.Context) {
 		return
 	}
 
-	muscleGroupID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
+	muscleGroupID, ok := utils.ParseUUID(c, params.ID, "muscle group")
+	if !ok {
 		return
 	}
 
@@ -141,9 +140,8 @@ func UpdateMuscleGroup(c *gin.Context) {
 		return
 	}
 
-	muscleGroupID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
+	muscleGroupID, ok := utils.ParseUUID(c, params.ID, "muscle group")
+	if !ok {
 		return
 	}
 
@@ -189,9 +187,8 @@ func DeleteMuscleGroup(c *gin.Context) {
 		return
 	}
 
-	muscleGroupID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
+	muscleGroupID, ok := utils.ParseUUID(c, params.ID, "muscle group")
+	if !ok {
 		return
 	}
 
@@ -224,9 +221,8 @@ func AssignMuscleGroupToExercise(c *gin.Context) {
 		return
 	}
 
-	exerciseID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
+	exerciseID, ok := utils.ParseUUID(c, params.ID, "exercise")
+	if !ok {
 		return
 	}
 
@@ -292,24 +288,13 @@ func AssignMuscleGroupToExercise(c *gin.Context) {
 }
 
 func RemoveMuscleGroupFromExercise(c *gin.Context) {
-	var params struct {
-		ID            string `uri:"id" binding:"required,uuid"`
-		MuscleGroupID string `uri:"muscle_group_id" binding:"required,uuid"`
-	}
-	if err := c.ShouldBindUri(&params); err != nil {
-		utils.HandleBindingError(c, err)
+	exerciseID, ok := utils.ParseUUIDParam(c, "id", "exercise")
+	if !ok {
 		return
 	}
 
-	exerciseID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
-		return
-	}
-
-	muscleGroupID, err := uuid.Parse(params.MuscleGroupID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid muscle group ID.", nil)
+	muscleGroupID, ok := utils.ParseUUIDParam(c, "muscle_group_id", "muscle group")
+	if !ok {
 		return
 	}
 
@@ -334,9 +319,8 @@ func GetExerciseMuscleGroups(c *gin.Context) {
 		return
 	}
 
-	exerciseID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid exercise ID.", nil)
+	exerciseID, ok := utils.ParseUUID(c, params.ID, "exercise")
+	if !ok {
 		return
 	}
 

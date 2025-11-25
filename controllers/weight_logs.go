@@ -9,20 +9,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // CreateWeightLog creates a new weight log entry
 func CreateWeightLog(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -53,15 +45,8 @@ func CreateWeightLog(c *gin.Context) {
 
 // GetWeightLogs retrieves weight history with pagination and date filtering
 func GetWeightLogs(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -113,21 +98,13 @@ func GetWeightLogs(c *gin.Context) {
 
 // GetWeightLog retrieves a specific weight log entry
 func GetWeightLog(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
-	logID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid weight log ID", nil)
+	logID, ok := utils.ParseUUID(c, c.Param("id"), "weight log")
+	if !ok {
 		return
 	}
 
@@ -142,21 +119,13 @@ func GetWeightLog(c *gin.Context) {
 
 // UpdateWeightLog updates a weight log entry (only within 24 hours of creation)
 func UpdateWeightLog(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
-	logID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid weight log ID", nil)
+	logID, ok := utils.ParseUUID(c, c.Param("id"), "weight log")
+	if !ok {
 		return
 	}
 
@@ -196,21 +165,13 @@ func UpdateWeightLog(c *gin.Context) {
 
 // DeleteWeightLog deletes a weight log entry (soft delete)
 func DeleteWeightLog(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
-	logID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid weight log ID", nil)
+	logID, ok := utils.ParseUUID(c, c.Param("id"), "weight log")
+	if !ok {
 		return
 	}
 
@@ -230,15 +191,8 @@ func DeleteWeightLog(c *gin.Context) {
 
 // GetWeightStats retrieves weight statistics for a given period
 func GetWeightStats(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 

@@ -6,7 +6,6 @@ import (
 	"fit-flow-api/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // GetSessionSet retrieves a single session set
@@ -17,14 +16,13 @@ func GetSessionSet(c *gin.Context) {
 		return
 	}
 
-	setID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	setID, ok := utils.ParseUUID(c, params.ID, "session set")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -57,14 +55,13 @@ func UpdateSessionSet(c *gin.Context) {
 		return
 	}
 
-	setID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	setID, ok := utils.ParseUUID(c, params.ID, "session set")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -143,14 +140,13 @@ func CompleteSessionSet(c *gin.Context) {
 		return
 	}
 
-	setID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	setID, ok := utils.ParseUUID(c, params.ID, "session set")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -226,14 +222,13 @@ func DeleteSessionSet(c *gin.Context) {
 		return
 	}
 
-	setID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	setID, ok := utils.ParseUUID(c, params.ID, "session set")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 

@@ -6,7 +6,6 @@ import (
 	"fit-flow-api/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type SendFriendRequestRequest struct {
@@ -14,9 +13,8 @@ type SendFriendRequestRequest struct {
 }
 
 func SendFriendRequest(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -32,7 +30,7 @@ func SendFriendRequest(c *gin.Context) {
 		return
 	}
 
-	if friend.ID == userID.(uuid.UUID) {
+	if friend.ID == userID {
 		utils.BadRequestResponse(c, "Cannot send friend request to yourself.", nil)
 		return
 	}
@@ -45,7 +43,7 @@ func SendFriendRequest(c *gin.Context) {
 	}
 
 	friendship := models.Friendship{
-		UserID:   userID.(uuid.UUID),
+		UserID:   userID,
 		FriendID: friend.ID,
 		Status:   "pending",
 	}
@@ -61,9 +59,8 @@ func SendFriendRequest(c *gin.Context) {
 }
 
 func GetFriendRequests(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -112,15 +109,13 @@ func GetFriendRequests(c *gin.Context) {
 }
 
 func RespondToFriendRequest(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
-	requestID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid request ID.", nil)
+	requestID, ok := utils.ParseUUID(c, c.Param("id"), "request")
+	if !ok {
 		return
 	}
 
@@ -154,9 +149,8 @@ func RespondToFriendRequest(c *gin.Context) {
 }
 
 func GetFriends(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -202,7 +196,7 @@ func GetFriends(c *gin.Context) {
 			UpdatedAt: friendship.UpdatedAt,
 		}
 
-		if friendship.UserID == userID.(uuid.UUID) {
+		if friendship.UserID == userID {
 			response.Friend = friendship.Friend.ToResponse()
 		} else {
 			response.Friend = friendship.User.ToResponse()
@@ -215,15 +209,13 @@ func GetFriends(c *gin.Context) {
 }
 
 func RemoveFriend(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
-	friendshipID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid friendship ID.", nil)
+	friendshipID, ok := utils.ParseUUID(c, c.Param("id"), "friendship")
+	if !ok {
 		return
 	}
 

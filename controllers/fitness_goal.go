@@ -1,13 +1,12 @@
 package controllers
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
-
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // GetAllFitnessGoals retrieves all fitness goals
@@ -56,9 +55,8 @@ func GetFitnessGoal(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid ID format.", nil)
+	id, ok := utils.ParseUUID(c, params.ID, "fitness goal")
+	if !ok {
 		return
 	}
 
@@ -77,10 +75,7 @@ func GetFitnessGoal(c *gin.Context) {
 
 // CreateFitnessGoal creates a new fitness goal (admin only)
 func CreateFitnessGoal(c *gin.Context) {
-	// Check if user is admin
-	user, exists := c.Get("user")
-	if !exists || !user.(models.User).IsAdmin {
-		utils.ForbiddenResponse(c, "Admin access required.")
+	if !utils.RequireAdmin(c) {
 		return
 	}
 
@@ -112,10 +107,7 @@ func CreateFitnessGoal(c *gin.Context) {
 
 // UpdateFitnessGoal updates an existing fitness goal (admin only)
 func UpdateFitnessGoal(c *gin.Context) {
-	// Check if user is admin
-	user, exists := c.Get("user")
-	if !exists || !user.(models.User).IsAdmin {
-		utils.ForbiddenResponse(c, "Admin access required.")
+	if !utils.RequireAdmin(c) {
 		return
 	}
 
@@ -125,9 +117,8 @@ func UpdateFitnessGoal(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid ID format.", nil)
+	id, ok := utils.ParseUUID(c, params.ID, "fitness goal")
+	if !ok {
 		return
 	}
 
@@ -176,10 +167,7 @@ func UpdateFitnessGoal(c *gin.Context) {
 
 // DeleteFitnessGoal deletes a fitness goal (admin only)
 func DeleteFitnessGoal(c *gin.Context) {
-	// Check if user is admin
-	user, exists := c.Get("user")
-	if !exists || !user.(models.User).IsAdmin {
-		utils.ForbiddenResponse(c, "Admin access required.")
+	if !utils.RequireAdmin(c) {
 		return
 	}
 
@@ -189,9 +177,8 @@ func DeleteFitnessGoal(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid ID format.", nil)
+	id, ok := utils.ParseUUID(c, params.ID, "fitness goal")
+	if !ok {
 		return
 	}
 

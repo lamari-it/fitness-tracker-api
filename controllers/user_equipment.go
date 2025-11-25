@@ -11,9 +11,8 @@ import (
 
 // GetUserEquipment gets all equipment for the authenticated user
 func GetUserEquipment(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
-		utils.UnauthorizedResponse(c, "Authentication required.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -56,9 +55,8 @@ func GetUserEquipment(c *gin.Context) {
 
 // AddUserEquipment adds equipment to user's inventory
 func AddUserEquipment(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
-		utils.UnauthorizedResponse(c, "Authentication required.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -87,7 +85,7 @@ func AddUserEquipment(c *gin.Context) {
 
 	// Create user equipment entry
 	userEquipment := models.UserEquipment{
-		UserID:       userID.(uuid.UUID),
+		UserID:       userID,
 		EquipmentID:  req.EquipmentID,
 		LocationType: req.LocationType,
 		GymLocation:  req.GymLocation,
@@ -112,9 +110,8 @@ func AddUserEquipment(c *gin.Context) {
 
 // UpdateUserEquipment updates user's equipment details
 func UpdateUserEquipment(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
-		utils.UnauthorizedResponse(c, "Authentication required.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -124,9 +121,8 @@ func UpdateUserEquipment(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid ID format.", nil)
+	id, ok := utils.ParseUUID(c, params.ID, "user equipment")
+	if !ok {
 		return
 	}
 
@@ -183,9 +179,8 @@ func UpdateUserEquipment(c *gin.Context) {
 
 // RemoveUserEquipment removes equipment from user's inventory
 func RemoveUserEquipment(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
-		utils.UnauthorizedResponse(c, "Authentication required.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -195,9 +190,8 @@ func RemoveUserEquipment(c *gin.Context) {
 		return
 	}
 
-	id, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid ID format.", nil)
+	id, ok := utils.ParseUUID(c, params.ID, "user equipment")
+	if !ok {
 		return
 	}
 
@@ -218,9 +212,8 @@ func RemoveUserEquipment(c *gin.Context) {
 
 // GetUserEquipmentByLocation gets equipment filtered by location
 func GetUserEquipmentByLocation(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
-		utils.UnauthorizedResponse(c, "Authentication required.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -274,9 +267,8 @@ func GetUserEquipmentByLocation(c *gin.Context) {
 
 // BulkAddUserEquipment allows adding multiple equipment items at once
 func BulkAddUserEquipment(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
-		utils.UnauthorizedResponse(c, "Authentication required.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -322,7 +314,7 @@ func BulkAddUserEquipment(c *gin.Context) {
 		}
 
 		userEquipment := models.UserEquipment{
-			UserID:       userID.(uuid.UUID),
+			UserID:       userID,
 			EquipmentID:  item.EquipmentID,
 			LocationType: item.LocationType,
 			GymLocation:  item.GymLocation,

@@ -28,9 +28,8 @@ type UpdateEnrollmentRequest struct {
 }
 
 func EnrollInPlan(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -90,7 +89,7 @@ func EnrollInPlan(c *gin.Context) {
 
 	enrollment := models.PlanEnrollment{
 		PlanID:            req.PlanID,
-		UserID:            userID.(uuid.UUID),
+		UserID:            userID,
 		StartDate:         startDate,
 		DaysPerWeek:       req.DaysPerWeek,
 		ScheduleMode:      scheduleMode,
@@ -108,9 +107,8 @@ func EnrollInPlan(c *gin.Context) {
 }
 
 func GetUserEnrollments(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -154,18 +152,13 @@ func GetUserEnrollments(c *gin.Context) {
 }
 
 func GetEnrollment(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
-	enrollmentID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid enrollment ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	enrollmentID, ok := utils.ParseUUID(c, c.Param("id"), "enrollment")
+	if !ok {
 		return
 	}
 
@@ -179,18 +172,13 @@ func GetEnrollment(c *gin.Context) {
 }
 
 func UpdateEnrollment(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
-	enrollmentID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid enrollment ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	enrollmentID, ok := utils.ParseUUID(c, c.Param("id"), "enrollment")
+	if !ok {
 		return
 	}
 
@@ -251,18 +239,13 @@ func UpdateEnrollment(c *gin.Context) {
 }
 
 func CancelEnrollment(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
-	enrollmentID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid enrollment ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	enrollmentID, ok := utils.ParseUUID(c, c.Param("id"), "enrollment")
+	if !ok {
 		return
 	}
 

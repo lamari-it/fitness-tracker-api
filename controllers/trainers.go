@@ -6,21 +6,13 @@ import (
 	"fit-flow-api/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 // CreateTrainerProfile creates a new trainer profile for the authenticated user
 func CreateTrainerProfile(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -81,15 +73,8 @@ func CreateTrainerProfile(c *gin.Context) {
 
 // GetTrainerProfile retrieves the authenticated user's trainer profile
 func GetTrainerProfile(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -104,15 +89,8 @@ func GetTrainerProfile(c *gin.Context) {
 
 // UpdateTrainerProfile updates the authenticated user's trainer profile
 func UpdateTrainerProfile(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -197,15 +175,8 @@ func UpdateTrainerProfile(c *gin.Context) {
 
 // DeleteTrainerProfile deletes the authenticated user's trainer profile
 func DeleteTrainerProfile(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -239,22 +210,14 @@ func GetTrainerPublicProfile(c *gin.Context) {
 		return
 	}
 
-	trainerID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	trainerID, ok := utils.ParseUUID(c, params.ID, "trainer")
+	if !ok {
 		return
 	}
 
 	// Get current user info for access control
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 

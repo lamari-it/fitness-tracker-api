@@ -1,13 +1,13 @@
 package controllers
 
 import (
+	"time"
+
 	"fit-flow-api/database"
 	"fit-flow-api/models"
 	"fit-flow-api/utils"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // GetSessionExercise retrieves a single session exercise
@@ -18,14 +18,13 @@ func GetSessionExercise(c *gin.Context) {
 		return
 	}
 
-	exerciseID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	exerciseID, ok := utils.ParseUUID(c, params.ID, "session exercise")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -59,14 +58,13 @@ func CompleteSessionExercise(c *gin.Context) {
 		return
 	}
 
-	exerciseID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	exerciseID, ok := utils.ParseUUID(c, params.ID, "session exercise")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -114,14 +112,13 @@ func SkipSessionExercise(c *gin.Context) {
 		return
 	}
 
-	exerciseID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	exerciseID, ok := utils.ParseUUID(c, params.ID, "session exercise")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -168,14 +165,13 @@ func UpdateSessionExerciseNotes(c *gin.Context) {
 		return
 	}
 
-	exerciseID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	exerciseID, ok := utils.ParseUUID(c, params.ID, "session exercise")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -228,14 +224,13 @@ func AddSetToExercise(c *gin.Context) {
 		return
 	}
 
-	exerciseID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	exerciseID, ok := utils.ParseUUID(c, params.ID, "session exercise")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 

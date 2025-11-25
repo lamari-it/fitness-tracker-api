@@ -15,8 +15,8 @@ import (
 // If workout_id is provided and the workout has prescriptions, automatically creates
 // session_blocks, session_exercises, and session_sets from the prescriptions
 func CreateWorkoutSession(c *gin.Context) {
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -200,14 +200,13 @@ func GetWorkoutSession(c *gin.Context) {
 		return
 	}
 
-	sessionID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	sessionID, ok := utils.ParseUUID(c, params.ID, "workout session")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -249,8 +248,8 @@ func GetWorkoutSession(c *gin.Context) {
 
 // GetWorkoutSessions lists workout sessions for the authenticated user
 func GetWorkoutSessions(c *gin.Context) {
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -259,9 +258,8 @@ func GetWorkoutSessions(c *gin.Context) {
 	var targetUserID uuid.UUID
 
 	if clientIDStr != "" {
-		clientID, err := uuid.Parse(clientIDStr)
-		if err != nil {
-			utils.BadRequestResponse(c, "Invalid client_id format", nil)
+		clientID, ok := utils.ParseUUID(c, clientIDStr, "client")
+		if !ok {
 			return
 		}
 
@@ -319,14 +317,13 @@ func EndWorkoutSession(c *gin.Context) {
 		return
 	}
 
-	sessionID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	sessionID, ok := utils.ParseUUID(c, params.ID, "workout session")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -392,14 +389,13 @@ func UpdateWorkoutSession(c *gin.Context) {
 		return
 	}
 
-	sessionID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	sessionID, ok := utils.ParseUUID(c, params.ID, "workout session")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -452,14 +448,13 @@ func DeleteWorkoutSession(c *gin.Context) {
 		return
 	}
 
-	sessionID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
+	sessionID, ok := utils.ParseUUID(c, params.ID, "workout session")
+	if !ok {
 		return
 	}
 
-	authUserID, err := getAuthUserID(c)
-	if err != nil {
+	authUserID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
