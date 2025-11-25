@@ -491,9 +491,12 @@ func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 		response := e.PUT("/api/v1/session-sets/"+setID).
 			WithHeader("Authorization", "Bearer "+userToken).
 			WithJSON(map[string]interface{}{
-				"actual_reps":      12,   // Did more reps than prescribed
-				"actual_weight_kg": 85.0, // Heavier weight
-				"was_failure":      false,
+				"actual_reps": 12, // Did more reps than prescribed
+				"actual_weight": map[string]interface{}{
+					"weight_value": 85.0,
+					"weight_unit":  "kg",
+				},
+				"was_failure": false,
 			}).
 			Expect().
 			Status(200).
@@ -503,7 +506,10 @@ func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 		response.Value("success").Boolean().IsTrue()
 		data := response.Value("data").Object()
 		data.Value("actual_reps").Number().IsEqual(12)
-		data.Value("actual_weight_kg").Number().IsEqual(85.0)
+		// Check actual_weight in WeightOutput format
+		actualWeight := data.Value("actual_weight").Object()
+		actualWeight.Value("weight_value").Number().IsEqual(85.0)
+		actualWeight.Value("weight_unit").String().IsEqual("kg")
 	})
 
 	t.Run("Complete Session Set", func(t *testing.T) {
