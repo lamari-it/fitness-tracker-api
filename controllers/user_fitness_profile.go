@@ -70,6 +70,18 @@ func CreateUserFitnessProfile(c *gin.Context) {
 	profile.OriginalCurrentWeightValue = originalValue
 	profile.OriginalCurrentWeightUnit = originalUnit
 
+	// If user doesn't have a weight preference set yet, infer from first input
+	var user models.User
+	if err := database.DB.First(&user, "id = ?", userID).Error; err == nil {
+		if user.PreferredWeightUnit == "" || user.PreferredWeightUnit == "kg" {
+			// Set preference based on input unit if provided
+			if originalUnit != nil && *originalUnit == "lb" {
+				user.PreferredWeightUnit = "lb"
+				database.DB.Model(&user).Update("preferred_weight_unit", "lb")
+			}
+		}
+	}
+
 	// Process target weight if provided
 	if req.TargetWeight != nil {
 		targetWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.TargetWeight)
@@ -142,8 +154,7 @@ func CreateUserFitnessProfile(c *gin.Context) {
 	// Preload fitness goals for response
 	database.DB.Preload("FitnessGoals.FitnessGoal").First(&profile, "id = ?", profile.ID)
 
-	// Get user's preferred weight unit for response conversion
-	var user models.User
+	// Get user's preferred weight unit for response conversion (reuse user variable from above)
 	database.DB.Select("preferred_weight_unit").First(&user, "id = ?", userID)
 	preferredWeightUnit := user.PreferredWeightUnit
 	if preferredWeightUnit == "" {
