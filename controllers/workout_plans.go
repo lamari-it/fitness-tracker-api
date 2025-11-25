@@ -22,9 +22,8 @@ type UpdateWorkoutPlanRequest struct {
 }
 
 func CreateWorkoutPlan(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -35,7 +34,7 @@ func CreateWorkoutPlan(c *gin.Context) {
 	}
 
 	plan := models.WorkoutPlan{
-		UserID:      userID.(uuid.UUID),
+		UserID:      userID,
 		Title:       req.Title,
 		Description: req.Description,
 		Visibility:  req.Visibility,
@@ -54,9 +53,8 @@ func CreateWorkoutPlan(c *gin.Context) {
 }
 
 func GetWorkoutPlans(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -94,9 +92,8 @@ func GetWorkoutPlans(c *gin.Context) {
 }
 
 func GetWorkoutPlan(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -106,9 +103,8 @@ func GetWorkoutPlan(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
+	planID, ok := utils.ParseUUID(c, params.ID, "workout plan")
+	if !ok {
 		return
 	}
 
@@ -128,9 +124,8 @@ func GetWorkoutPlan(c *gin.Context) {
 }
 
 func UpdateWorkoutPlan(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -140,9 +135,8 @@ func UpdateWorkoutPlan(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
+	planID, ok := utils.ParseUUID(c, params.ID, "workout plan")
+	if !ok {
 		return
 	}
 
@@ -182,9 +176,8 @@ func UpdateWorkoutPlan(c *gin.Context) {
 }
 
 func DeleteWorkoutPlan(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -194,9 +187,8 @@ func DeleteWorkoutPlan(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
+	planID, ok := utils.ParseUUID(c, params.ID, "workout plan")
+	if !ok {
 		return
 	}
 
@@ -220,9 +212,8 @@ type AddWorkoutToPlanRequest struct {
 }
 
 func AddWorkoutToPlan(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -232,9 +223,8 @@ func AddWorkoutToPlan(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
+	planID, ok := utils.ParseUUID(c, params.ID, "workout plan")
+	if !ok {
 		return
 	}
 
@@ -284,9 +274,8 @@ func AddWorkoutToPlan(c *gin.Context) {
 }
 
 func RemoveWorkoutFromPlan(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -299,15 +288,13 @@ func RemoveWorkoutFromPlan(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
+	planID, ok := utils.ParseUUID(c, params.ID, "workout plan")
+	if !ok {
 		return
 	}
 
-	itemID, err := uuid.Parse(params.ItemID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid plan item ID format.", nil)
+	itemID, ok := utils.ParseUUID(c, params.ItemID, "plan item")
+	if !ok {
 		return
 	}
 
@@ -334,9 +321,8 @@ func RemoveWorkoutFromPlan(c *gin.Context) {
 }
 
 func GetPlanWorkouts(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -346,9 +332,8 @@ func GetPlanWorkouts(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
+	planID, ok := utils.ParseUUID(c, params.ID, "workout plan")
+	if !ok {
 		return
 	}
 
@@ -377,9 +362,8 @@ type UpdatePlanItemRequest struct {
 }
 
 func UpdatePlanItem(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -392,15 +376,13 @@ func UpdatePlanItem(c *gin.Context) {
 		return
 	}
 
-	planID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid workout plan ID format.", nil)
+	planID, ok := utils.ParseUUID(c, params.ID, "workout plan")
+	if !ok {
 		return
 	}
 
-	itemID, err := uuid.Parse(params.ItemID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid plan item ID format.", nil)
+	itemID, ok := utils.ParseUUID(c, params.ItemID, "plan item")
+	if !ok {
 		return
 	}
 

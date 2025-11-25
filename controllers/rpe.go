@@ -11,15 +11,8 @@ import (
 
 // ListRPEScales retrieves all RPE scales (global + user's custom scales)
 func ListRPEScales(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -60,21 +53,13 @@ func GetRPEScale(c *gin.Context) {
 		return
 	}
 
-	scaleID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
-		return
-	}
-
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	scaleID, ok := utils.ParseUUID(c, params.ID, "RPE scale")
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
+		return
+	}
+
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -111,15 +96,8 @@ func GetRPEScale(c *gin.Context) {
 
 // CreateRPEScale creates a new custom RPE scale for the trainer
 func CreateRPEScale(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -202,21 +180,13 @@ func UpdateRPEScale(c *gin.Context) {
 		return
 	}
 
-	scaleID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
-		return
-	}
-
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	scaleID, ok := utils.ParseUUID(c, params.ID, "RPE scale")
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
+		return
+	}
+
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -276,21 +246,13 @@ func DeleteRPEScale(c *gin.Context) {
 		return
 	}
 
-	scaleID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
-		return
-	}
-
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	scaleID, ok := utils.ParseUUID(c, params.ID, "RPE scale")
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
+		return
+	}
+
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 
@@ -328,21 +290,13 @@ func AddRPEScaleValue(c *gin.Context) {
 		return
 	}
 
-	scaleID, err := uuid.Parse(params.ID)
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid UUID format", nil)
-		return
-	}
-
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	scaleID, ok := utils.ParseUUID(c, params.ID, "RPE scale")
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
+		return
+	}
+
+	userID, ok := utils.GetAuthUserID(c)
+	if !ok {
 		return
 	}
 

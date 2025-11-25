@@ -8,20 +8,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // CreateEmailInvitation creates an email-based invitation for a potential client
 func CreateEmailInvitation(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -116,15 +108,8 @@ func CreateEmailInvitation(c *gin.Context) {
 
 // GetEmailInvitations gets all email invitations sent by the trainer
 func GetEmailInvitations(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -154,21 +139,13 @@ func GetEmailInvitations(c *gin.Context) {
 
 // CancelEmailInvitation cancels a pending email invitation
 func CancelEmailInvitation(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
-	invitationID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid invitation ID", nil)
+	invitationID, ok := utils.ParseUUID(c, c.Param("id"), "invitation")
+	if !ok {
 		return
 	}
 
@@ -241,21 +218,13 @@ func VerifyInvitationToken(c *gin.Context) {
 
 // ResendEmailInvitation resends an invitation email
 func ResendEmailInvitation(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
-	invitationID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid invitation ID", nil)
+	invitationID, ok := utils.ParseUUID(c, c.Param("id"), "invitation")
+	if !ok {
 		return
 	}
 

@@ -25,15 +25,8 @@ type UpdateWorkoutRequest struct {
 }
 
 func CreateWorkout(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
@@ -63,15 +56,8 @@ func CreateWorkout(c *gin.Context) {
 }
 
 func GetUserWorkouts(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
@@ -112,24 +98,13 @@ func GetUserWorkouts(c *gin.Context) {
 }
 
 func GetWorkout(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	workoutID, ok := utils.ParseUUID(c, c.Param("id"), "workout")
+	if !ok {
 		return
 	}
 
@@ -167,24 +142,13 @@ func GetWorkout(c *gin.Context) {
 }
 
 func UpdateWorkout(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	workoutID, ok := utils.ParseUUID(c, c.Param("id"), "workout")
+	if !ok {
 		return
 	}
 
@@ -224,24 +188,13 @@ func UpdateWorkout(c *gin.Context) {
 }
 
 func DeleteWorkout(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	workoutID, ok := utils.ParseUUID(c, c.Param("id"), "workout")
+	if !ok {
 		return
 	}
 
@@ -261,24 +214,13 @@ func DeleteWorkout(c *gin.Context) {
 
 // CreatePrescriptionGroup creates a new prescription group for a workout
 func CreatePrescriptionGroup(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	workoutID, ok := utils.ParseUUID(c, c.Param("id"), "workout")
+	if !ok {
 		return
 	}
 
@@ -314,7 +256,7 @@ func CreatePrescriptionGroup(c *gin.Context) {
 	var createdPrescriptions []models.WorkoutPrescription
 	var exerciseNotFound bool
 	var validationError string
-	err = database.DB.Transaction(func(tx *gorm.DB) error {
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		// Create prescription rows for each exercise
 		for _, exerciseReq := range req.Exercises {
 			// Verify exercise exists
@@ -407,33 +349,18 @@ func CreatePrescriptionGroup(c *gin.Context) {
 
 // UpdatePrescriptionGroup updates an existing prescription group
 func UpdatePrescriptionGroup(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	workoutID, ok := utils.ParseUUID(c, c.Param("id"), "workout")
+	if !ok {
 		return
 	}
 
-	groupID, err := uuid.Parse(c.Param("group_id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"group_id": []string{"Invalid group ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	groupID, ok := utils.ParseUUID(c, c.Param("group_id"), "group")
+	if !ok {
 		return
 	}
 
@@ -465,7 +392,7 @@ func UpdatePrescriptionGroup(c *gin.Context) {
 	}
 
 	// Start a transaction
-	err = database.DB.Transaction(func(tx *gorm.DB) error {
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		// Build updates for group-level fields
 		groupUpdates := map[string]interface{}{}
 		if req.Type != nil {
@@ -635,33 +562,18 @@ func UpdatePrescriptionGroup(c *gin.Context) {
 
 // DeletePrescriptionGroup deletes a prescription group from a workout
 func DeletePrescriptionGroup(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	workoutID, ok := utils.ParseUUID(c, c.Param("id"), "workout")
+	if !ok {
 		return
 	}
 
-	groupID, err := uuid.Parse(c.Param("group_id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"group_id": []string{"Invalid group ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	groupID, ok := utils.ParseUUID(c, c.Param("group_id"), "group")
+	if !ok {
 		return
 	}
 
@@ -690,24 +602,13 @@ func DeletePrescriptionGroup(c *gin.Context) {
 
 // ReorderPrescriptionGroups reorders the groups within a workout
 func ReorderPrescriptionGroups(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	workoutID, ok := utils.ParseUUID(c, c.Param("id"), "workout")
+	if !ok {
 		return
 	}
 
@@ -725,7 +626,7 @@ func ReorderPrescriptionGroups(c *gin.Context) {
 	}
 
 	// Start a transaction
-	err = database.DB.Transaction(func(tx *gorm.DB) error {
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		for _, groupOrder := range req.GroupOrders {
 			if err := tx.Model(&models.WorkoutPrescription{}).
 				Where("workout_id = ? AND group_id = ?", workoutID, groupOrder.GroupID).
@@ -746,24 +647,13 @@ func ReorderPrescriptionGroups(c *gin.Context) {
 
 // GetWorkoutPrescriptions returns all prescriptions for a workout grouped by group_id
 func GetWorkoutPrescriptions(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	workoutID, ok := utils.ParseUUID(c, c.Param("id"), "workout")
+	if !ok {
 		return
 	}
 
@@ -795,33 +685,18 @@ func GetWorkoutPrescriptions(c *gin.Context) {
 
 // AddExerciseToPrescriptionGroup adds an exercise to an existing prescription group
 func AddExerciseToPrescriptionGroup(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	workoutID, ok := utils.ParseUUID(c, c.Param("id"), "workout")
+	if !ok {
 		return
 	}
 
-	groupID, err := uuid.Parse(c.Param("group_id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"group_id": []string{"Invalid group ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	groupID, ok := utils.ParseUUID(c, c.Param("group_id"), "group")
+	if !ok {
 		return
 	}
 
@@ -908,24 +783,13 @@ func AddExerciseToPrescriptionGroup(c *gin.Context) {
 
 // DuplicateWorkout creates a copy of an existing workout with all its prescriptions
 func DuplicateWorkout(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated.")
-		return
-	}
-
-	userUUID, ok := userID.(uuid.UUID)
+	userUUID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type.")
 		return
 	}
 
-	workoutID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		validationErrors := utils.ValidationErrors{
-			"id": []string{"Invalid workout ID format."},
-		}
-		utils.ValidationErrorResponse(c, validationErrors)
+	workoutID, ok := utils.ParseUUID(c, c.Param("id"), "workout")
+	if !ok {
 		return
 	}
 
@@ -941,7 +805,7 @@ func DuplicateWorkout(c *gin.Context) {
 	var newWorkout models.Workout
 
 	// Start a transaction
-	err = database.DB.Transaction(func(tx *gorm.DB) error {
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		// Create a new workout
 		newWorkout = models.Workout{
 			UserID:      userUUID,

@@ -6,20 +6,12 @@ import (
 	"fit-flow-api/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // InviteClient allows a trainer to invite a client
 func InviteClient(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -82,15 +74,8 @@ func InviteClient(c *gin.Context) {
 
 // GetTrainerClients retrieves all clients for the authenticated trainer
 func GetTrainerClients(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -127,22 +112,14 @@ func GetTrainerClients(c *gin.Context) {
 
 // RemoveClient removes or deactivates a client relationship
 func RemoveClient(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
 	// Parse link ID from URL
-	linkID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid link ID", nil)
+	linkID, ok := utils.ParseUUID(c, c.Param("id"), "link")
+	if !ok {
 		return
 	}
 
@@ -171,15 +148,8 @@ func RemoveClient(c *gin.Context) {
 
 // GetMyTrainers retrieves all trainers for the authenticated client
 func GetMyTrainers(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -201,15 +171,8 @@ func GetMyTrainers(c *gin.Context) {
 
 // GetMyTrainerInvitations retrieves pending trainer invitations for the authenticated user
 func GetMyTrainerInvitations(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -231,22 +194,14 @@ func GetMyTrainerInvitations(c *gin.Context) {
 
 // RespondToInvitation allows a client to accept or reject a trainer invitation
 func RespondToInvitation(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
 	// Parse link ID from URL
-	linkID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		utils.BadRequestResponse(c, "Invalid invitation ID", nil)
+	linkID, ok := utils.ParseUUID(c, c.Param("id"), "invitation")
+	if !ok {
 		return
 	}
 

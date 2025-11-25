@@ -7,21 +7,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
 // CreateUserFitnessProfile creates a fitness profile for the authenticated user
 func CreateUserFitnessProfile(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -180,15 +172,8 @@ func CreateUserFitnessProfile(c *gin.Context) {
 
 // GetUserFitnessProfile retrieves the fitness profile for the authenticated user
 func GetUserFitnessProfile(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -211,15 +196,8 @@ func GetUserFitnessProfile(c *gin.Context) {
 
 // UpdateUserFitnessProfile updates the fitness profile for the authenticated user
 func UpdateUserFitnessProfile(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -381,15 +359,8 @@ func UpdateUserFitnessProfile(c *gin.Context) {
 
 // DeleteUserFitnessProfile deletes the fitness profile for the authenticated user
 func DeleteUserFitnessProfile(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
@@ -409,15 +380,8 @@ func DeleteUserFitnessProfile(c *gin.Context) {
 
 // LogWeight logs a weight update for the user (updates current weight)
 func LogWeight(c *gin.Context) {
-	userIDVal, exists := c.Get("user_id")
-	if !exists {
-		utils.UnauthorizedResponse(c, "User not authenticated")
-		return
-	}
-
-	userID, ok := userIDVal.(uuid.UUID)
+	userID, ok := utils.GetAuthUserID(c)
 	if !ok {
-		utils.InternalServerErrorResponse(c, "Invalid user ID type")
 		return
 	}
 
