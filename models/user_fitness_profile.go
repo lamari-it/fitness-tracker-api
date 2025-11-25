@@ -40,6 +40,9 @@ type UserFitnessProfile struct {
 	HealthConditions string `gorm:"type:text" json:"health_conditions,omitempty"`
 	InjuriesNotes    string `gorm:"type:text" json:"injuries_notes,omitempty"`
 
+	// Fitness level (moved from User table)
+	FitnessLevelID *uuid.UUID `gorm:"type:uuid" json:"fitness_level_id,omitempty"`
+
 	// Timestamps
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
@@ -48,6 +51,7 @@ type UserFitnessProfile struct {
 	// Relationships
 	User         User              `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
 	FitnessGoals []UserFitnessGoal `gorm:"foreignKey:UserFitnessProfileID" json:"fitness_goals,omitempty"`
+	FitnessLevel *FitnessLevel     `gorm:"foreignKey:FitnessLevelID;constraint:OnDelete:SET NULL" json:"fitness_level,omitempty"`
 }
 
 // Request DTOs
@@ -69,6 +73,7 @@ type CreateUserFitnessProfileRequest struct {
 	AvailableDays                []string     `json:"available_days" binding:"omitempty,dive,oneof=monday tuesday wednesday thursday friday saturday sunday"`
 	HealthConditions             string       `json:"health_conditions" binding:"omitempty,max=1000"`
 	InjuriesNotes                string       `json:"injuries_notes" binding:"omitempty,max=1000"`
+	FitnessLevelID               *uuid.UUID   `json:"fitness_level_id,omitempty"`
 }
 
 type UpdateUserFitnessProfileRequest struct {
@@ -85,6 +90,7 @@ type UpdateUserFitnessProfileRequest struct {
 	AvailableDays                []string     `json:"available_days" binding:"omitempty,dive,oneof=monday tuesday wednesday thursday friday saturday sunday"`
 	HealthConditions             string       `json:"health_conditions" binding:"omitempty,max=1000"`
 	InjuriesNotes                string       `json:"injuries_notes" binding:"omitempty,max=1000"`
+	FitnessLevelID               *uuid.UUID   `json:"fitness_level_id,omitempty"`
 }
 
 // Response DTOs
@@ -107,6 +113,8 @@ type UserFitnessProfileResponse struct {
 	AvailableDays                []string                  `json:"available_days"`
 	HealthConditions             string                    `json:"health_conditions,omitempty"`
 	InjuriesNotes                string                    `json:"injuries_notes,omitempty"`
+	FitnessLevelID               *uuid.UUID                `json:"fitness_level_id,omitempty"`
+	FitnessLevel                 *FitnessLevelResponse     `json:"fitness_level,omitempty"`
 	CreatedAt                    time.Time                 `json:"created_at"`
 	UpdatedAt                    time.Time                 `json:"updated_at"`
 }
@@ -166,7 +174,7 @@ func (p *UserFitnessProfile) ToResponse(preferredWeightUnit string) UserFitnessP
 		fitnessGoalResponses[i] = goal.ToResponse()
 	}
 
-	return UserFitnessProfileResponse{
+	response := UserFitnessProfileResponse{
 		ID:                           p.ID,
 		UserID:                       p.UserID,
 		DateOfBirth:                  p.DateOfBirth.Format("2006-01-02"),
@@ -184,9 +192,17 @@ func (p *UserFitnessProfile) ToResponse(preferredWeightUnit string) UserFitnessP
 		AvailableDays:                p.AvailableDays,
 		HealthConditions:             p.HealthConditions,
 		InjuriesNotes:                p.InjuriesNotes,
+		FitnessLevelID:               p.FitnessLevelID,
 		CreatedAt:                    p.CreatedAt,
 		UpdatedAt:                    p.UpdatedAt,
 	}
+
+	if p.FitnessLevel != nil {
+		levelResponse := p.FitnessLevel.ToResponse()
+		response.FitnessLevel = &levelResponse
+	}
+
+	return response
 }
 
 // Helper function to format feet and inches

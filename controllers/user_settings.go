@@ -16,7 +16,7 @@ func GetUserSettings(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := database.DB.Preload("FitnessLevel").First(&user, "id = ?", userID).Error; err != nil {
+	if err := database.DB.First(&user, "id = ?", userID).Error; err != nil {
 		utils.NotFoundResponse(c, "User not found")
 		return
 	}
@@ -64,9 +64,6 @@ func UpdateUserSettings(c *gin.Context) {
 		utils.InternalServerErrorResponse(c, "Failed to update user settings")
 		return
 	}
-
-	// Reload with relationships for response
-	database.DB.Preload("FitnessLevel").First(&user, "id = ?", userID)
 
 	utils.SuccessResponse(c, "User settings updated successfully", user.ToResponse())
 }
