@@ -76,10 +76,7 @@ func GetFitnessLevel(c *gin.Context) {
 
 // CreateFitnessLevel creates a new fitness level (admin only)
 func CreateFitnessLevel(c *gin.Context) {
-	// Check if user is admin
-	user, exists := c.Get("user")
-	if !exists || !user.(models.User).IsAdmin {
-		utils.ForbiddenResponse(c, "Admin access required.")
+	if !utils.RequireAdmin(c) {
 		return
 	}
 
@@ -110,10 +107,7 @@ func CreateFitnessLevel(c *gin.Context) {
 
 // UpdateFitnessLevel updates an existing fitness level (admin only)
 func UpdateFitnessLevel(c *gin.Context) {
-	// Check if user is admin
-	user, exists := c.Get("user")
-	if !exists || !user.(models.User).IsAdmin {
-		utils.ForbiddenResponse(c, "Admin access required.")
+	if !utils.RequireAdmin(c) {
 		return
 	}
 
@@ -171,10 +165,7 @@ func UpdateFitnessLevel(c *gin.Context) {
 
 // DeleteFitnessLevel deletes a fitness level (admin only)
 func DeleteFitnessLevel(c *gin.Context) {
-	// Check if user is admin
-	user, exists := c.Get("user")
-	if !exists || !user.(models.User).IsAdmin {
-		utils.ForbiddenResponse(c, "Admin access required.")
+	if !utils.RequireAdmin(c) {
 		return
 	}
 

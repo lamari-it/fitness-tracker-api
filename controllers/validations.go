@@ -88,3 +88,8 @@ func SetDefaultPagination(query *PaginationQuery) {
 		query.Limit = 50
 	}
 }
+
+// GetOffset calculates the database offset for pagination.
+func (p *PaginationQuery) GetOffset() int {
+	return (p.Page - 1) * p.Limit
+}

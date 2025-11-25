@@ -93,7 +93,7 @@ func AutoMigrate() {
 
 		// User fitness profile (must be before UserFitnessGoal)
 		&models.UserFitnessProfile{},
-		&models.UserFitnessGoal{},  // FK to UserFitnessProfile
+		&models.UserFitnessGoal{}, // FK to UserFitnessProfile
 		&models.WeightLog{},
 
 		// RPE scales

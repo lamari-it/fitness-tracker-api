@@ -77,10 +77,7 @@ func GetFitnessGoal(c *gin.Context) {
 
 // CreateFitnessGoal creates a new fitness goal (admin only)
 func CreateFitnessGoal(c *gin.Context) {
-	// Check if user is admin
-	user, exists := c.Get("user")
-	if !exists || !user.(models.User).IsAdmin {
-		utils.ForbiddenResponse(c, "Admin access required.")
+	if !utils.RequireAdmin(c) {
 		return
 	}
 
@@ -112,10 +109,7 @@ func CreateFitnessGoal(c *gin.Context) {
 
 // UpdateFitnessGoal updates an existing fitness goal (admin only)
 func UpdateFitnessGoal(c *gin.Context) {
-	// Check if user is admin
-	user, exists := c.Get("user")
-	if !exists || !user.(models.User).IsAdmin {
-		utils.ForbiddenResponse(c, "Admin access required.")
+	if !utils.RequireAdmin(c) {
 		return
 	}
 
@@ -176,10 +170,7 @@ func UpdateFitnessGoal(c *gin.Context) {
 
 // DeleteFitnessGoal deletes a fitness goal (admin only)
 func DeleteFitnessGoal(c *gin.Context) {
-	// Check if user is admin
-	user, exists := c.Get("user")
-	if !exists || !user.(models.User).IsAdmin {
-		utils.ForbiddenResponse(c, "Admin access required.")
+	if !utils.RequireAdmin(c) {
 		return
 	}
 
