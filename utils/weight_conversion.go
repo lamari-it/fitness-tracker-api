@@ -1,6 +1,10 @@
 package utils
 
-import "math"
+import (
+	"math"
+
+	"github.com/peteratkins85/fit-flow-api/models"
+)
 
 // Weight conversion constants
 // 1 pound = 0.45359237 kilograms (exact definition)
@@ -85,4 +89,39 @@ func GetUserPreferredWeightUnit(preferredWeightUnit string) string {
 func roundToDecimal(value float64, decimals int) float64 {
 	shift := math.Pow(10, float64(decimals))
 	return math.Round(value*shift) / shift
+}
+
+// ProcessWeightInput processes a WeightInput and returns the canonical kg value,
+// the original value, and the normalized unit for storage
+// Returns (weightKg, originalValue, originalUnit)
+func ProcessWeightInput(input *models.WeightInput) (*float64, *float64, *string) {
+	if input == nil || input.WeightValue == nil {
+		return nil, nil, nil
+	}
+
+	unit := "kg" // default
+	if input.WeightUnit != nil {
+		unit = NormalizeWeightUnit(*input.WeightUnit)
+	}
+
+	// Convert to kg
+	weightKg := ConvertToKg(*input.WeightValue, unit)
+
+	return &weightKg, input.WeightValue, &unit
+}
+
+// ConvertWeightForResponse converts a canonical kg weight to the user's preferred unit
+// Returns a WeightOutput with the converted value
+func ConvertWeightForResponse(weightKg *float64, preferredUnit string) *models.WeightOutput {
+	if weightKg == nil {
+		return nil
+	}
+
+	unit := NormalizeWeightUnit(preferredUnit)
+	convertedValue := ConvertFromKg(*weightKg, unit)
+
+	return &models.WeightOutput{
+		WeightValue: &convertedValue,
+		WeightUnit:  &unit,
+	}
 }

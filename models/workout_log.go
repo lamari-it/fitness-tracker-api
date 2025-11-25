@@ -102,19 +102,21 @@ func (se *SessionExercise) BeforeCreate(tx *gorm.DB) (err error) {
 
 // SessionSet represents an actual performed set within a session exercise
 type SessionSet struct {
-	ID                    uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	SessionExerciseID     uuid.UUID      `gorm:"type:uuid;not null;index" json:"session_exercise_id"`
-	SetNumber             int            `gorm:"not null" json:"set_number"`
-	Completed             bool           `gorm:"default:false" json:"completed"`
-	ActualReps            *int           `json:"actual_reps,omitempty"`
-	ActualWeightKg        *float64       `gorm:"type:numeric(10,2)" json:"actual_weight_kg,omitempty"`
-	ActualDurationSeconds *int           `json:"actual_duration_seconds,omitempty"`
-	RPEValueID            *uuid.UUID     `gorm:"type:uuid" json:"rpe_value_id,omitempty"`
-	WasFailure            bool           `gorm:"default:false" json:"was_failure"`
-	Notes                 string         `gorm:"type:text" json:"notes"`
-	CreatedAt             time.Time      `json:"created_at"`
-	UpdatedAt             time.Time      `json:"updated_at"`
-	DeletedAt             gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID                         uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	SessionExerciseID          uuid.UUID      `gorm:"type:uuid;not null;index" json:"session_exercise_id"`
+	SetNumber                  int            `gorm:"not null" json:"set_number"`
+	Completed                  bool           `gorm:"default:false" json:"completed"`
+	ActualReps                 *int           `json:"actual_reps,omitempty"`
+	ActualWeightKg             *float64       `gorm:"type:decimal(6,2)" json:"-"`
+	OriginalActualWeightValue  *float64       `gorm:"type:decimal(6,2)" json:"-"`
+	OriginalActualWeightUnit   *string        `gorm:"type:varchar(2)" json:"-"`
+	ActualDurationSeconds      *int           `json:"actual_duration_seconds,omitempty"`
+	RPEValueID                 *uuid.UUID     `gorm:"type:uuid" json:"rpe_value_id,omitempty"`
+	WasFailure                 bool           `gorm:"default:false" json:"was_failure"`
+	Notes                      string         `gorm:"type:text" json:"notes"`
+	CreatedAt                  time.Time      `json:"created_at"`
+	UpdatedAt                  time.Time      `json:"updated_at"`
+	DeletedAt                  gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relations
 	SessionExercise SessionExercise `gorm:"foreignKey:SessionExerciseID;constraint:OnDelete:CASCADE" json:"session_exercise,omitempty"`
@@ -169,24 +171,22 @@ type UpdateSessionExerciseRequest struct {
 
 // CreateSessionSetRequest represents the request to add a set to an exercise
 type CreateSessionSetRequest struct {
-	ActualReps            *int       `json:"actual_reps,omitempty"`
-	ActualWeightKg        *float64   `json:"actual_weight_kg,omitempty"`
-	WeightUnit            *string    `json:"weight_unit,omitempty"` // kg or lb, for conversion
-	ActualDurationSeconds *int       `json:"actual_duration_seconds,omitempty"`
-	RPEValueID            *uuid.UUID `json:"rpe_value_id,omitempty"`
-	Notes                 *string    `json:"notes,omitempty"`
+	ActualReps            *int         `json:"actual_reps,omitempty"`
+	ActualWeight          *WeightInput `json:"actual_weight,omitempty"`
+	ActualDurationSeconds *int         `json:"actual_duration_seconds,omitempty"`
+	RPEValueID            *uuid.UUID   `json:"rpe_value_id,omitempty"`
+	Notes                 *string      `json:"notes,omitempty"`
 }
 
 // UpdateSessionSetRequest represents the request to update a logged set
 type UpdateSessionSetRequest struct {
-	ActualReps            *int       `json:"actual_reps,omitempty"`
-	ActualWeightKg        *float64   `json:"actual_weight_kg,omitempty"`
-	WeightUnit            *string    `json:"weight_unit,omitempty"` // kg or lb, for conversion
-	ActualDurationSeconds *int       `json:"actual_duration_seconds,omitempty"`
-	RPEValueID            *uuid.UUID `json:"rpe_value_id,omitempty"`
-	WasFailure            *bool      `json:"was_failure,omitempty"`
-	Completed             *bool      `json:"completed,omitempty"`
-	Notes                 *string    `json:"notes,omitempty"`
+	ActualReps            *int         `json:"actual_reps,omitempty"`
+	ActualWeight          *WeightInput `json:"actual_weight,omitempty"`
+	ActualDurationSeconds *int         `json:"actual_duration_seconds,omitempty"`
+	RPEValueID            *uuid.UUID   `json:"rpe_value_id,omitempty"`
+	WasFailure            *bool        `json:"was_failure,omitempty"`
+	Completed             *bool        `json:"completed,omitempty"`
+	Notes                 *string      `json:"notes,omitempty"`
 }
 
 // ===== RESPONSE DTOs =====
@@ -197,9 +197,7 @@ type SessionSetResponse struct {
 	SetNumber             int            `json:"set_number"`
 	Completed             bool           `json:"completed"`
 	ActualReps            *int           `json:"actual_reps,omitempty"`
-	ActualWeightKg        *float64       `json:"actual_weight_kg,omitempty"`
-	ActualWeightDisplay   *float64       `json:"actual_weight_display,omitempty"`
-	ActualWeightUnit      string         `json:"actual_weight_unit,omitempty"`
+	ActualWeight          *WeightOutput  `json:"actual_weight,omitempty"`
 	ActualDurationSeconds *int           `json:"actual_duration_seconds,omitempty"`
 	RPEValueID            *uuid.UUID     `json:"rpe_value_id,omitempty"`
 	RPEValue              *RPEValueBrief `json:"rpe_value,omitempty"`
@@ -225,11 +223,10 @@ type SessionExerciseResponse struct {
 
 // PrescriptionBrief represents prescription details in responses
 type PrescriptionBrief struct {
-	Sets           *int     `json:"sets,omitempty"`
-	Reps           *int     `json:"reps,omitempty"`
-	HoldSeconds    *int     `json:"hold_seconds,omitempty"`
-	WeightKg       *float64 `json:"weight_kg,omitempty"`
-	TargetWeightKg *float64 `json:"target_weight_kg,omitempty"`
+	Sets         *int          `json:"sets,omitempty"`
+	Reps         *int          `json:"reps,omitempty"`
+	HoldSeconds  *int          `json:"hold_seconds,omitempty"`
+	TargetWeight *WeightOutput `json:"target_weight,omitempty"`
 }
 
 // SessionBlockResponse represents a block in the response
