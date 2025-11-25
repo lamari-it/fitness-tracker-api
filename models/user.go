@@ -8,14 +8,14 @@ import (
 )
 
 type User struct {
-	ID             uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	Email          string         `gorm:"unique;not null" json:"email"`
-	Password       string         `gorm:"not null" json:"-"`
-	FirstName      string         `gorm:"not null" json:"first_name"`
-	LastName       string         `gorm:"not null" json:"last_name"`
-	Provider       string         `gorm:"default:'local'" json:"provider"`
-	GoogleID       *string        `gorm:"unique" json:"google_id,omitempty"`
-	AppleID        *string        `gorm:"unique" json:"apple_id,omitempty"`
+	ID                    uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	Email                 string         `gorm:"unique;not null" json:"email"`
+	Password              string         `gorm:"not null" json:"-"`
+	FirstName             string         `gorm:"not null" json:"first_name"`
+	LastName              string         `gorm:"not null" json:"last_name"`
+	Provider              string         `gorm:"default:'local'" json:"provider"`
+	GoogleID              *string        `gorm:"unique" json:"google_id,omitempty"`
+	AppleID               *string        `gorm:"unique" json:"apple_id,omitempty"`
 	FitnessLevelID        *uuid.UUID     `gorm:"type:uuid" json:"fitness_level_id,omitempty"`
 	IsActive              bool           `gorm:"default:true" json:"is_active"`
 	IsAdmin               bool           `gorm:"default:false" json:"is_admin"`

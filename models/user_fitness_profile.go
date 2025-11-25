@@ -15,12 +15,12 @@ type UserFitnessProfile struct {
 	UserID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex" json:"user_id"`
 
 	// Basic physical stats (required)
-	DateOfBirth                 time.Time `gorm:"type:date;not null" json:"date_of_birth"`
-	Gender                      string    `gorm:"type:varchar(20);not null" json:"gender"`
-	HeightCm                    float64   `gorm:"type:decimal(5,2);not null" json:"height_cm"`
-	CurrentWeightKg             *float64  `gorm:"type:decimal(6,2)" json:"-"`
-	OriginalCurrentWeightValue  *float64  `gorm:"type:decimal(6,2)" json:"-"`
-	OriginalCurrentWeightUnit   *string   `gorm:"type:varchar(2)" json:"-"`
+	DateOfBirth                time.Time `gorm:"type:date;not null" json:"date_of_birth"`
+	Gender                     string    `gorm:"type:varchar(20);not null" json:"gender"`
+	HeightCm                   float64   `gorm:"type:decimal(5,2);not null" json:"height_cm"`
+	CurrentWeightKg            *float64  `gorm:"type:decimal(6,2)" json:"-"`
+	OriginalCurrentWeightValue *float64  `gorm:"type:decimal(6,2)" json:"-"`
+	OriginalCurrentWeightUnit  *string   `gorm:"type:varchar(2)" json:"-"`
 
 	// Fitness goals
 	TargetWeightKg            *float64 `gorm:"type:decimal(6,2)" json:"-"`

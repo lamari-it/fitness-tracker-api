@@ -184,14 +184,14 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		generalFitnessIDs := GetFitnessGoalIDs(t, "general_fitness")
 
 		profileData := map[string]interface{}{
-			"date_of_birth":     "1990-05-15",
-			"gender":            "male",
-			"height_cm":         180.0,
+			"date_of_birth": "1990-05-15",
+			"gender":        "male",
+			"height_cm":     180.0,
 			"current_weight": map[string]interface{}{
 				"weight_value": 80.0,
 				"weight_unit":  "kg",
 			},
-			"fitness_goal_ids":  generalFitnessIDs,
+			"fitness_goal_ids": generalFitnessIDs,
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile").
@@ -288,14 +288,14 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	// Create profile first
 	profileData := map[string]interface{}{
-		"date_of_birth":     "1988-12-25",
-		"gender":            "male",
-		"height_cm":         175.0,
+		"date_of_birth": "1988-12-25",
+		"gender":        "male",
+		"height_cm":     175.0,
 		"current_weight": map[string]interface{}{
-				"weight_value": 85.0,
-				"weight_unit":  "kg",
-			},
-		"fitness_goal_ids":  generalFitnessIDs,
+			"weight_value": 85.0,
+			"weight_unit":  "kg",
+		},
+		"fitness_goal_ids": generalFitnessIDs,
 	}
 
 	e.POST("/api/v1/user/fitness-profile").
@@ -310,7 +310,7 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 				"weight_value": 82.0,
 				"weight_unit":  "kg",
 			},
-			"fitness_goal_ids":                muscleGainIDs,
+			"fitness_goal_ids": muscleGainIDs,
 			"target_weight": map[string]interface{}{
 				"weight_value": 78.0,
 				"weight_unit":  "kg",
@@ -443,14 +443,14 @@ func testDeleteFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	// Create profile first
 	profileData := map[string]interface{}{
-		"date_of_birth":     "1995-07-04",
-		"gender":            "female",
-		"height_cm":         162.0,
+		"date_of_birth": "1995-07-04",
+		"gender":        "female",
+		"height_cm":     162.0,
 		"current_weight": map[string]interface{}{
-				"weight_value": 55.0,
-				"weight_unit":  "kg",
-			},
-		"fitness_goal_ids":  flexibilityIDs,
+			"weight_value": 55.0,
+			"weight_unit":  "kg",
+		},
+		"fitness_goal_ids": flexibilityIDs,
 	}
 
 	e.POST("/api/v1/user/fitness-profile").
@@ -495,18 +495,18 @@ func testLogWeight(t *testing.T, e *httpexpect.Expect) {
 
 	// Create profile first
 	profileData := map[string]interface{}{
-		"date_of_birth":     "1990-01-01",
-		"gender":            "male",
-		"height_cm":         180.0,
+		"date_of_birth": "1990-01-01",
+		"gender":        "male",
+		"height_cm":     180.0,
 		"current_weight": map[string]interface{}{
-				"weight_value": 85.0,
-				"weight_unit":  "kg",
-			},
-		"fitness_goal_ids":  weightLossIDs,
+			"weight_value": 85.0,
+			"weight_unit":  "kg",
+		},
+		"fitness_goal_ids": weightLossIDs,
 		"target_weight": map[string]interface{}{
-				"weight_value": 75.0,
-				"weight_unit":  "kg",
-			},
+			"weight_value": 75.0,
+			"weight_unit":  "kg",
+		},
 	}
 
 	e.POST("/api/v1/user/fitness-profile").
@@ -537,7 +537,8 @@ func testLogWeight(t *testing.T, e *httpexpect.Expect) {
 		data := response.Value("data").Object()
 		currentWeight := data.Value("current_weight").Object()
 		currentWeight.Value("weight_value").Number().IsEqual(83.5)
-		currentWeight.Value("weight_unit").String().IsEqual("kg")	})
+		currentWeight.Value("weight_unit").String().IsEqual("kg")
+	})
 
 	t.Run("Log Weight Without Profile", func(t *testing.T) {
 		noProfileToken := createTestUserAndGetToken(e, "noprofile@example.com", "NoProfile123!", "No", "Profile")
@@ -592,116 +593,116 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 		{
 			name: "Missing Date of Birth",
 			profileData: map[string]interface{}{
-				"gender":            "male",
-				"height_cm":         180.0,
+				"gender":    "male",
+				"height_cm": 180.0,
 				"current_weight": map[string]interface{}{
-				"weight_value": 80.0,
-				"weight_unit":  "kg",
-			},
-				"fitness_goal_ids":  generalFitnessIDs,
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
 			},
 		},
 		{
 			name: "Invalid Gender",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "invalid",
-				"height_cm":         180.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "invalid",
+				"height_cm":     180.0,
 				"current_weight": map[string]interface{}{
-				"weight_value": 80.0,
-				"weight_unit":  "kg",
-			},
-				"fitness_goal_ids":  generalFitnessIDs,
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
 			},
 		},
 		{
 			name: "Height Too Low",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         40.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     40.0,
 				"current_weight": map[string]interface{}{
-				"weight_value": 80.0,
-				"weight_unit":  "kg",
-			},
-				"fitness_goal_ids":  generalFitnessIDs,
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
 			},
 		},
 		{
 			name: "Height Too High",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         350.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     350.0,
 				"current_weight": map[string]interface{}{
-				"weight_value": 80.0,
-				"weight_unit":  "kg",
-			},
-				"fitness_goal_ids":  generalFitnessIDs,
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
 			},
 		},
 		{
 			name: "Weight Too Low",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         180.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
 				"current_weight": map[string]interface{}{
-				"weight_value": 10.0,
-				"weight_unit":  "kg",
-			},
-				"fitness_goal_ids":  generalFitnessIDs,
+					"weight_value": 10.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
 			},
 		},
 		{
 			name: "Missing Fitness Goals",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         180.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
 				"current_weight": map[string]interface{}{
-				"weight_value": 80.0,
-				"weight_unit":  "kg",
-			},
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
 			},
 		},
 		{
 			name: "Empty Fitness Goals Array",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         180.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
 				"current_weight": map[string]interface{}{
-				"weight_value": 80.0,
-				"weight_unit":  "kg",
-			},
-				"fitness_goal_ids":  []string{},
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": []string{},
 			},
 		},
 		{
 			name: "Invalid Activity Level",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         180.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
 				"current_weight": map[string]interface{}{
-				"weight_value": 80.0,
-				"weight_unit":  "kg",
-			},
-				"fitness_goal_ids":  generalFitnessIDs,
-				"activity_level":    "super_active",
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
+				"activity_level":   "super_active",
 			},
 		},
 		{
 			name: "Invalid Training Location",
 			profileData: map[string]interface{}{
-				"date_of_birth":      "1990-05-15",
-				"gender":             "male",
-				"height_cm":          180.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
 				"current_weight": map[string]interface{}{
-				"weight_value": 80.0,
-				"weight_unit":  "kg",
-			},
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
 				"fitness_goal_ids":   generalFitnessIDs,
 				"training_locations": []string{"space"},
 			},
@@ -709,27 +710,27 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 		{
 			name: "Invalid Day",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         180.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
 				"current_weight": map[string]interface{}{
-				"weight_value": 80.0,
-				"weight_unit":  "kg",
-			},
-				"fitness_goal_ids":  generalFitnessIDs,
-				"available_days":    []string{"funday"},
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
+				"available_days":   []string{"funday"},
 			},
 		},
 		{
 			name: "Weekly Workouts Too High",
 			profileData: map[string]interface{}{
-				"date_of_birth":          "1990-05-15",
-				"gender":                 "male",
-				"height_cm":              180.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
 				"current_weight": map[string]interface{}{
-				"weight_value": 80.0,
-				"weight_unit":  "kg",
-			},
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
 				"fitness_goal_ids":       generalFitnessIDs,
 				"target_weekly_workouts": 10,
 			},

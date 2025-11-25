@@ -102,21 +102,21 @@ func (se *SessionExercise) BeforeCreate(tx *gorm.DB) (err error) {
 
 // SessionSet represents an actual performed set within a session exercise
 type SessionSet struct {
-	ID                         uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	SessionExerciseID          uuid.UUID      `gorm:"type:uuid;not null;index" json:"session_exercise_id"`
-	SetNumber                  int            `gorm:"not null" json:"set_number"`
-	Completed                  bool           `gorm:"default:false" json:"completed"`
-	ActualReps                 *int           `json:"actual_reps,omitempty"`
-	ActualWeightKg             *float64       `gorm:"type:decimal(6,2)" json:"-"`
-	OriginalActualWeightValue  *float64       `gorm:"type:decimal(6,2)" json:"-"`
-	OriginalActualWeightUnit   *string        `gorm:"type:varchar(2)" json:"-"`
-	ActualDurationSeconds      *int           `json:"actual_duration_seconds,omitempty"`
-	RPEValueID                 *uuid.UUID     `gorm:"type:uuid" json:"rpe_value_id,omitempty"`
-	WasFailure                 bool           `gorm:"default:false" json:"was_failure"`
-	Notes                      string         `gorm:"type:text" json:"notes"`
-	CreatedAt                  time.Time      `json:"created_at"`
-	UpdatedAt                  time.Time      `json:"updated_at"`
-	DeletedAt                  gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID                        uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	SessionExerciseID         uuid.UUID      `gorm:"type:uuid;not null;index" json:"session_exercise_id"`
+	SetNumber                 int            `gorm:"not null" json:"set_number"`
+	Completed                 bool           `gorm:"default:false" json:"completed"`
+	ActualReps                *int           `json:"actual_reps,omitempty"`
+	ActualWeightKg            *float64       `gorm:"type:decimal(6,2)" json:"-"`
+	OriginalActualWeightValue *float64       `gorm:"type:decimal(6,2)" json:"-"`
+	OriginalActualWeightUnit  *string        `gorm:"type:varchar(2)" json:"-"`
+	ActualDurationSeconds     *int           `json:"actual_duration_seconds,omitempty"`
+	RPEValueID                *uuid.UUID     `gorm:"type:uuid" json:"rpe_value_id,omitempty"`
+	WasFailure                bool           `gorm:"default:false" json:"was_failure"`
+	Notes                     string         `gorm:"type:text" json:"notes"`
+	CreatedAt                 time.Time      `json:"created_at"`
+	UpdatedAt                 time.Time      `json:"updated_at"`
+	DeletedAt                 gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relations
 	SessionExercise SessionExercise `gorm:"foreignKey:SessionExerciseID;constraint:OnDelete:CASCADE" json:"session_exercise,omitempty"`

@@ -267,17 +267,17 @@ func AddSetToExercise(c *gin.Context) {
 	actualWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.ActualWeight)
 
 	set := models.SessionSet{
-		SessionExerciseID:          sessionExercise.ID,
-		SetNumber:                  nextSetNumber,
-		Completed:                  false,
-		ActualReps:                 req.ActualReps,
-		ActualWeightKg:             actualWeightKg,
-		OriginalActualWeightValue:  originalValue,
-		OriginalActualWeightUnit:   originalUnit,
-		ActualDurationSeconds:      req.ActualDurationSeconds,
-		RPEValueID:                 req.RPEValueID,
-		WasFailure:                 false,
-		Notes:                      "",
+		SessionExerciseID:         sessionExercise.ID,
+		SetNumber:                 nextSetNumber,
+		Completed:                 false,
+		ActualReps:                req.ActualReps,
+		ActualWeightKg:            actualWeightKg,
+		OriginalActualWeightValue: originalValue,
+		OriginalActualWeightUnit:  originalUnit,
+		ActualDurationSeconds:     req.ActualDurationSeconds,
+		RPEValueID:                req.RPEValueID,
+		WasFailure:                false,
+		Notes:                     "",
 	}
 
 	if req.Notes != nil {

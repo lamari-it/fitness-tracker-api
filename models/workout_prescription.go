@@ -75,14 +75,14 @@ type WorkoutPrescription struct {
 	GroupNotes      *string          `gorm:"type:text" json:"group_notes,omitempty"`
 
 	// Exercise-level fields (individual prescription row inside a group)
-	ExerciseOrder              int      `gorm:"not null" json:"exercise_order"`
-	Sets                       *int     `gorm:"" json:"sets,omitempty"`
-	Reps                       *int     `gorm:"" json:"reps,omitempty"`
-	HoldSeconds                *int     `gorm:"" json:"hold_seconds,omitempty"`
-	TargetWeightKg             *float64 `gorm:"type:decimal(6,2)" json:"-"`
-	OriginalTargetWeightValue  *float64 `gorm:"type:decimal(6,2)" json:"-"`
-	OriginalTargetWeightUnit   *string  `gorm:"type:varchar(2)" json:"-"`
-	Notes                      *string  `gorm:"type:text" json:"notes,omitempty"`
+	ExerciseOrder             int      `gorm:"not null" json:"exercise_order"`
+	Sets                      *int     `gorm:"" json:"sets,omitempty"`
+	Reps                      *int     `gorm:"" json:"reps,omitempty"`
+	HoldSeconds               *int     `gorm:"" json:"hold_seconds,omitempty"`
+	TargetWeightKg            *float64 `gorm:"type:decimal(6,2)" json:"-"`
+	OriginalTargetWeightValue *float64 `gorm:"type:decimal(6,2)" json:"-"`
+	OriginalTargetWeightUnit  *string  `gorm:"type:varchar(2)" json:"-"`
+	Notes                     *string  `gorm:"type:text" json:"notes,omitempty"`
 
 	// Relationships
 	Workout  Workout        `gorm:"foreignKey:WorkoutID" json:"-"`
