@@ -148,6 +148,10 @@ func GetWorkout(c *gin.Context) {
 	// Group prescriptions by group_id for response
 	groupedPrescriptions := models.GroupPrescriptionsByGroupID(workout.Prescriptions)
 
+	// Get user's preferred weight unit and populate target weights
+	preferredWeightUnit := getUserPreferredWeightUnit(c, userUUID)
+	models.PopulatePrescriptionWeights(groupedPrescriptions, workout.Prescriptions, preferredWeightUnit)
+
 	response := map[string]interface{}{
 		"id":            workout.ID,
 		"user_id":       workout.UserID,
@@ -332,14 +336,20 @@ func CreatePrescriptionGroup(c *gin.Context) {
 				RestBetweenSets: req.RestBetweenSets,
 				GroupName:       req.GroupName,
 				GroupNotes:      req.GroupNotes,
-				ExerciseOrder:  exerciseReq.ExerciseOrder,
-				Sets:           exerciseReq.Sets,
-				Reps:           exerciseReq.Reps,
-				HoldSeconds:    exerciseReq.HoldSeconds,
-				WeightKg:       exerciseReq.WeightKg,
-				TargetWeightKg: exerciseReq.TargetWeightKg,
-				RPEValueID:     exerciseReq.RPEValueID,
-				Notes:          exerciseReq.Notes,
+				ExerciseOrder:   exerciseReq.ExerciseOrder,
+				Sets:            exerciseReq.Sets,
+				Reps:            exerciseReq.Reps,
+				HoldSeconds:     exerciseReq.HoldSeconds,
+				RPEValueID:      exerciseReq.RPEValueID,
+				Notes:           exerciseReq.Notes,
+			}
+
+			// Process target weight if provided
+			if exerciseReq.TargetWeight != nil {
+				targetKg, originalValue, originalUnit := utils.ProcessWeightInput(exerciseReq.TargetWeight)
+				prescription.TargetWeightKg = targetKg
+				prescription.OriginalTargetWeightValue = originalValue
+				prescription.OriginalTargetWeightUnit = originalUnit
 			}
 
 			if err := tx.Create(&prescription).Error; err != nil {
@@ -383,6 +393,11 @@ func CreatePrescriptionGroup(c *gin.Context) {
 
 	// Format response as grouped prescriptions
 	groupedResponse := models.GroupPrescriptionsByGroupID(createdPrescriptions)
+
+	// Get user's preferred weight unit and populate target weights
+	preferredWeightUnit := getUserPreferredWeightUnit(c, userUUID)
+	models.PopulatePrescriptionWeights(groupedResponse, createdPrescriptions, preferredWeightUnit)
+
 	if len(groupedResponse) > 0 {
 		utils.CreatedResponse(c, "Prescription group created successfully.", groupedResponse[0])
 	} else {
@@ -537,14 +552,20 @@ func UpdatePrescriptionGroup(c *gin.Context) {
 					RestBetweenSets: restBetweenSets,
 					GroupName:       groupName,
 					GroupNotes:      groupNotes,
-					ExerciseOrder:  exerciseReq.ExerciseOrder,
-					Sets:           exerciseReq.Sets,
-					Reps:           exerciseReq.Reps,
-					HoldSeconds:    exerciseReq.HoldSeconds,
-					WeightKg:       exerciseReq.WeightKg,
-					TargetWeightKg: exerciseReq.TargetWeightKg,
-					RPEValueID:     exerciseReq.RPEValueID,
-					Notes:          exerciseReq.Notes,
+					ExerciseOrder:   exerciseReq.ExerciseOrder,
+					Sets:            exerciseReq.Sets,
+					Reps:            exerciseReq.Reps,
+					HoldSeconds:     exerciseReq.HoldSeconds,
+					RPEValueID:      exerciseReq.RPEValueID,
+					Notes:           exerciseReq.Notes,
+				}
+
+				// Process target weight if provided
+				if exerciseReq.TargetWeight != nil {
+					targetKg, originalValue, originalUnit := utils.ProcessWeightInput(exerciseReq.TargetWeight)
+					prescription.TargetWeightKg = targetKg
+					prescription.OriginalTargetWeightValue = originalValue
+					prescription.OriginalTargetWeightUnit = originalUnit
 				}
 
 				if err := tx.Create(&prescription).Error; err != nil {
@@ -600,6 +621,11 @@ func UpdatePrescriptionGroup(c *gin.Context) {
 	}
 
 	groupedResponse := models.GroupPrescriptionsByGroupID(updatedPrescriptions)
+
+	// Get user's preferred weight unit and populate target weights
+	preferredWeightUnit := getUserPreferredWeightUnit(c, userUUID)
+	models.PopulatePrescriptionWeights(groupedResponse, updatedPrescriptions, preferredWeightUnit)
+
 	if len(groupedResponse) > 0 {
 		utils.SuccessResponse(c, "Prescription group updated successfully.", groupedResponse[0])
 	} else {
@@ -759,6 +785,11 @@ func GetWorkoutPrescriptions(c *gin.Context) {
 	}
 
 	groupedResponse := models.GroupPrescriptionsByGroupID(prescriptions)
+
+	// Get user's preferred weight unit and populate target weights
+	preferredWeightUnit := getUserPreferredWeightUnit(c, userUUID)
+	models.PopulatePrescriptionWeights(groupedResponse, prescriptions, preferredWeightUnit)
+
 	utils.SuccessResponse(c, "Workout prescriptions fetched successfully.", groupedResponse)
 }
 
@@ -848,14 +879,20 @@ func AddExerciseToPrescriptionGroup(c *gin.Context) {
 		RestBetweenSets: firstPrescription.RestBetweenSets,
 		GroupName:       firstPrescription.GroupName,
 		GroupNotes:      firstPrescription.GroupNotes,
-		ExerciseOrder:  nextOrder,
-		Sets:           req.Sets,
-		Reps:           req.Reps,
-		HoldSeconds:    req.HoldSeconds,
-		WeightKg:       req.WeightKg,
-		TargetWeightKg: req.TargetWeightKg,
-		RPEValueID:     req.RPEValueID,
-		Notes:          req.Notes,
+		ExerciseOrder:   nextOrder,
+		Sets:            req.Sets,
+		Reps:            req.Reps,
+		HoldSeconds:     req.HoldSeconds,
+		RPEValueID:      req.RPEValueID,
+		Notes:           req.Notes,
+	}
+
+	// Process target weight if provided
+	if req.TargetWeight != nil {
+		targetKg, originalValue, originalUnit := utils.ProcessWeightInput(req.TargetWeight)
+		prescription.TargetWeightKg = targetKg
+		prescription.OriginalTargetWeightValue = originalValue
+		prescription.OriginalTargetWeightUnit = originalUnit
 	}
 
 	if err := database.DB.Create(&prescription).Error; err != nil {
@@ -940,13 +977,18 @@ func DuplicateWorkout(c *gin.Context) {
 				RestBetweenSets: prescription.RestBetweenSets,
 				GroupName:       prescription.GroupName,
 				GroupNotes:      prescription.GroupNotes,
-				ExerciseOrder:  prescription.ExerciseOrder,
-				Sets:           prescription.Sets,
-				Reps:           prescription.Reps,
-				HoldSeconds:    prescription.HoldSeconds,
-				WeightKg:       prescription.WeightKg,
-				TargetWeightKg: prescription.TargetWeightKg,
-				Notes:          prescription.Notes,
+				ExerciseOrder:   prescription.ExerciseOrder,
+				Sets:            prescription.Sets,
+				Reps:            prescription.Reps,
+				HoldSeconds:     prescription.HoldSeconds,
+				Notes:           prescription.Notes,
+			}
+
+			// Copy target weight fields if present
+			if prescription.TargetWeightKg != nil {
+				newPrescription.TargetWeightKg = prescription.TargetWeightKg
+				newPrescription.OriginalTargetWeightValue = prescription.OriginalTargetWeightValue
+				newPrescription.OriginalTargetWeightUnit = prescription.OriginalTargetWeightUnit
 			}
 
 			if err := tx.Create(&newPrescription).Error; err != nil {
@@ -975,6 +1017,10 @@ func DuplicateWorkout(c *gin.Context) {
 
 	// Group prescriptions for response
 	groupedPrescriptions := models.GroupPrescriptionsByGroupID(newWorkout.Prescriptions)
+
+	// Get user's preferred weight unit and populate target weights
+	preferredWeightUnit := getUserPreferredWeightUnit(c, userUUID)
+	models.PopulatePrescriptionWeights(groupedPrescriptions, newWorkout.Prescriptions, preferredWeightUnit)
 
 	response := map[string]interface{}{
 		"id":            newWorkout.ID,

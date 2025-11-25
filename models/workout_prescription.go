@@ -75,13 +75,14 @@ type WorkoutPrescription struct {
 	GroupNotes      *string          `gorm:"type:text" json:"group_notes,omitempty"`
 
 	// Exercise-level fields (individual prescription row inside a group)
-	ExerciseOrder  int      `gorm:"not null" json:"exercise_order"`
-	Sets           *int     `gorm:"" json:"sets,omitempty"`
-	Reps           *int     `gorm:"" json:"reps,omitempty"`
-	HoldSeconds    *int     `gorm:"" json:"hold_seconds,omitempty"`
-	WeightKg       *float64 `gorm:"type:decimal(10,2)" json:"weight_kg,omitempty"`
-	TargetWeightKg *float64 `gorm:"type:decimal(10,2)" json:"target_weight_kg,omitempty"`
-	Notes          *string  `gorm:"type:text" json:"notes,omitempty"`
+	ExerciseOrder             int      `gorm:"not null" json:"exercise_order"`
+	Sets                      *int     `gorm:"" json:"sets,omitempty"`
+	Reps                      *int     `gorm:"" json:"reps,omitempty"`
+	HoldSeconds               *int     `gorm:"" json:"hold_seconds,omitempty"`
+	TargetWeightKg            *float64 `gorm:"type:decimal(6,2)" json:"-"`
+	OriginalTargetWeightValue *float64 `gorm:"type:decimal(6,2)" json:"-"`
+	OriginalTargetWeightUnit  *string  `gorm:"type:varchar(2)" json:"-"`
+	Notes                     *string  `gorm:"type:text" json:"notes,omitempty"`
 
 	// Relationships
 	Workout  Workout        `gorm:"foreignKey:WorkoutID" json:"-"`
@@ -138,15 +139,14 @@ func (wp *WorkoutPrescription) BeforeCreate(tx *gorm.DB) error {
 
 // PrescriptionExerciseRequest represents a single exercise within a prescription group
 type PrescriptionExerciseRequest struct {
-	ExerciseID     uuid.UUID  `json:"exercise_id" binding:"required"`
-	ExerciseOrder  int        `json:"exercise_order" binding:"required,min=1"`
-	Sets           *int       `json:"sets,omitempty"`
-	Reps           *int       `json:"reps,omitempty"`
-	HoldSeconds    *int       `json:"hold_seconds,omitempty"`
-	WeightKg       *float64   `json:"weight_kg,omitempty"`
-	TargetWeightKg *float64   `json:"target_weight_kg,omitempty"`
-	RPEValueID     *uuid.UUID `json:"rpe_value_id,omitempty"`
-	Notes          *string    `json:"notes,omitempty"`
+	ExerciseID    uuid.UUID    `json:"exercise_id" binding:"required"`
+	ExerciseOrder int          `json:"exercise_order" binding:"required,min=1"`
+	Sets          *int         `json:"sets,omitempty"`
+	Reps          *int         `json:"reps,omitempty"`
+	HoldSeconds   *int         `json:"hold_seconds,omitempty"`
+	TargetWeight  *WeightInput `json:"target_weight,omitempty"`
+	RPEValueID    *uuid.UUID   `json:"rpe_value_id,omitempty"`
+	Notes         *string      `json:"notes,omitempty"`
 }
 
 // CreatePrescriptionGroupRequest represents the request to create a prescription group
@@ -185,32 +185,30 @@ type GroupOrderItem struct {
 
 // AddExerciseToPrescriptionRequest represents adding an exercise to an existing group
 type AddExerciseToPrescriptionRequest struct {
-	ExerciseID     uuid.UUID  `json:"exercise_id" binding:"required"`
-	Sets           *int       `json:"sets,omitempty"`
-	Reps           *int       `json:"reps,omitempty"`
-	HoldSeconds    *int       `json:"hold_seconds,omitempty"`
-	WeightKg       *float64   `json:"weight_kg,omitempty"`
-	TargetWeightKg *float64   `json:"target_weight_kg,omitempty"`
-	RPEValueID     *uuid.UUID `json:"rpe_value_id,omitempty"`
-	Notes          *string    `json:"notes,omitempty"`
+	ExerciseID   uuid.UUID    `json:"exercise_id" binding:"required"`
+	Sets         *int         `json:"sets,omitempty"`
+	Reps         *int         `json:"reps,omitempty"`
+	HoldSeconds  *int         `json:"hold_seconds,omitempty"`
+	TargetWeight *WeightInput `json:"target_weight,omitempty"`
+	RPEValueID   *uuid.UUID   `json:"rpe_value_id,omitempty"`
+	Notes        *string      `json:"notes,omitempty"`
 }
 
 // ===== Response DTOs =====
 
 // PrescriptionExerciseResponse represents a single exercise in the response
 type PrescriptionExerciseResponse struct {
-	ID             uuid.UUID      `json:"id"`
-	ExerciseID     uuid.UUID      `json:"exercise_id"`
-	ExerciseOrder  int            `json:"exercise_order"`
-	Sets           *int           `json:"sets,omitempty"`
-	Reps           *int           `json:"reps,omitempty"`
-	HoldSeconds    *int           `json:"hold_seconds,omitempty"`
-	WeightKg       *float64       `json:"weight_kg,omitempty"`
-	TargetWeightKg *float64       `json:"target_weight_kg,omitempty"`
-	RPEValueID     *uuid.UUID     `json:"rpe_value_id,omitempty"`
-	Notes          *string        `json:"notes,omitempty"`
-	Exercise       *ExerciseBrief `json:"exercise,omitempty"`
-	RPEValue       *RPEValueBrief `json:"rpe_value,omitempty"`
+	ID            uuid.UUID      `json:"id"`
+	ExerciseID    uuid.UUID      `json:"exercise_id"`
+	ExerciseOrder int            `json:"exercise_order"`
+	Sets          *int           `json:"sets,omitempty"`
+	Reps          *int           `json:"reps,omitempty"`
+	HoldSeconds   *int           `json:"hold_seconds,omitempty"`
+	TargetWeight  *WeightOutput  `json:"target_weight,omitempty"`
+	RPEValueID    *uuid.UUID     `json:"rpe_value_id,omitempty"`
+	Notes         *string        `json:"notes,omitempty"`
+	Exercise      *ExerciseBrief `json:"exercise,omitempty"`
+	RPEValue      *RPEValueBrief `json:"rpe_value,omitempty"`
 }
 
 // PrescriptionGroupResponse represents a group of prescriptions in the response
@@ -244,6 +242,8 @@ type RPEValueBrief struct {
 // ===== Helper Functions =====
 
 // GroupPrescriptionsByGroupID groups prescriptions by their GroupID for response formatting
+// Note: This function requires a second pass to populate TargetWeight fields
+// Use PopulatePrescriptionWeights() after calling this function
 func GroupPrescriptionsByGroupID(prescriptions []WorkoutPrescription) []PrescriptionGroupResponse {
 	if len(prescriptions) == 0 {
 		return []PrescriptionGroupResponse{}
@@ -268,16 +268,15 @@ func GroupPrescriptionsByGroupID(prescriptions []WorkoutPrescription) []Prescrip
 		}
 
 		exerciseResp := PrescriptionExerciseResponse{
-			ID:             p.ID,
-			ExerciseID:     p.ExerciseID,
-			ExerciseOrder:  p.ExerciseOrder,
-			Sets:           p.Sets,
-			Reps:           p.Reps,
-			HoldSeconds:    p.HoldSeconds,
-			WeightKg:       p.WeightKg,
-			TargetWeightKg: p.TargetWeightKg,
-			RPEValueID:     p.RPEValueID,
-			Notes:          p.Notes,
+			ID:            p.ID,
+			ExerciseID:    p.ExerciseID,
+			ExerciseOrder: p.ExerciseOrder,
+			Sets:          p.Sets,
+			Reps:          p.Reps,
+			HoldSeconds:   p.HoldSeconds,
+			TargetWeight:  nil, // Will be populated by controller with user's preferred unit
+			RPEValueID:    p.RPEValueID,
+			Notes:         p.Notes,
 		}
 
 		// Add exercise brief if loaded
@@ -310,6 +309,43 @@ func GroupPrescriptionsByGroupID(prescriptions []WorkoutPrescription) []Prescrip
 	}
 
 	return result
+}
+
+// PopulatePrescriptionWeights populates the TargetWeight fields in prescription responses
+// by converting from canonical kg storage to the user's preferred unit
+func PopulatePrescriptionWeights(groupedResponse []PrescriptionGroupResponse, prescriptions []WorkoutPrescription, preferredWeightUnit string) {
+	// Create a map of prescription ID to prescription for quick lookup
+	prescriptionMap := make(map[uuid.UUID]WorkoutPrescription)
+	for _, p := range prescriptions {
+		prescriptionMap[p.ID] = p
+	}
+
+	// Iterate through grouped response and populate target weights
+	for i := range groupedResponse {
+		for j := range groupedResponse[i].Exercises {
+			exercise := &groupedResponse[i].Exercises[j]
+			if prescription, exists := prescriptionMap[exercise.ID]; exists {
+				if prescription.TargetWeightKg != nil {
+					// Convert from canonical kg to user's preferred unit
+					var weightValue float64
+					var weightUnit string
+
+					if preferredWeightUnit == "lb" {
+						weightValue = *prescription.TargetWeightKg * 2.20462262
+						weightUnit = "lb"
+					} else {
+						weightValue = *prescription.TargetWeightKg
+						weightUnit = "kg"
+					}
+
+					exercise.TargetWeight = &WeightOutput{
+						WeightValue: &weightValue,
+						WeightUnit:  &weightUnit,
+					}
+				}
+			}
+		}
+	}
 }
 
 // GetNextGroupOrder returns the next available group order for a workout

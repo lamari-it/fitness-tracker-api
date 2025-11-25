@@ -45,7 +45,10 @@ func GetSessionBlock(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, "Session block retrieved successfully", block.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.SuccessResponse(c, "Session block retrieved successfully", block.ToResponse(preferredWeightUnit))
 }
 
 // CompleteSessionBlock marks a session block as complete
@@ -95,7 +98,10 @@ func CompleteSessionBlock(c *gin.Context) {
 		Preload("SessionExercises.SessionSets.RPEValue").
 		First(&block, "id = ?", block.ID)
 
-	utils.SuccessResponse(c, "Session block completed successfully", block.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.SuccessResponse(c, "Session block completed successfully", block.ToResponse(preferredWeightUnit))
 }
 
 // SkipSessionBlock marks a session block as skipped
@@ -144,7 +150,10 @@ func SkipSessionBlock(c *gin.Context) {
 		Preload("SessionExercises.SessionSets.RPEValue").
 		First(&block, "id = ?", block.ID)
 
-	utils.SuccessResponse(c, "Session block skipped successfully", block.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.SuccessResponse(c, "Session block skipped successfully", block.ToResponse(preferredWeightUnit))
 }
 
 // UpdateSessionBlockRPE updates the perceived exertion for a block
@@ -199,7 +208,10 @@ func UpdateSessionBlockRPE(c *gin.Context) {
 		Preload("SessionExercises.SessionSets.RPEValue").
 		First(&block, "id = ?", block.ID)
 
-	utils.SuccessResponse(c, "Session block updated successfully", block.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.SuccessResponse(c, "Session block updated successfully", block.ToResponse(preferredWeightUnit))
 }
 
 // Helper functions
@@ -224,4 +236,12 @@ func isAuthorizedForSession(session models.WorkoutSession, authUserID uuid.UUID)
 	isOwner := session.UserID == authUserID
 	isCreator := session.CreatedByID != nil && *session.CreatedByID == authUserID
 	return isOwner || isCreator
+}
+
+func getUserPreferredWeightUnit(c *gin.Context, userID uuid.UUID) string {
+	var user models.User
+	if err := database.DB.Select("preferred_weight_unit").First(&user, "id = ?", userID).Error; err != nil {
+		return "kg" // default fallback
+	}
+	return user.PreferredWeightUnit
 }

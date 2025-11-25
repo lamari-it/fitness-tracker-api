@@ -55,11 +55,14 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Successful Creation with Required Fields", func(t *testing.T) {
 		profileData := map[string]interface{}{
-			"date_of_birth":     "1990-05-15",
-			"gender":            "male",
-			"height_cm":         180.5,
-			"current_weight_kg": 80.0,
-			"fitness_goal_ids":  muscleGainIDs,
+			"date_of_birth": "1990-05-15",
+			"gender":        "male",
+			"height_cm":     180.5,
+			"current_weight": map[string]interface{}{
+				"weight_value": 80.0,
+				"weight_unit":  "kg",
+			},
+			"fitness_goal_ids": muscleGainIDs,
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile").
@@ -80,9 +83,10 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("gender").String().IsEqual("male")
 		data.Value("height_cm").Number().IsEqual(180.5)
 		data.Value("height_ft_in").String().NotEmpty()
-		data.Value("current_weight_kg").Number().IsEqual(80.0)
-		data.Value("current_weight_lbs").Number().Gt(0)
-		data.Value("preferred_weight_unit").String().IsEqual("kg")
+		// Check current_weight response format
+		currentWeight := data.Value("current_weight").Object()
+		currentWeight.Value("weight_value").Number().IsEqual(80.0)
+		currentWeight.Value("weight_unit").String().IsEqual("kg")
 		data.Value("target_weekly_workouts").Number().IsEqual(3)
 		data.Value("activity_level").String().IsEqual("moderate")
 		data.Value("training_locations").Array().Length().IsEqual(1)
@@ -97,11 +101,14 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Duplicate Profile Creation", func(t *testing.T) {
 		profileData := map[string]interface{}{
-			"date_of_birth":     "1990-05-15",
-			"gender":            "female",
-			"height_cm":         165.0,
-			"current_weight_kg": 60.0,
-			"fitness_goal_ids":  weightLossIDs,
+			"date_of_birth": "1990-05-15",
+			"gender":        "female",
+			"height_cm":     165.0,
+			"current_weight": map[string]interface{}{
+				"weight_value": 60.0,
+				"weight_unit":  "kg",
+			},
+			"fitness_goal_ids": weightLossIDs,
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile").
@@ -123,13 +130,18 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		multiGoalIDs := GetFitnessGoalIDs(t, "weight_loss", "endurance")
 
 		profileData := map[string]interface{}{
-			"date_of_birth":                   "1985-08-20",
-			"gender":                          "female",
-			"height_cm":                       165.0,
-			"current_weight_kg":               70.0,
-			"fitness_goal_ids":                multiGoalIDs,
-			"preferred_weight_unit":           "lb",
-			"target_weight_kg":                60.0,
+			"date_of_birth": "1985-08-20",
+			"gender":        "female",
+			"height_cm":     165.0,
+			"current_weight": map[string]interface{}{
+				"weight_value": 154.32, // ~70kg in lbs
+				"weight_unit":  "lb",
+			},
+			"fitness_goal_ids": multiGoalIDs,
+			"target_weight": map[string]interface{}{
+				"weight_value": 132.28, // ~60kg in lbs
+				"weight_unit":  "lb",
+			},
 			"target_weekly_workouts":          5,
 			"activity_level":                  "active",
 			"training_locations":              []string{"home", "gym"},
@@ -150,9 +162,11 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		response.Value("success").Boolean().IsTrue()
 
 		data := response.Value("data").Object()
-		data.Value("preferred_weight_unit").String().IsEqual("lb")
-		data.Value("target_weight_kg").Number().IsEqual(60.0)
-		data.Value("target_weight_lbs").Number().Gt(0)
+		// User should have lb preference set in users table  (managed separately from profile now)
+		// Check target_weight response format - should be in user's preferred unit (lb)
+		targetWeight := data.Value("target_weight").Object()
+		targetWeight.Value("weight_value").Number().InRange(132, 133) // ~132.28 lbs
+		targetWeight.Value("weight_unit").String().IsEqual("lb")
 		data.Value("target_weekly_workouts").Number().IsEqual(5)
 		data.Value("activity_level").String().IsEqual("active")
 		data.Value("training_locations").Array().Length().IsEqual(2)
@@ -170,11 +184,14 @@ func testCreateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		generalFitnessIDs := GetFitnessGoalIDs(t, "general_fitness")
 
 		profileData := map[string]interface{}{
-			"date_of_birth":     "1990-05-15",
-			"gender":            "male",
-			"height_cm":         180.0,
-			"current_weight_kg": 80.0,
-			"fitness_goal_ids":  generalFitnessIDs,
+			"date_of_birth": "1990-05-15",
+			"gender":        "male",
+			"height_cm":     180.0,
+			"current_weight": map[string]interface{}{
+				"weight_value": 80.0,
+				"weight_unit":  "kg",
+			},
+			"fitness_goal_ids": generalFitnessIDs,
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile").
@@ -208,11 +225,14 @@ func testGetFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	// Create profile first
 	profileData := map[string]interface{}{
-		"date_of_birth":     "1992-03-10",
-		"gender":            "other",
-		"height_cm":         170.0,
-		"current_weight_kg": 65.0,
-		"fitness_goal_ids":  strengthIDs,
+		"date_of_birth": "1992-03-10",
+		"gender":        "other",
+		"height_cm":     170.0,
+		"current_weight": map[string]interface{}{
+			"weight_value": 65.0,
+			"weight_unit":  "kg",
+		},
+		"fitness_goal_ids": strengthIDs,
 	}
 
 	e.POST("/api/v1/user/fitness-profile").
@@ -237,7 +257,10 @@ func testGetFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("date_of_birth").String().IsEqual("1992-03-10")
 		data.Value("gender").String().IsEqual("other")
 		data.Value("height_cm").Number().IsEqual(170.0)
-		data.Value("current_weight_kg").Number().IsEqual(65.0)
+		// Check current_weight response format
+		currentWeight := data.Value("current_weight").Object()
+		currentWeight.Value("weight_value").Number().IsEqual(65.0)
+		currentWeight.Value("weight_unit").String().IsEqual("kg")
 
 		// Check fitness goals
 		fitnessGoals := data.Value("fitness_goals").Array()
@@ -265,11 +288,14 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	// Create profile first
 	profileData := map[string]interface{}{
-		"date_of_birth":     "1988-12-25",
-		"gender":            "male",
-		"height_cm":         175.0,
-		"current_weight_kg": 85.0,
-		"fitness_goal_ids":  generalFitnessIDs,
+		"date_of_birth": "1988-12-25",
+		"gender":        "male",
+		"height_cm":     175.0,
+		"current_weight": map[string]interface{}{
+			"weight_value": 85.0,
+			"weight_unit":  "kg",
+		},
+		"fitness_goal_ids": generalFitnessIDs,
 	}
 
 	e.POST("/api/v1/user/fitness-profile").
@@ -280,9 +306,15 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Successful Full Update", func(t *testing.T) {
 		updateData := map[string]interface{}{
-			"current_weight_kg":               82.0,
-			"fitness_goal_ids":                muscleGainIDs,
-			"target_weight_kg":                78.0,
+			"current_weight": map[string]interface{}{
+				"weight_value": 82.0,
+				"weight_unit":  "kg",
+			},
+			"fitness_goal_ids": muscleGainIDs,
+			"target_weight": map[string]interface{}{
+				"weight_value": 78.0,
+				"weight_unit":  "kg",
+			},
 			"target_weekly_workouts":          4,
 			"activity_level":                  "very_active",
 			"training_locations":              []string{"gym", "outdoors"},
@@ -302,8 +334,12 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		response.Value("message").String().Contains("updated")
 
 		data := response.Value("data").Object()
-		data.Value("current_weight_kg").Number().IsEqual(82.0)
-		data.Value("target_weight_kg").Number().IsEqual(78.0)
+		currentWeight := data.Value("current_weight").Object()
+		currentWeight.Value("weight_value").Number().IsEqual(82.0)
+		currentWeight.Value("weight_unit").String().IsEqual("kg")
+		targetWeight := data.Value("target_weight").Object()
+		targetWeight.Value("weight_value").Number().IsEqual(78.0)
+		targetWeight.Value("weight_unit").String().IsEqual("kg")
 		data.Value("target_weekly_workouts").Number().IsEqual(4)
 		data.Value("activity_level").String().IsEqual("very_active")
 		data.Value("training_locations").Array().Length().IsEqual(2)
@@ -318,7 +354,10 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Partial Update - Weight Only", func(t *testing.T) {
 		updateData := map[string]interface{}{
-			"current_weight_kg": 80.0,
+			"current_weight": map[string]interface{}{
+				"weight_value": 80.0,
+				"weight_unit":  "kg",
+			},
 		}
 
 		response := e.PUT("/api/v1/user/fitness-profile").
@@ -331,7 +370,9 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 		response.Value("success").Boolean().IsTrue()
 		data := response.Value("data").Object()
-		data.Value("current_weight_kg").Number().IsEqual(80.0)
+		currentWeight := data.Value("current_weight").Object()
+		currentWeight.Value("weight_value").Number().IsEqual(80.0)
+		currentWeight.Value("weight_unit").String().IsEqual("kg")
 		// Other fields should remain unchanged
 		data.Value("activity_level").String().IsEqual("very_active")
 
@@ -345,7 +386,10 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		newToken := createTestUserAndGetToken(e, "nonexistent@example.com", "NoProfile123!", "No", "Profile")
 
 		updateData := map[string]interface{}{
-			"current_weight_kg": 70.0,
+			"current_weight": map[string]interface{}{
+				"weight_value": 70.0,
+				"weight_unit":  "kg",
+			},
 		}
 
 		response := e.PUT("/api/v1/user/fitness-profile").
@@ -362,7 +406,10 @@ func testUpdateFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Update Without Auth", func(t *testing.T) {
 		updateData := map[string]interface{}{
-			"current_weight_kg": 75.0,
+			"current_weight": map[string]interface{}{
+				"weight_value": 75.0,
+				"weight_unit":  "kg",
+			},
 		}
 
 		response := e.PUT("/api/v1/user/fitness-profile").
@@ -396,11 +443,14 @@ func testDeleteFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	// Create profile first
 	profileData := map[string]interface{}{
-		"date_of_birth":     "1995-07-04",
-		"gender":            "female",
-		"height_cm":         162.0,
-		"current_weight_kg": 55.0,
-		"fitness_goal_ids":  flexibilityIDs,
+		"date_of_birth": "1995-07-04",
+		"gender":        "female",
+		"height_cm":     162.0,
+		"current_weight": map[string]interface{}{
+			"weight_value": 55.0,
+			"weight_unit":  "kg",
+		},
+		"fitness_goal_ids": flexibilityIDs,
 	}
 
 	e.POST("/api/v1/user/fitness-profile").
@@ -445,12 +495,18 @@ func testLogWeight(t *testing.T, e *httpexpect.Expect) {
 
 	// Create profile first
 	profileData := map[string]interface{}{
-		"date_of_birth":     "1990-01-01",
-		"gender":            "male",
-		"height_cm":         180.0,
-		"current_weight_kg": 85.0,
-		"fitness_goal_ids":  weightLossIDs,
-		"target_weight_kg":  75.0,
+		"date_of_birth": "1990-01-01",
+		"gender":        "male",
+		"height_cm":     180.0,
+		"current_weight": map[string]interface{}{
+			"weight_value": 85.0,
+			"weight_unit":  "kg",
+		},
+		"fitness_goal_ids": weightLossIDs,
+		"target_weight": map[string]interface{}{
+			"weight_value": 75.0,
+			"weight_unit":  "kg",
+		},
 	}
 
 	e.POST("/api/v1/user/fitness-profile").
@@ -461,7 +517,10 @@ func testLogWeight(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Successful Weight Log", func(t *testing.T) {
 		weightData := map[string]interface{}{
-			"weight_kg": 83.5,
+			"weight": map[string]interface{}{
+				"weight_value": 83.5,
+				"weight_unit":  "kg",
+			},
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile/log-weight").
@@ -476,15 +535,19 @@ func testLogWeight(t *testing.T, e *httpexpect.Expect) {
 		response.Value("message").String().Contains("logged")
 
 		data := response.Value("data").Object()
-		data.Value("current_weight_kg").Number().IsEqual(83.5)
-		data.Value("current_weight_lbs").Number().Gt(0)
+		currentWeight := data.Value("current_weight").Object()
+		currentWeight.Value("weight_value").Number().IsEqual(83.5)
+		currentWeight.Value("weight_unit").String().IsEqual("kg")
 	})
 
 	t.Run("Log Weight Without Profile", func(t *testing.T) {
 		noProfileToken := createTestUserAndGetToken(e, "noprofile@example.com", "NoProfile123!", "No", "Profile")
 
 		weightData := map[string]interface{}{
-			"weight_kg": 70.0,
+			"weight": map[string]interface{}{
+				"weight_value": 70.0,
+				"weight_unit":  "kg",
+			},
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile/log-weight").
@@ -500,7 +563,10 @@ func testLogWeight(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Log Weight Without Auth", func(t *testing.T) {
 		weightData := map[string]interface{}{
-			"weight_kg": 70.0,
+			"weight": map[string]interface{}{
+				"weight_value": 70.0,
+				"weight_unit":  "kg",
+			},
 		}
 
 		response := e.POST("/api/v1/user/fitness-profile/log-weight").
@@ -527,89 +593,116 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 		{
 			name: "Missing Date of Birth",
 			profileData: map[string]interface{}{
-				"gender":            "male",
-				"height_cm":         180.0,
-				"current_weight_kg": 80.0,
-				"fitness_goal_ids":  generalFitnessIDs,
+				"gender":    "male",
+				"height_cm": 180.0,
+				"current_weight": map[string]interface{}{
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
 			},
 		},
 		{
 			name: "Invalid Gender",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "invalid",
-				"height_cm":         180.0,
-				"current_weight_kg": 80.0,
-				"fitness_goal_ids":  generalFitnessIDs,
+				"date_of_birth": "1990-05-15",
+				"gender":        "invalid",
+				"height_cm":     180.0,
+				"current_weight": map[string]interface{}{
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
 			},
 		},
 		{
 			name: "Height Too Low",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         40.0,
-				"current_weight_kg": 80.0,
-				"fitness_goal_ids":  generalFitnessIDs,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     40.0,
+				"current_weight": map[string]interface{}{
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
 			},
 		},
 		{
 			name: "Height Too High",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         350.0,
-				"current_weight_kg": 80.0,
-				"fitness_goal_ids":  generalFitnessIDs,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     350.0,
+				"current_weight": map[string]interface{}{
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
 			},
 		},
 		{
 			name: "Weight Too Low",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         180.0,
-				"current_weight_kg": 10.0,
-				"fitness_goal_ids":  generalFitnessIDs,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
+				"current_weight": map[string]interface{}{
+					"weight_value": 10.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
 			},
 		},
 		{
 			name: "Missing Fitness Goals",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         180.0,
-				"current_weight_kg": 80.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
+				"current_weight": map[string]interface{}{
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
 			},
 		},
 		{
 			name: "Empty Fitness Goals Array",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         180.0,
-				"current_weight_kg": 80.0,
-				"fitness_goal_ids":  []string{},
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
+				"current_weight": map[string]interface{}{
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": []string{},
 			},
 		},
 		{
 			name: "Invalid Activity Level",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         180.0,
-				"current_weight_kg": 80.0,
-				"fitness_goal_ids":  generalFitnessIDs,
-				"activity_level":    "super_active",
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
+				"current_weight": map[string]interface{}{
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
+				"activity_level":   "super_active",
 			},
 		},
 		{
 			name: "Invalid Training Location",
 			profileData: map[string]interface{}{
-				"date_of_birth":      "1990-05-15",
-				"gender":             "male",
-				"height_cm":          180.0,
-				"current_weight_kg":  80.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
+				"current_weight": map[string]interface{}{
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
 				"fitness_goal_ids":   generalFitnessIDs,
 				"training_locations": []string{"space"},
 			},
@@ -617,21 +710,27 @@ func testFitnessProfileValidation(t *testing.T, e *httpexpect.Expect) {
 		{
 			name: "Invalid Day",
 			profileData: map[string]interface{}{
-				"date_of_birth":     "1990-05-15",
-				"gender":            "male",
-				"height_cm":         180.0,
-				"current_weight_kg": 80.0,
-				"fitness_goal_ids":  generalFitnessIDs,
-				"available_days":    []string{"funday"},
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
+				"current_weight": map[string]interface{}{
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
+				"fitness_goal_ids": generalFitnessIDs,
+				"available_days":   []string{"funday"},
 			},
 		},
 		{
 			name: "Weekly Workouts Too High",
 			profileData: map[string]interface{}{
-				"date_of_birth":          "1990-05-15",
-				"gender":                 "male",
-				"height_cm":              180.0,
-				"current_weight_kg":      80.0,
+				"date_of_birth": "1990-05-15",
+				"gender":        "male",
+				"height_cm":     180.0,
+				"current_weight": map[string]interface{}{
+					"weight_value": 80.0,
+					"weight_unit":  "kg",
+				},
 				"fitness_goal_ids":       generalFitnessIDs,
 				"target_weekly_workouts": 10,
 			},

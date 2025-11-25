@@ -35,11 +35,8 @@ dev: ## Run with auto-reload (requires air: go install github.com/cosmtrek/air@l
 	air
 
 # Test and quality commands
-test: ## Run tests
-	go test -v ./...
-
-test-auth: ## Run authentication tests only
-	go test -v ./test -run TestAuth
+test: ## Run authentication tests only
+	go test -v ./test
 
 test-coverage: ## Run tests with coverage
 	go test -v -coverprofile=coverage.out ./...

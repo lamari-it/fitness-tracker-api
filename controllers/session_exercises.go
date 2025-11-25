@@ -45,7 +45,10 @@ func GetSessionExercise(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, "Session exercise retrieved successfully", sessionExercise.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.SuccessResponse(c, "Session exercise retrieved successfully", sessionExercise.ToResponse(preferredWeightUnit))
 }
 
 // CompleteSessionExercise marks a session exercise as complete
@@ -97,7 +100,10 @@ func CompleteSessionExercise(c *gin.Context) {
 		Preload("SessionSets.RPEValue").
 		First(&sessionExercise, "id = ?", sessionExercise.ID)
 
-	utils.SuccessResponse(c, "Session exercise completed successfully", sessionExercise.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.SuccessResponse(c, "Session exercise completed successfully", sessionExercise.ToResponse(preferredWeightUnit))
 }
 
 // SkipSessionExercise marks a session exercise as skipped
@@ -148,7 +154,10 @@ func SkipSessionExercise(c *gin.Context) {
 		Preload("SessionSets.RPEValue").
 		First(&sessionExercise, "id = ?", sessionExercise.ID)
 
-	utils.SuccessResponse(c, "Session exercise skipped successfully", sessionExercise.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.SuccessResponse(c, "Session exercise skipped successfully", sessionExercise.ToResponse(preferredWeightUnit))
 }
 
 // UpdateSessionExerciseNotes updates the notes for a session exercise
@@ -205,7 +214,10 @@ func UpdateSessionExerciseNotes(c *gin.Context) {
 		Preload("SessionSets.RPEValue").
 		First(&sessionExercise, "id = ?", sessionExercise.ID)
 
-	utils.SuccessResponse(c, "Session exercise updated successfully", sessionExercise.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.SuccessResponse(c, "Session exercise updated successfully", sessionExercise.ToResponse(preferredWeightUnit))
 }
 
 // AddSetToExercise adds a new set to a session exercise
@@ -251,23 +263,21 @@ func AddSetToExercise(c *gin.Context) {
 	// Determine next set number
 	nextSetNumber := len(sessionExercise.SessionSets) + 1
 
-	// Convert weight to kg if needed
-	actualWeightKg := req.ActualWeightKg
-	if req.WeightUnit != nil && *req.WeightUnit == "lb" && req.ActualWeightKg != nil {
-		converted := *req.ActualWeightKg * 0.453592
-		actualWeightKg = &converted
-	}
+	// Process weight input using new unified weight system
+	actualWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.ActualWeight)
 
 	set := models.SessionSet{
-		SessionExerciseID:     sessionExercise.ID,
-		SetNumber:             nextSetNumber,
-		Completed:             false,
-		ActualReps:            req.ActualReps,
-		ActualWeightKg:        actualWeightKg,
-		ActualDurationSeconds: req.ActualDurationSeconds,
-		RPEValueID:            req.RPEValueID,
-		WasFailure:            false,
-		Notes:                 "",
+		SessionExerciseID:         sessionExercise.ID,
+		SetNumber:                 nextSetNumber,
+		Completed:                 false,
+		ActualReps:                req.ActualReps,
+		ActualWeightKg:            actualWeightKg,
+		OriginalActualWeightValue: originalValue,
+		OriginalActualWeightUnit:  originalUnit,
+		ActualDurationSeconds:     req.ActualDurationSeconds,
+		RPEValueID:                req.RPEValueID,
+		WasFailure:                false,
+		Notes:                     "",
 	}
 
 	if req.Notes != nil {
@@ -282,5 +292,8 @@ func AddSetToExercise(c *gin.Context) {
 	// Reload with RPE value
 	database.DB.Preload("RPEValue").First(&set, "id = ?", set.ID)
 
-	utils.CreatedResponse(c, "Set added successfully", set.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	preferredWeightUnit := getUserPreferredWeightUnit(c, authUserID)
+
+	utils.CreatedResponse(c, "Set added successfully", set.ToResponse(preferredWeightUnit))
 }
