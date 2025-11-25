@@ -58,22 +58,26 @@ func CreateUserFitnessProfile(c *gin.Context) {
 
 	// Create profile with defaults for optional fields
 	profile := models.UserFitnessProfile{
-		UserID:          userID,
-		DateOfBirth:     dob,
-		Gender:          req.Gender,
-		HeightCm:        req.HeightCm,
-		CurrentWeightKg: req.CurrentWeightKg,
+		UserID:      userID,
+		DateOfBirth: dob,
+		Gender:      req.Gender,
+		HeightCm:    req.HeightCm,
 	}
 
-	// Set optional fields with defaults
-	if req.PreferredWeightUnit != "" {
-		profile.PreferredWeightUnit = req.PreferredWeightUnit
-	} else {
-		profile.PreferredWeightUnit = "kg"
+	// Process current weight using unified weight system
+	if req.CurrentWeight != nil {
+		currentWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.CurrentWeight)
+		profile.CurrentWeightKg = currentWeightKg
+		profile.OriginalCurrentWeightValue = originalValue
+		profile.OriginalCurrentWeightUnit = originalUnit
 	}
 
-	if req.TargetWeightKg != nil {
-		profile.TargetWeightKg = req.TargetWeightKg
+	// Process target weight if provided
+	if req.TargetWeight != nil {
+		targetWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.TargetWeight)
+		profile.TargetWeightKg = targetWeightKg
+		profile.OriginalTargetWeightValue = originalValue
+		profile.OriginalTargetWeightUnit = originalUnit
 	}
 
 	if req.TargetWeeklyWorkouts > 0 {
@@ -210,16 +214,20 @@ func UpdateUserFitnessProfile(c *gin.Context) {
 		profile.HeightCm = req.HeightCm
 	}
 
-	if req.CurrentWeightKg > 0 {
-		profile.CurrentWeightKg = req.CurrentWeightKg
+	// Process current weight if provided
+	if req.CurrentWeight != nil {
+		currentWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.CurrentWeight)
+		profile.CurrentWeightKg = currentWeightKg
+		profile.OriginalCurrentWeightValue = originalValue
+		profile.OriginalCurrentWeightUnit = originalUnit
 	}
 
-	if req.PreferredWeightUnit != "" {
-		profile.PreferredWeightUnit = req.PreferredWeightUnit
-	}
-
-	if req.TargetWeightKg != nil {
-		profile.TargetWeightKg = req.TargetWeightKg
+	// Process target weight if provided
+	if req.TargetWeight != nil {
+		targetWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.TargetWeight)
+		profile.TargetWeightKg = targetWeightKg
+		profile.OriginalTargetWeightValue = originalValue
+		profile.OriginalTargetWeightUnit = originalUnit
 	}
 
 	if req.TargetWeeklyWorkouts > 0 {
@@ -359,7 +367,7 @@ func LogWeight(c *gin.Context) {
 	}
 
 	var req struct {
-		WeightKg float64 `json:"weight_kg" binding:"required,gt=20,lt=500"`
+		Weight *models.WeightInput `json:"weight" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -367,7 +375,11 @@ func LogWeight(c *gin.Context) {
 		return
 	}
 
-	profile.CurrentWeightKg = req.WeightKg
+	// Process weight input using unified weight system
+	currentWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.Weight)
+	profile.CurrentWeightKg = currentWeightKg
+	profile.OriginalCurrentWeightValue = originalValue
+	profile.OriginalCurrentWeightUnit = originalUnit
 
 	if err := database.DB.Save(&profile).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to log weight")
@@ -377,7 +389,7 @@ func LogWeight(c *gin.Context) {
 	// Also create a weight log entry for historical tracking
 	weightLog := models.WeightLog{
 		UserID:   userID,
-		WeightKg: req.WeightKg,
+		WeightKg: *currentWeightKg,
 	}
 	database.DB.Create(&weightLog)
 
