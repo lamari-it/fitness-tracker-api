@@ -225,17 +225,25 @@ func UpdateUserFitnessLevel(c *gin.Context) {
 		}
 	}
 
-	// Update user's fitness level
-	if err := database.DB.Model(&currentUser).Update("fitness_level_id", req.FitnessLevelID).Error; err != nil {
-		utils.InternalServerErrorResponse(c, "Failed to update user fitness level.")
+	// Find user's fitness profile
+	var profile models.UserFitnessProfile
+	if err := database.DB.Where("user_id = ?", currentUser.ID).First(&profile).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			utils.NotFoundResponse(c, "Fitness profile not found. Please create a fitness profile first.")
+			return
+		}
+		utils.InternalServerErrorResponse(c, "Failed to find fitness profile.")
 		return
 	}
 
-	// Reload user with fitness level
-	if err := database.DB.Preload("FitnessLevel").First(&currentUser, currentUser.ID).Error; err != nil {
-		utils.InternalServerErrorResponse(c, "Failed to retrieve updated user.")
+	// Update fitness profile's fitness level
+	if err := database.DB.Model(&profile).Update("fitness_level_id", req.FitnessLevelID).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to update fitness level.")
 		return
 	}
 
-	utils.SuccessResponse(c, "User fitness level updated successfully.", currentUser.ToResponse())
+	// Reload profile with fitness level
+	database.DB.Preload("FitnessLevel").Preload("FitnessGoals.FitnessGoal").First(&profile, "id = ?", profile.ID)
+
+	utils.SuccessResponse(c, "Fitness level updated successfully.", profile.ToResponse(currentUser.PreferredWeightUnit))
 }

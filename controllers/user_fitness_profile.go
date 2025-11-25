@@ -129,6 +129,17 @@ func CreateUserFitnessProfile(c *gin.Context) {
 	profile.HealthConditions = req.HealthConditions
 	profile.InjuriesNotes = req.InjuriesNotes
 
+	// Set fitness level if provided
+	if req.FitnessLevelID != nil {
+		// Validate that the fitness level exists
+		var level models.FitnessLevel
+		if err := database.DB.First(&level, *req.FitnessLevelID).Error; err != nil {
+			utils.BadRequestResponse(c, "Invalid fitness level ID", nil)
+			return
+		}
+		profile.FitnessLevelID = req.FitnessLevelID
+	}
+
 	// Use transaction for profile creation and goal associations
 	tx := database.DB.Begin()
 
@@ -157,8 +168,8 @@ func CreateUserFitnessProfile(c *gin.Context) {
 		return
 	}
 
-	// Preload fitness goals for response
-	database.DB.Preload("FitnessGoals.FitnessGoal").First(&profile, "id = ?", profile.ID)
+	// Preload fitness goals and fitness level for response
+	database.DB.Preload("FitnessGoals.FitnessGoal").Preload("FitnessLevel").First(&profile, "id = ?", profile.ID)
 
 	// Get user's preferred weight unit for response conversion (reuse user variable from above)
 	database.DB.Select("preferred_weight_unit").First(&user, "id = ?", userID)
@@ -178,7 +189,7 @@ func GetUserFitnessProfile(c *gin.Context) {
 	}
 
 	var profile models.UserFitnessProfile
-	if err := database.DB.Preload("FitnessGoals.FitnessGoal").Where("user_id = ?", userID).First(&profile).Error; err != nil {
+	if err := database.DB.Preload("FitnessGoals.FitnessGoal").Preload("FitnessLevel").Where("user_id = ?", userID).First(&profile).Error; err != nil {
 		utils.NotFoundResponse(c, "Fitness profile not found")
 		return
 	}
@@ -289,6 +300,17 @@ func UpdateUserFitnessProfile(c *gin.Context) {
 		profile.InjuriesNotes = req.InjuriesNotes
 	}
 
+	// Update fitness level if provided
+	if req.FitnessLevelID != nil {
+		// Validate that the fitness level exists
+		var level models.FitnessLevel
+		if err := database.DB.First(&level, *req.FitnessLevelID).Error; err != nil {
+			utils.BadRequestResponse(c, "Invalid fitness level ID", nil)
+			return
+		}
+		profile.FitnessLevelID = req.FitnessLevelID
+	}
+
 	// Use transaction if updating fitness goals
 	if len(req.FitnessGoalIDs) > 0 {
 		// Validate that all fitness goal IDs exist
@@ -343,8 +365,8 @@ func UpdateUserFitnessProfile(c *gin.Context) {
 		}
 	}
 
-	// Preload fitness goals for response
-	database.DB.Preload("FitnessGoals.FitnessGoal").First(&profile, "id = ?", profile.ID)
+	// Preload fitness goals and fitness level for response
+	database.DB.Preload("FitnessGoals.FitnessGoal").Preload("FitnessLevel").First(&profile, "id = ?", profile.ID)
 
 	// Get user's preferred weight unit for response conversion
 	var user models.User
@@ -417,6 +439,9 @@ func LogWeight(c *gin.Context) {
 		WeightKg: *currentWeightKg,
 	}
 	database.DB.Create(&weightLog)
+
+	// Preload fitness goals and fitness level for response
+	database.DB.Preload("FitnessGoals.FitnessGoal").Preload("FitnessLevel").First(&profile, "id = ?", profile.ID)
 
 	// Get user's preferred weight unit for response conversion
 	var user models.User

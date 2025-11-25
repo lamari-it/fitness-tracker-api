@@ -18,7 +18,7 @@ type FitnessLevel struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
-	Users []User `gorm:"foreignKey:FitnessLevelID" json:"users,omitempty"`
+	FitnessProfiles []UserFitnessProfile `gorm:"foreignKey:FitnessLevelID" json:"fitness_profiles,omitempty"`
 }
 
 // FitnessGoal represents different fitness objectives
