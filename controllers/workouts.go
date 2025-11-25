@@ -336,10 +336,16 @@ func CreatePrescriptionGroup(c *gin.Context) {
 				Sets:            exerciseReq.Sets,
 				Reps:            exerciseReq.Reps,
 				HoldSeconds:     exerciseReq.HoldSeconds,
-				WeightKg:        exerciseReq.WeightKg,
-				TargetWeightKg:  exerciseReq.TargetWeightKg,
 				RPEValueID:      exerciseReq.RPEValueID,
 				Notes:           exerciseReq.Notes,
+			}
+
+			// Process target weight if provided
+			if exerciseReq.TargetWeight != nil {
+				targetKg, originalValue, originalUnit := utils.ProcessWeightInput(exerciseReq.TargetWeight)
+				prescription.TargetWeightKg = targetKg
+				prescription.OriginalTargetWeightValue = originalValue
+				prescription.OriginalTargetWeightUnit = originalUnit
 			}
 
 			if err := tx.Create(&prescription).Error; err != nil {
@@ -541,10 +547,16 @@ func UpdatePrescriptionGroup(c *gin.Context) {
 					Sets:            exerciseReq.Sets,
 					Reps:            exerciseReq.Reps,
 					HoldSeconds:     exerciseReq.HoldSeconds,
-					WeightKg:        exerciseReq.WeightKg,
-					TargetWeightKg:  exerciseReq.TargetWeightKg,
 					RPEValueID:      exerciseReq.RPEValueID,
 					Notes:           exerciseReq.Notes,
+				}
+
+				// Process target weight if provided
+				if exerciseReq.TargetWeight != nil {
+					targetKg, originalValue, originalUnit := utils.ProcessWeightInput(exerciseReq.TargetWeight)
+					prescription.TargetWeightKg = targetKg
+					prescription.OriginalTargetWeightValue = originalValue
+					prescription.OriginalTargetWeightUnit = originalUnit
 				}
 
 				if err := tx.Create(&prescription).Error; err != nil {
@@ -852,10 +864,16 @@ func AddExerciseToPrescriptionGroup(c *gin.Context) {
 		Sets:            req.Sets,
 		Reps:            req.Reps,
 		HoldSeconds:     req.HoldSeconds,
-		WeightKg:        req.WeightKg,
-		TargetWeightKg:  req.TargetWeightKg,
 		RPEValueID:      req.RPEValueID,
 		Notes:           req.Notes,
+	}
+
+	// Process target weight if provided
+	if req.TargetWeight != nil {
+		targetKg, originalValue, originalUnit := utils.ProcessWeightInput(req.TargetWeight)
+		prescription.TargetWeightKg = targetKg
+		prescription.OriginalTargetWeightValue = originalValue
+		prescription.OriginalTargetWeightUnit = originalUnit
 	}
 
 	if err := database.DB.Create(&prescription).Error; err != nil {
@@ -944,9 +962,14 @@ func DuplicateWorkout(c *gin.Context) {
 				Sets:            prescription.Sets,
 				Reps:            prescription.Reps,
 				HoldSeconds:     prescription.HoldSeconds,
-				WeightKg:        prescription.WeightKg,
-				TargetWeightKg:  prescription.TargetWeightKg,
 				Notes:           prescription.Notes,
+			}
+
+			// Copy target weight fields if present
+			if prescription.TargetWeightKg != nil {
+				newPrescription.TargetWeightKg = prescription.TargetWeightKg
+				newPrescription.OriginalTargetWeightValue = prescription.OriginalTargetWeightValue
+				newPrescription.OriginalTargetWeightUnit = prescription.OriginalTargetWeightUnit
 			}
 
 			if err := tx.Create(&newPrescription).Error; err != nil {
