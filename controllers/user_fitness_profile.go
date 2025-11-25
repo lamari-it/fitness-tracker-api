@@ -64,13 +64,11 @@ func CreateUserFitnessProfile(c *gin.Context) {
 		HeightCm:    req.HeightCm,
 	}
 
-	// Process current weight using unified weight system
-	if req.CurrentWeight != nil {
-		currentWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.CurrentWeight)
-		profile.CurrentWeightKg = currentWeightKg
-		profile.OriginalCurrentWeightValue = originalValue
-		profile.OriginalCurrentWeightUnit = originalUnit
-	}
+	// Process current weight using unified weight system (required field)
+	currentWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(&req.CurrentWeight)
+	profile.CurrentWeightKg = currentWeightKg
+	profile.OriginalCurrentWeightValue = originalValue
+	profile.OriginalCurrentWeightUnit = originalUnit
 
 	// Process target weight if provided
 	if req.TargetWeight != nil {
@@ -144,7 +142,15 @@ func CreateUserFitnessProfile(c *gin.Context) {
 	// Preload fitness goals for response
 	database.DB.Preload("FitnessGoals.FitnessGoal").First(&profile, "id = ?", profile.ID)
 
-	utils.CreatedResponse(c, "Fitness profile created successfully", profile.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	var user models.User
+	database.DB.Select("preferred_weight_unit").First(&user, "id = ?", userID)
+	preferredWeightUnit := user.PreferredWeightUnit
+	if preferredWeightUnit == "" {
+		preferredWeightUnit = "kg"
+	}
+
+	utils.CreatedResponse(c, "Fitness profile created successfully", profile.ToResponse(preferredWeightUnit))
 }
 
 // GetUserFitnessProfile retrieves the fitness profile for the authenticated user
@@ -167,7 +173,15 @@ func GetUserFitnessProfile(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, "Fitness profile retrieved successfully", profile.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	var user models.User
+	database.DB.Select("preferred_weight_unit").First(&user, "id = ?", userID)
+	preferredWeightUnit := user.PreferredWeightUnit
+	if preferredWeightUnit == "" {
+		preferredWeightUnit = "kg"
+	}
+
+	utils.SuccessResponse(c, "Fitness profile retrieved successfully", profile.ToResponse(preferredWeightUnit))
 }
 
 // UpdateUserFitnessProfile updates the fitness profile for the authenticated user
@@ -315,7 +329,15 @@ func UpdateUserFitnessProfile(c *gin.Context) {
 	// Preload fitness goals for response
 	database.DB.Preload("FitnessGoals.FitnessGoal").First(&profile, "id = ?", profile.ID)
 
-	utils.SuccessResponse(c, "Fitness profile updated successfully", profile.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	var user models.User
+	database.DB.Select("preferred_weight_unit").First(&user, "id = ?", userID)
+	preferredWeightUnit := user.PreferredWeightUnit
+	if preferredWeightUnit == "" {
+		preferredWeightUnit = "kg"
+	}
+
+	utils.SuccessResponse(c, "Fitness profile updated successfully", profile.ToResponse(preferredWeightUnit))
 }
 
 // DeleteUserFitnessProfile deletes the fitness profile for the authenticated user
@@ -393,5 +415,13 @@ func LogWeight(c *gin.Context) {
 	}
 	database.DB.Create(&weightLog)
 
-	utils.SuccessResponse(c, "Weight logged successfully", profile.ToResponse())
+	// Get user's preferred weight unit for response conversion
+	var user models.User
+	database.DB.Select("preferred_weight_unit").First(&user, "id = ?", userID)
+	preferredWeightUnit := user.PreferredWeightUnit
+	if preferredWeightUnit == "" {
+		preferredWeightUnit = "kg"
+	}
+
+	utils.SuccessResponse(c, "Weight logged successfully", profile.ToResponse(preferredWeightUnit))
 }
