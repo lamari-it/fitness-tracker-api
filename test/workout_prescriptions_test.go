@@ -154,7 +154,10 @@ func testBasicWorkoutPrescriptionFlow(t *testing.T, e *httpexpect.Expect) {
 		exercises.Length().IsEqual(1)
 		exercises.Value(0).Object().Value("sets").Number().IsEqual(4)
 		exercises.Value(0).Object().Value("reps").Number().IsEqual(8)
-		exercises.Value(0).Object().Value("weight_kg").Number().IsEqual(60.0)
+		// Check target_weight in WeightOutput format
+		targetWeight := exercises.Value(0).Object().Value("target_weight").Object()
+		targetWeight.Value("weight_value").Number().IsEqual(60.0)
+		targetWeight.Value("weight_unit").String().IsEqual("kg")
 		exercises.Value(0).Object().Value("rpe_value_id").String().IsEqual(rpeValueID)
 	})
 

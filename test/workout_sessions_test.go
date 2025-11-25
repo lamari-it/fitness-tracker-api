@@ -439,8 +439,11 @@ func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 
 		set1 := sets.Value(0).Object()
 		set1.Value("set_number").Number().IsEqual(1)
-		set1.Value("actual_reps").Number().IsEqual(10)        // Pre-filled from prescription
-		set1.Value("actual_weight_kg").Number().IsEqual(80.0) // Pre-filled from prescription
+		set1.Value("actual_reps").Number().IsEqual(10) // Pre-filled from prescription
+		// Check actual_weight in WeightOutput format
+		actualWeight := set1.Value("actual_weight").Object()
+		actualWeight.Value("weight_value").Number().IsEqual(80.0)
+		actualWeight.Value("weight_unit").String().IsEqual("kg")
 		setID = set1.Value("id").String().Raw()
 
 		// Second block
