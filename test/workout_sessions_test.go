@@ -363,12 +363,15 @@ func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 			"rest_between_sets": 90,
 			"exercises": []map[string]interface{}{
 				{
-					"exercise_id":      exerciseID,
-					"exercise_order":   1,
-					"sets":             3,
-					"reps":             10,
-					"target_weight_kg": 80.0,
-					"rpe_value_id":     rpeValueID,
+					"exercise_id":    exerciseID,
+					"exercise_order": 1,
+					"sets":           3,
+					"reps":           10,
+					"target_weight": map[string]interface{}{
+						"weight_value": 80.0,
+						"weight_unit":  "kg",
+					},
+					"rpe_value_id": rpeValueID,
 				},
 			},
 		}).
@@ -383,11 +386,14 @@ func testSessionWithPrescriptions(t *testing.T, e *httpexpect.Expect) {
 			"group_order": 2,
 			"exercises": []map[string]interface{}{
 				{
-					"exercise_id":      exercise2ID,
-					"exercise_order":   1,
-					"sets":             4,
-					"reps":             8,
-					"target_weight_kg": 100.0,
+					"exercise_id":    exercise2ID,
+					"exercise_order": 1,
+					"sets":           4,
+					"reps":           8,
+					"target_weight": map[string]interface{}{
+						"weight_value": 100.0,
+						"weight_unit":  "kg",
+					},
 				},
 			},
 		}).

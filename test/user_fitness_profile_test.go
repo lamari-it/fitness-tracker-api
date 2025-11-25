@@ -222,11 +222,14 @@ func testGetFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 
 	// Create profile first
 	profileData := map[string]interface{}{
-		"date_of_birth":     "1992-03-10",
-		"gender":            "other",
-		"height_cm":         170.0,
-		"current_weight_kg": 65.0,
-		"fitness_goal_ids":  strengthIDs,
+		"date_of_birth": "1992-03-10",
+		"gender":        "other",
+		"height_cm":     170.0,
+		"current_weight": map[string]interface{}{
+			"weight_value": 65.0,
+			"weight_unit":  "kg",
+		},
+		"fitness_goal_ids": strengthIDs,
 	}
 
 	e.POST("/api/v1/user/fitness-profile").
@@ -251,7 +254,10 @@ func testGetFitnessProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("date_of_birth").String().IsEqual("1992-03-10")
 		data.Value("gender").String().IsEqual("other")
 		data.Value("height_cm").Number().IsEqual(170.0)
-		data.Value("current_weight_kg").Number().IsEqual(65.0)
+		// Check current_weight response format
+		currentWeight := data.Value("current_weight").Object()
+		currentWeight.Value("weight_value").Number().IsEqual(65.0)
+		currentWeight.Value("weight_unit").String().IsEqual("kg")
 
 		// Check fitness goals
 		fitnessGoals := data.Value("fitness_goals").Array()

@@ -131,8 +131,11 @@ func testBasicWorkoutPrescriptionFlow(t *testing.T, e *httpexpect.Expect) {
 						"exercise_order": 1,
 						"sets":           4,
 						"reps":           8,
-						"weight_kg":      60.0,
-						"rpe_value_id":   rpeValueID,
+						"target_weight": map[string]interface{}{
+							"weight_value": 60.0,
+							"weight_unit":  "kg",
+						},
+						"rpe_value_id": rpeValueID,
 					},
 				},
 			}).
