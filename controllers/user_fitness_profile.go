@@ -66,6 +66,13 @@ func CreateUserFitnessProfile(c *gin.Context) {
 
 	// Process current weight using unified weight system (required field)
 	currentWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(&req.CurrentWeight)
+
+	// Validate weight is in reasonable range (20-500 kg)
+	if currentWeightKg != nil && (*currentWeightKg < 20 || *currentWeightKg > 500) {
+		utils.BadRequestResponse(c, "Weight must be between 20 and 500 kg", nil)
+		return
+	}
+
 	profile.CurrentWeightKg = currentWeightKg
 	profile.OriginalCurrentWeightValue = originalValue
 	profile.OriginalCurrentWeightUnit = originalUnit
@@ -85,6 +92,13 @@ func CreateUserFitnessProfile(c *gin.Context) {
 	// Process target weight if provided
 	if req.TargetWeight != nil {
 		targetWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.TargetWeight)
+
+		// Validate target weight is in reasonable range (20-500 kg)
+		if targetWeightKg != nil && (*targetWeightKg < 20 || *targetWeightKg > 500) {
+			utils.BadRequestResponse(c, "Target weight must be between 20 and 500 kg", nil)
+			return
+		}
+
 		profile.TargetWeightKg = targetWeightKg
 		profile.OriginalTargetWeightValue = originalValue
 		profile.OriginalTargetWeightUnit = originalUnit
@@ -242,6 +256,13 @@ func UpdateUserFitnessProfile(c *gin.Context) {
 	// Process current weight if provided
 	if req.CurrentWeight != nil {
 		currentWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.CurrentWeight)
+
+		// Validate weight is in reasonable range (20-500 kg)
+		if currentWeightKg != nil && (*currentWeightKg < 20 || *currentWeightKg > 500) {
+			utils.BadRequestResponse(c, "Weight must be between 20 and 500 kg", nil)
+			return
+		}
+
 		profile.CurrentWeightKg = currentWeightKg
 		profile.OriginalCurrentWeightValue = originalValue
 		profile.OriginalCurrentWeightUnit = originalUnit
@@ -250,6 +271,13 @@ func UpdateUserFitnessProfile(c *gin.Context) {
 	// Process target weight if provided
 	if req.TargetWeight != nil {
 		targetWeightKg, originalValue, originalUnit := utils.ProcessWeightInput(req.TargetWeight)
+
+		// Validate target weight is in reasonable range (20-500 kg)
+		if targetWeightKg != nil && (*targetWeightKg < 20 || *targetWeightKg > 500) {
+			utils.BadRequestResponse(c, "Target weight must be between 20 and 500 kg", nil)
+			return
+		}
+
 		profile.TargetWeightKg = targetWeightKg
 		profile.OriginalTargetWeightValue = originalValue
 		profile.OriginalTargetWeightUnit = originalUnit
