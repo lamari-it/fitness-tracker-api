@@ -1,0 +1,271 @@
+# Exercise Schemas
+
+ExerciseResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    name_slug:
+      type: string
+    description:
+      type: string
+    instructions:
+      type: string
+    difficulty:
+      type: string
+      enum: [beginner, intermediate, advanced]
+    exercise_type:
+      type: string
+      enum: [strength, cardio, flexibility, balance]
+    is_compound:
+      type: boolean
+    is_unilateral:
+      type: boolean
+    video_url:
+      type: string
+    image_url:
+      type: string
+    muscle_groups:
+      type: array
+      items:
+        $ref: '#/ExerciseMuscleGroupResponse'
+    equipment:
+      type: array
+      items:
+        $ref: '#/EquipmentResponse'
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CreateExerciseRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 1000
+    instructions:
+      type: string
+      maxLength: 2000
+    difficulty:
+      type: string
+      enum: [beginner, intermediate, advanced]
+    exercise_type:
+      type: string
+      enum: [strength, cardio, flexibility, balance]
+    is_compound:
+      type: boolean
+      default: false
+    is_unilateral:
+      type: boolean
+      default: false
+    video_url:
+      type: string
+      format: uri
+    image_url:
+      type: string
+      format: uri
+
+UpdateExerciseRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 1000
+    instructions:
+      type: string
+      maxLength: 2000
+    difficulty:
+      type: string
+      enum: [beginner, intermediate, advanced]
+    exercise_type:
+      type: string
+      enum: [strength, cardio, flexibility, balance]
+    is_compound:
+      type: boolean
+    is_unilateral:
+      type: boolean
+    video_url:
+      type: string
+      format: uri
+    image_url:
+      type: string
+      format: uri
+
+MuscleGroupResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    name_slug:
+      type: string
+    description:
+      type: string
+    body_region:
+      type: string
+    image_url:
+      type: string
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CreateMuscleGroupRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 50
+    description:
+      type: string
+      maxLength: 500
+    body_region:
+      type: string
+      maxLength: 50
+    image_url:
+      type: string
+      format: uri
+
+UpdateMuscleGroupRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 50
+    description:
+      type: string
+      maxLength: 500
+    body_region:
+      type: string
+      maxLength: 50
+    image_url:
+      type: string
+      format: uri
+
+ExerciseMuscleGroupResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    muscle_group_id:
+      type: string
+      format: uuid
+    muscle_group:
+      $ref: '#/MuscleGroupResponse'
+    is_primary:
+      type: boolean
+    involvement_level:
+      type: string
+      enum: [primary, secondary, stabilizer]
+
+AssignMuscleGroupRequest:
+  type: object
+  required:
+    - muscle_group_id
+  properties:
+    muscle_group_id:
+      type: string
+      format: uuid
+    is_primary:
+      type: boolean
+      default: false
+    involvement_level:
+      type: string
+      enum: [primary, secondary, stabilizer]
+      default: primary
+
+EquipmentResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    name_slug:
+      type: string
+    description:
+      type: string
+    category:
+      type: string
+    image_url:
+      type: string
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CreateEquipmentRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 500
+    category:
+      type: string
+      maxLength: 50
+    image_url:
+      type: string
+      format: uri
+
+UpdateEquipmentRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 500
+    category:
+      type: string
+      maxLength: 50
+    image_url:
+      type: string
+      format: uri
+
+AssignEquipmentRequest:
+  type: object
+  required:
+    - equipment_id
+  properties:
+    equipment_id:
+      type: string
+      format: uuid
+    is_required:
+      type: boolean
+      default: false

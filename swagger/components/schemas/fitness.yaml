@@ -1,0 +1,149 @@
+# Fitness Schemas
+
+FitnessLevelResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+      example: "Intermediate"
+    description:
+      type: string
+    sort_order:
+      type: integer
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CreateFitnessLevelRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 50
+    description:
+      type: string
+      maxLength: 500
+    sort_order:
+      type: integer
+      default: 0
+
+UpdateFitnessLevelRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 50
+    description:
+      type: string
+      maxLength: 500
+    sort_order:
+      type: integer
+
+FitnessGoalResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+      example: "Build Muscle"
+    name_slug:
+      type: string
+      example: "build-muscle"
+    description:
+      type: string
+    category:
+      type: string
+      example: "strength"
+    icon_name:
+      type: string
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CreateFitnessGoalRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 500
+    category:
+      type: string
+      maxLength: 50
+    icon_name:
+      type: string
+      maxLength: 50
+
+UpdateFitnessGoalRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 500
+    category:
+      type: string
+      maxLength: 50
+    icon_name:
+      type: string
+      maxLength: 50
+
+UserFitnessGoalResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    user_fitness_profile_id:
+      type: string
+      format: uuid
+    fitness_goal_id:
+      type: string
+      format: uuid
+    priority:
+      type: integer
+      description: "1 = primary goal"
+    target_date:
+      type: string
+      format: date-time
+    notes:
+      type: string
+    fitness_goal:
+      $ref: '#/FitnessGoalResponse'
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+UpdateUserFitnessLevelRequest:
+  type: object
+  properties:
+    fitness_level_id:
+      type: string
+      format: uuid
+      description: Set to null to clear fitness level

@@ -1,0 +1,37 @@
+securitySchemes:
+  BearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: JWT token obtained from login or register endpoints
+
+schemas:
+  # Common schemas
+  $ref: './schemas/common.yaml'
+
+  # Auth schemas
+  $ref: './schemas/auth.yaml'
+
+  # User schemas
+  $ref: './schemas/user.yaml'
+
+  # Exercise schemas
+  $ref: './schemas/exercise.yaml'
+
+  # Workout schemas
+  $ref: './schemas/workout.yaml'
+
+  # Session schemas
+  $ref: './schemas/session.yaml'
+
+  # Trainer schemas
+  $ref: './schemas/trainer.yaml'
+
+  # Fitness schemas
+  $ref: './schemas/fitness.yaml'
+
+parameters:
+  $ref: './parameters.yaml'
+
+responses:
+  $ref: './responses.yaml'

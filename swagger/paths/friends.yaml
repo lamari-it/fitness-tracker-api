@@ -1,0 +1,166 @@
+# Friends Endpoints
+
+/friends:
+  get:
+    tags:
+      - Friends
+    summary: List friends
+    description: Get all friends for the authenticated user
+    operationId: getFriends
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+    responses:
+      '200':
+        description: List of friends
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/trainer.yaml#/UserPublicResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/friends/{id}:
+  delete:
+    tags:
+      - Friends
+    summary: Remove a friend
+    description: Remove a friend from the authenticated user's friend list
+    operationId: removeFriend
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Friend removed
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/friends/request:
+  post:
+    tags:
+      - Friends
+    summary: Send friend request
+    description: Send a friend request to another user
+    operationId: sendFriendRequest
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/trainer.yaml#/SendFriendRequestRequest'
+    responses:
+      '201':
+        description: Friend request sent
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/trainer.yaml#/FriendRequestResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '409':
+        description: Friend request already exists
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/ErrorResponse'
+
+/friends/requests:
+  get:
+    tags:
+      - Friends
+    summary: List friend requests
+    description: Get all pending friend requests for the authenticated user
+    operationId: getFriendRequests
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+      - name: direction
+        in: query
+        description: Filter by sent or received requests
+        schema:
+          type: string
+          enum: [sent, received]
+    responses:
+      '200':
+        description: List of friend requests
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/trainer.yaml#/FriendRequestResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/friends/requests/{id}/{action}:
+  put:
+    tags:
+      - Friends
+    summary: Respond to friend request
+    description: Accept or reject a friend request
+    operationId: respondToFriendRequest
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+      - name: action
+        in: path
+        required: true
+        schema:
+          type: string
+          enum: [accept, reject]
+    responses:
+      '200':
+        description: Response recorded
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/trainer.yaml#/FriendRequestResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'

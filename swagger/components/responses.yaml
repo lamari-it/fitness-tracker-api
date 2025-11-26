@@ -1,0 +1,132 @@
+# Common Responses
+
+SuccessResponse:
+  description: Successful operation
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: true
+          message:
+            type: string
+            example: "Operation completed successfully"
+          data:
+            type: object
+          meta:
+            type: object
+
+ErrorResponse:
+  description: Error response
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: false
+          message:
+            type: string
+            example: "An error occurred"
+          errors:
+            type: object
+            additionalProperties:
+              type: string
+
+BadRequestResponse:
+  description: Bad request - validation error or invalid input
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: false
+          message:
+            type: string
+            example: "Validation failed"
+          errors:
+            type: object
+            additionalProperties:
+              type: string
+
+UnauthorizedResponse:
+  description: Authentication required or token invalid
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: false
+          message:
+            type: string
+            example: "Authentication required"
+
+ForbiddenResponse:
+  description: Access denied - insufficient permissions
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: false
+          message:
+            type: string
+            example: "Access denied"
+
+NotFoundResponse:
+  description: Resource not found
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: false
+          message:
+            type: string
+            example: "Resource not found"
+
+ValidationErrorResponse:
+  description: Validation error with field-level details
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: false
+          message:
+            type: string
+            example: "Validation failed"
+          errors:
+            type: object
+            additionalProperties:
+              type: string
+            example:
+              email: "Invalid email format"
+              password: "Password must be at least 8 characters"
+
+ConflictResponse:
+  description: Resource already exists or conflict with current state
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: false
+          message:
+            type: string
+            example: "Resource already exists"

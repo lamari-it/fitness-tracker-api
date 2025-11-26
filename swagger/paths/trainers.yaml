@@ -1,0 +1,467 @@
+# Trainer Endpoints
+
+/trainers:
+  get:
+    tags:
+      - Trainers
+    summary: List trainers
+    description: Get a list of public trainer profiles
+    operationId: listTrainers
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+      - name: specialty_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: location
+        in: query
+        schema:
+          type: string
+      - name: min_rating
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+    responses:
+      '200':
+        description: List of trainers
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/trainer.yaml#/TrainerPublicResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/trainers/{id}:
+  get:
+    tags:
+      - Trainers
+    summary: Get trainer public profile
+    description: Get a trainer's public profile by ID
+    operationId: getTrainerPublicProfile
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Trainer profile
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/trainer.yaml#/TrainerPublicResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/trainers/profile:
+  get:
+    tags:
+      - Trainers
+    summary: Get own trainer profile
+    description: Get the authenticated user's trainer profile
+    operationId: getTrainerProfile
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Trainer profile
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/trainer.yaml#/TrainerProfileResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  post:
+    tags:
+      - Trainers
+    summary: Create trainer profile
+    description: Create a trainer profile for the authenticated user
+    operationId: createTrainerProfile
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/trainer.yaml#/CreateTrainerProfileRequest'
+    responses:
+      '201':
+        description: Trainer profile created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/trainer.yaml#/TrainerProfileResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '409':
+        description: Trainer profile already exists
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/ErrorResponse'
+
+  put:
+    tags:
+      - Trainers
+    summary: Update trainer profile
+    description: Update the authenticated user's trainer profile
+    operationId: updateTrainerProfile
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/trainer.yaml#/UpdateTrainerProfileRequest'
+    responses:
+      '200':
+        description: Trainer profile updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/trainer.yaml#/TrainerProfileResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Trainers
+    summary: Delete trainer profile
+    description: Delete the authenticated user's trainer profile
+    operationId: deleteTrainerProfile
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Trainer profile deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/trainers/clients:
+  get:
+    tags:
+      - Trainers
+    summary: List trainer's clients
+    description: Get all clients for the authenticated trainer
+    operationId: getTrainerClients
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [pending, active, inactive]
+    responses:
+      '200':
+        description: List of clients
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/trainer.yaml#/TrainerClientLinkResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - Trainers
+    summary: Invite a client
+    description: Send a client invitation to an existing user
+    operationId: inviteClient
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/trainer.yaml#/InviteClientRequest'
+    responses:
+      '201':
+        description: Invitation sent
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/trainer.yaml#/TrainerClientLinkResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/trainers/clients/{id}:
+  delete:
+    tags:
+      - Trainers
+    summary: Remove a client
+    description: Remove a client from the trainer's client list
+    operationId: removeClient
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Client removed
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/trainers/email-invitations:
+  get:
+    tags:
+      - Trainers
+    summary: List email invitations
+    description: Get all email invitations sent by the trainer
+    operationId: getEmailInvitations
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [pending, accepted, expired, cancelled]
+    responses:
+      '200':
+        description: List of email invitations
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/trainer.yaml#/TrainerInvitationResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - Trainers
+    summary: Create email invitation
+    description: Send an email invitation to a potential client
+    operationId: createEmailInvitation
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/trainer.yaml#/CreateEmailInvitationRequest'
+    responses:
+      '201':
+        description: Email invitation sent
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/trainer.yaml#/TrainerInvitationResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/trainers/email-invitations/{id}:
+  delete:
+    tags:
+      - Trainers
+    summary: Cancel email invitation
+    description: Cancel a pending email invitation
+    operationId: cancelEmailInvitation
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Invitation cancelled
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/trainers/email-invitations/{id}/resend:
+  post:
+    tags:
+      - Trainers
+    summary: Resend email invitation
+    description: Resend an email invitation
+    operationId: resendEmailInvitation
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Invitation resent
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/trainer.yaml#/TrainerInvitationResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/invitations/verify/{token}:
+  get:
+    tags:
+      - Trainers
+    summary: Verify invitation token
+    description: Verify an email invitation token (public endpoint)
+    operationId: verifyInvitationToken
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Token is valid
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        valid:
+                          type: boolean
+                        trainer_name:
+                          type: string
+                        email:
+                          type: string
+      '400':
+        description: Invalid or expired token
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/ErrorResponse'
+
+/specialties:
+  get:
+    tags:
+      - Trainers
+    summary: List specialties
+    description: Get a list of all trainer specialties
+    operationId: listSpecialties
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of specialties
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/trainer.yaml#/SpecialtyResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'

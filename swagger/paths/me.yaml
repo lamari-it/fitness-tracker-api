@@ -1,0 +1,104 @@
+# Me Endpoints (Client-side trainer relationships)
+
+/me/trainers:
+  get:
+    tags:
+      - Me
+    summary: List my trainers
+    description: Get all trainers the authenticated user is connected to
+    operationId: getMyTrainers
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [pending, active, inactive]
+    responses:
+      '200':
+        description: List of trainers
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/trainer.yaml#/TrainerClientLinkResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/me/trainer-invitations:
+  get:
+    tags:
+      - Me
+    summary: List my trainer invitations
+    description: Get all pending trainer invitations for the authenticated user
+    operationId: getMyTrainerInvitations
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+    responses:
+      '200':
+        description: List of invitations
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/trainer.yaml#/TrainerClientLinkResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/me/trainer-invitations/{id}:
+  put:
+    tags:
+      - Me
+    summary: Respond to trainer invitation
+    description: Accept or reject a trainer invitation
+    operationId: respondToInvitation
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/trainer.yaml#/RespondToInvitationRequest'
+    responses:
+      '200':
+        description: Response recorded
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/trainer.yaml#/TrainerClientLinkResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'

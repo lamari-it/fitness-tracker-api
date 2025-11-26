@@ -1,0 +1,117 @@
+# Auth Schemas
+
+RegisterRequest:
+  type: object
+  required:
+    - email
+    - password
+    - password_confirm
+    - first_name
+    - last_name
+  properties:
+    email:
+      type: string
+      format: email
+      maxLength: 255
+      example: "user@example.com"
+    password:
+      type: string
+      format: password
+      minLength: 8
+      maxLength: 128
+      example: "SecurePass123!"
+    password_confirm:
+      type: string
+      format: password
+      example: "SecurePass123!"
+    first_name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      example: "John"
+    last_name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      example: "Doe"
+    trainer_profile:
+      $ref: '#/TrainerProfileData'
+
+TrainerProfileData:
+  type: object
+  description: Optional trainer profile to create during registration
+  properties:
+    bio:
+      type: string
+      maxLength: 1000
+      example: "Certified personal trainer with 5 years experience"
+    specialty_ids:
+      type: array
+      maxItems: 20
+      items:
+        type: string
+        format: uuid
+    hourly_rate:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 9999.99
+      example: 75.00
+    location:
+      type: string
+      maxLength: 500
+      example: "New York, NY"
+    visibility:
+      type: string
+      enum: [public, link_only, private]
+      default: private
+
+LoginRequest:
+  type: object
+  required:
+    - email
+    - password
+  properties:
+    email:
+      type: string
+      format: email
+      maxLength: 255
+      example: "user@example.com"
+    password:
+      type: string
+      format: password
+      minLength: 1
+      maxLength: 128
+      example: "SecurePass123!"
+
+AuthResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      example: true
+    message:
+      type: string
+      example: "Registration successful"
+    data:
+      type: object
+      properties:
+        user:
+          $ref: './user.yaml#/UserResponse'
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        trainer_profile:
+          $ref: './trainer.yaml#/TrainerProfileResponse'
+
+AppleAuthRequest:
+  type: object
+  required:
+    - id_token
+  properties:
+    id_token:
+      type: string
+      description: Apple ID token
+    authorization_code:
+      type: string
+      description: Apple authorization code

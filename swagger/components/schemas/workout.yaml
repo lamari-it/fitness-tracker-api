@@ -1,0 +1,391 @@
+# Workout Schemas
+
+WorkoutResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    user_id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    description:
+      type: string
+    difficulty:
+      type: string
+      enum: [beginner, intermediate, advanced]
+    estimated_duration_mins:
+      type: integer
+    is_template:
+      type: boolean
+    is_public:
+      type: boolean
+    prescriptions:
+      type: array
+      items:
+        $ref: '#/WorkoutPrescriptionResponse'
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CreateWorkoutRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 1000
+    difficulty:
+      type: string
+      enum: [beginner, intermediate, advanced]
+    estimated_duration_mins:
+      type: integer
+      minimum: 1
+      maximum: 480
+    is_template:
+      type: boolean
+      default: false
+    is_public:
+      type: boolean
+      default: false
+
+UpdateWorkoutRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 1000
+    difficulty:
+      type: string
+      enum: [beginner, intermediate, advanced]
+    estimated_duration_mins:
+      type: integer
+      minimum: 1
+      maximum: 480
+    is_template:
+      type: boolean
+    is_public:
+      type: boolean
+
+WorkoutPrescriptionResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    workout_id:
+      type: string
+      format: uuid
+    exercise_id:
+      type: string
+      format: uuid
+    exercise:
+      $ref: './exercise.yaml#/ExerciseResponse'
+    group_type:
+      type: string
+      enum: [standard, superset, circuit, drop_set, giant_set]
+    group_order:
+      type: integer
+    exercise_order:
+      type: integer
+    sets:
+      type: integer
+    reps_min:
+      type: integer
+    reps_max:
+      type: integer
+    duration_seconds:
+      type: integer
+    is_timed:
+      type: boolean
+    rest_seconds:
+      type: integer
+    weight_kg:
+      type: number
+      format: float
+    rpe_target:
+      type: number
+      format: float
+    notes:
+      type: string
+    created_at:
+      type: string
+      format: date-time
+
+CreatePrescriptionGroupRequest:
+  type: object
+  required:
+    - exercises
+  properties:
+    group_type:
+      type: string
+      enum: [standard, superset, circuit, drop_set, giant_set]
+      default: standard
+    exercises:
+      type: array
+      minItems: 1
+      items:
+        $ref: '#/PrescriptionExerciseInput'
+    rest_seconds:
+      type: integer
+      minimum: 0
+      default: 60
+    notes:
+      type: string
+      maxLength: 500
+
+PrescriptionExerciseInput:
+  type: object
+  required:
+    - exercise_id
+  properties:
+    exercise_id:
+      type: string
+      format: uuid
+    sets:
+      type: integer
+      minimum: 1
+      default: 3
+    reps_min:
+      type: integer
+      minimum: 1
+    reps_max:
+      type: integer
+      minimum: 1
+    duration_seconds:
+      type: integer
+      minimum: 1
+    is_timed:
+      type: boolean
+      default: false
+    rest_seconds:
+      type: integer
+      minimum: 0
+    weight_kg:
+      type: number
+      format: float
+    rpe_target:
+      type: number
+      format: float
+      minimum: 1
+      maximum: 10
+    notes:
+      type: string
+      maxLength: 500
+
+ReorderPrescriptionGroupsRequest:
+  type: object
+  required:
+    - group_ids
+  properties:
+    group_ids:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: Ordered list of prescription group IDs
+
+WorkoutPlanResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    user_id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    description:
+      type: string
+    duration_weeks:
+      type: integer
+    difficulty:
+      type: string
+      enum: [beginner, intermediate, advanced]
+    is_template:
+      type: boolean
+    is_public:
+      type: boolean
+    items:
+      type: array
+      items:
+        $ref: '#/WorkoutPlanItemResponse'
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CreateWorkoutPlanRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 1000
+    duration_weeks:
+      type: integer
+      minimum: 1
+      maximum: 52
+    difficulty:
+      type: string
+      enum: [beginner, intermediate, advanced]
+    is_template:
+      type: boolean
+      default: false
+    is_public:
+      type: boolean
+      default: false
+
+UpdateWorkoutPlanRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 1000
+    duration_weeks:
+      type: integer
+      minimum: 1
+      maximum: 52
+    difficulty:
+      type: string
+      enum: [beginner, intermediate, advanced]
+    is_template:
+      type: boolean
+    is_public:
+      type: boolean
+
+WorkoutPlanItemResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    workout_plan_id:
+      type: string
+      format: uuid
+    workout_id:
+      type: string
+      format: uuid
+    workout:
+      $ref: '#/WorkoutResponse'
+    week_number:
+      type: integer
+    day_of_week:
+      type: integer
+      minimum: 1
+      maximum: 7
+    order:
+      type: integer
+    created_at:
+      type: string
+      format: date-time
+
+AddWorkoutToPlanRequest:
+  type: object
+  required:
+    - workout_id
+  properties:
+    workout_id:
+      type: string
+      format: uuid
+    week_number:
+      type: integer
+      minimum: 1
+    day_of_week:
+      type: integer
+      minimum: 1
+      maximum: 7
+    order:
+      type: integer
+      minimum: 0
+
+UpdatePlanItemRequest:
+  type: object
+  properties:
+    week_number:
+      type: integer
+      minimum: 1
+    day_of_week:
+      type: integer
+      minimum: 1
+      maximum: 7
+    order:
+      type: integer
+      minimum: 0
+
+PlanEnrollmentResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    user_id:
+      type: string
+      format: uuid
+    workout_plan_id:
+      type: string
+      format: uuid
+    workout_plan:
+      $ref: '#/WorkoutPlanResponse'
+    status:
+      type: string
+      enum: [active, paused, completed, cancelled]
+    started_at:
+      type: string
+      format: date-time
+    completed_at:
+      type: string
+      format: date-time
+    current_week:
+      type: integer
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+EnrollInPlanRequest:
+  type: object
+  required:
+    - workout_plan_id
+  properties:
+    workout_plan_id:
+      type: string
+      format: uuid
+
+UpdateEnrollmentRequest:
+  type: object
+  properties:
+    status:
+      type: string
+      enum: [active, paused, completed, cancelled]
+    current_week:
+      type: integer
+      minimum: 1

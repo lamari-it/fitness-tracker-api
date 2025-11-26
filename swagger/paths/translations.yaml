@@ -1,0 +1,300 @@
+# Translation Endpoints (Admin only)
+
+/translations:
+  get:
+    tags:
+      - Translations
+    summary: List translations
+    description: Get all translations (Admin only)
+    operationId: getTranslations
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+      - name: locale
+        in: query
+        schema:
+          type: string
+      - name: resource_type
+        in: query
+        schema:
+          type: string
+    responses:
+      '200':
+        description: List of translations
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TranslationResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '403':
+        $ref: '../components/responses.yaml#/ForbiddenResponse'
+
+  post:
+    tags:
+      - Translations
+    summary: Create translation
+    description: Create a new translation (Admin only)
+    operationId: createTranslation
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateTranslationRequest'
+    responses:
+      '201':
+        description: Translation created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/TranslationResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '403':
+        $ref: '../components/responses.yaml#/ForbiddenResponse'
+
+/translations/{id}:
+  get:
+    tags:
+      - Translations
+    summary: Get translation
+    description: Get a specific translation by ID (Admin only)
+    operationId: getTranslation
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Translation details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/TranslationResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '403':
+        $ref: '../components/responses.yaml#/ForbiddenResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  put:
+    tags:
+      - Translations
+    summary: Update translation
+    description: Update an existing translation (Admin only)
+    operationId: updateTranslation
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateTranslationRequest'
+    responses:
+      '200':
+        description: Translation updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/TranslationResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '403':
+        $ref: '../components/responses.yaml#/ForbiddenResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Translations
+    summary: Delete translation
+    description: Delete a translation (Admin only)
+    operationId: deleteTranslation
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Translation deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '403':
+        $ref: '../components/responses.yaml#/ForbiddenResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/translations/resource/{resource_type}/{resource_id}:
+  get:
+    tags:
+      - Translations
+    summary: Get resource translations
+    description: Get all translations for a specific resource (Admin only)
+    operationId: getResourceTranslations
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: resource_type
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: resource_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: List of translations for the resource
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TranslationResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '403':
+        $ref: '../components/responses.yaml#/ForbiddenResponse'
+
+/translations/upsert:
+  post:
+    tags:
+      - Translations
+    summary: Create or update translation
+    description: Create a new translation or update existing one (Admin only)
+    operationId: createOrUpdateTranslation
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateTranslationRequest'
+    responses:
+      '200':
+        description: Translation created or updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/TranslationResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '403':
+        $ref: '../components/responses.yaml#/ForbiddenResponse'
+
+# Local component schemas for translations
+components:
+  schemas:
+    TranslationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+          format: uuid
+        locale:
+          type: string
+        field:
+          type: string
+        value:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateTranslationRequest:
+      type: object
+      required:
+        - resource_type
+        - resource_id
+        - locale
+        - field
+        - value
+      properties:
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+          format: uuid
+        locale:
+          type: string
+          minLength: 2
+          maxLength: 10
+        field:
+          type: string
+          minLength: 1
+          maxLength: 50
+        value:
+          type: string
+          maxLength: 5000
+
+    UpdateTranslationRequest:
+      type: object
+      properties:
+        value:
+          type: string
+          maxLength: 5000

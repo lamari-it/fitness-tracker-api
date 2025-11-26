@@ -1,0 +1,388 @@
+# Exercise Endpoints
+
+/exercises:
+  get:
+    tags:
+      - Exercises
+    summary: List all exercises
+    description: Get a paginated list of exercises with optional filters
+    operationId: getExercises
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum: [beginner, intermediate, advanced]
+      - name: exercise_type
+        in: query
+        schema:
+          type: string
+          enum: [strength, cardio, flexibility, balance]
+      - name: muscle_group_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: equipment_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: search
+        in: query
+        description: Search by name
+        schema:
+          type: string
+    responses:
+      '200':
+        description: List of exercises
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/exercise.yaml#/ExerciseResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - Exercises
+    summary: Create an exercise
+    description: Create a new exercise
+    operationId: createExercise
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/exercise.yaml#/CreateExerciseRequest'
+    responses:
+      '201':
+        description: Exercise created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/ExerciseResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/exercises/{id}:
+  get:
+    tags:
+      - Exercises
+    summary: Get an exercise
+    description: Get a specific exercise by ID
+    operationId: getExercise
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Exercise details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/ExerciseResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  put:
+    tags:
+      - Exercises
+    summary: Update an exercise
+    description: Update an existing exercise
+    operationId: updateExercise
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/exercise.yaml#/UpdateExerciseRequest'
+    responses:
+      '200':
+        description: Exercise updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/ExerciseResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Exercises
+    summary: Delete an exercise
+    description: Delete an exercise
+    operationId: deleteExercise
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Exercise deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/exercises/by-slug/{slug}:
+  get:
+    tags:
+      - Exercises
+    summary: Get exercise by slug
+    description: Get a specific exercise by its URL-friendly slug
+    operationId: getExerciseBySlug
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Exercise details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/ExerciseResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/exercises/{id}/muscle-groups:
+  get:
+    tags:
+      - Exercises
+    summary: Get exercise muscle groups
+    description: Get all muscle groups associated with an exercise
+    operationId: getExerciseMuscleGroups
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: List of muscle groups
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/exercise.yaml#/ExerciseMuscleGroupResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  post:
+    tags:
+      - Exercises
+    summary: Assign muscle group to exercise
+    description: Associate a muscle group with an exercise
+    operationId: assignMuscleGroupToExercise
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/exercise.yaml#/AssignMuscleGroupRequest'
+    responses:
+      '201':
+        description: Muscle group assigned
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/ExerciseMuscleGroupResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/exercises/{id}/muscle-groups/{muscle_group_id}:
+  delete:
+    tags:
+      - Exercises
+    summary: Remove muscle group from exercise
+    description: Remove a muscle group association from an exercise
+    operationId: removeMuscleGroupFromExercise
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+      - name: muscle_group_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Muscle group removed
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/exercises/{id}/equipment:
+  get:
+    tags:
+      - Exercises
+    summary: Get exercise equipment
+    description: Get all equipment associated with an exercise
+    operationId: getExerciseEquipment
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: List of equipment
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/exercise.yaml#/EquipmentResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  post:
+    tags:
+      - Exercises
+    summary: Assign equipment to exercise
+    description: Associate equipment with an exercise
+    operationId: assignEquipmentToExercise
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/exercise.yaml#/AssignEquipmentRequest'
+    responses:
+      '201':
+        description: Equipment assigned
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/exercises/{id}/equipment/{equipment_id}:
+  delete:
+    tags:
+      - Exercises
+    summary: Remove equipment from exercise
+    description: Remove an equipment association from an exercise
+    operationId: removeEquipmentFromExercise
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+      - name: equipment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Equipment removed
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'

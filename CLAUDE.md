@@ -111,6 +111,26 @@ API testing via Postman collection in `postman/` directory with:
 - Auto-token management in collection scripts
 - Comprehensive endpoint coverage
 
+**IMPORTANT**: The Postman collection must be kept in sync with the codebase. When making changes:
+- Adding endpoints: Add corresponding requests to the appropriate folder in the collection
+- Modifying request/response schemas: Update the request body and example responses
+- Removing endpoints: Remove the corresponding requests from the collection
+
+## API Documentation
+
+Swagger/OpenAPI documentation is in `swagger/` directory:
+- `swagger.yaml` - Main OpenAPI 3.0.3 specification entry point
+- `components/schemas/` - Data models organized by domain (auth, user, exercise, workout, session, trainer, fitness)
+- `components/parameters.yaml` - Reusable path/query parameters
+- `components/responses.yaml` - Standard response definitions
+- `paths/` - API endpoint definitions grouped by resource
+
+**IMPORTANT**: The Swagger documentation must be kept in sync with the codebase. When making changes:
+- Adding/modifying endpoints: Update the corresponding `paths/*.yaml` file
+- Adding/modifying request/response schemas: Update the corresponding `components/schemas/*.yaml` file
+- Adding new resources: Create new path and schema files as needed
+- Update `swagger.yaml` if adding new path or schema references
+
 ## Common Development Tasks
 
 ### Adding a New API Endpoint
