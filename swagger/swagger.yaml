@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: FitFlow API
+  title: LamariFit API
   description: |
-    FitFlow is a comprehensive fitness tracking REST API built with Go, Gin framework, PostgreSQL, and GORM.
+    LamariFit is a comprehensive fitness tracking REST API built with Go, Gin framework, PostgreSQL, and GORM.
 
     ## Features
     - JWT Authentication with OAuth (Google/Apple) support
@@ -42,14 +42,14 @@ info:
     - `/paths/` - API endpoint definitions grouped by resource
   version: 1.0.0
   contact:
-    name: FitFlow Support
+    name: LamariFit Support
   license:
     name: MIT
 
 servers:
   - url: http://localhost:8080
     description: Local development server
-  - url: https://api.fitflow.com
+  - url: https://api.lamarifit.com
     description: Production server
 
 tags:

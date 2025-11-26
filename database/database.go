@@ -1,9 +1,9 @@
 package database
 
 import (
-	"fit-flow-api/config"
-	"fit-flow-api/models"
 	"fmt"
+	"lamari-fit-api/config"
+	"lamari-fit-api/models"
 	"log"
 	"os"
 

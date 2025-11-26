@@ -2,8 +2,8 @@ package utils
 
 import (
 	"crypto/tls"
-	"fit-flow-api/config"
 	"fmt"
+	"lamari-fit-api/config"
 	"log"
 	"net/smtp"
 	"strings"
@@ -36,7 +36,7 @@ func NewEmailService() *EmailService {
 
 // SendTrainerInvitation sends an invitation email to a potential client
 func (e *EmailService) SendTrainerInvitation(toEmail, trainerName, invitationToken string) error {
-	subject := fmt.Sprintf("%s has invited you to FitFlow", trainerName)
+	subject := fmt.Sprintf("%s has invited you to LamariFit", trainerName)
 
 	invitationLink := fmt.Sprintf("%s/invitations/accept?token=%s", e.appURL, invitationToken)
 
@@ -53,9 +53,9 @@ func (e *EmailService) SendTrainerInvitation(toEmail, trainerName, invitationTok
 
         <p>Hi there,</p>
 
-        <p><strong>%s</strong> has invited you to become their client on FitFlow.</p>
+        <p><strong>%s</strong> has invited you to become their client on LamariFit.</p>
 
-        <p>FitFlow is a fitness tracking platform that helps trainers and clients work together to achieve fitness goals.</p>
+        <p>LamariFit is a fitness tracking platform that helps trainers and clients work together to achieve fitness goals.</p>
 
         <div style="margin: 30px 0;">
             <a href="%s" style="background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">

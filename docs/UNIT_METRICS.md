@@ -2,7 +2,7 @@
 
 ## Overview
 
-FitFlow API implements a **unified global weight handling system** that provides:
+LamariFit API implements a **unified global weight handling system** that provides:
 
 - **Canonical storage** in kilograms for all weights
 - **Preservation** of original user input (value + unit)
@@ -248,7 +248,7 @@ ADD COLUMN original_actual_weight_unit VARCHAR(2)
 ### Backend: Processing Weight Input
 
 ```go
-import "fit-flow-api/utils"
+import "lamari-fit-api/utils"
 
 // In controller
 if req.CurrentWeight != nil {

@@ -49,7 +49,7 @@ func LoadConfig() {
 		DBPort:              getEnv("DB_PORT", "5432"),
 		DBUser:              getEnv("DB_USER", "postgres"),
 		DBPassword:          getEnv("DB_PASSWORD", ""),
-		DBName:              getEnv("DB_NAME", "fitflow"),
+		DBName:              getEnv("DB_NAME", "lamarifit"),
 		DBSSLMode:           getEnv("DB_SSLMODE", "disable"),
 		JWTSecret:           getEnv("JWT_SECRET", "your-secret-key"),
 		JWTExpires:          getEnv("JWT_EXPIRES_IN", "24h"),
@@ -68,8 +68,8 @@ func LoadConfig() {
 		SMTPPort:      getEnv("SMTP_PORT", "587"),
 		SMTPUsername:  getEnv("SMTP_USERNAME", ""),
 		SMTPPassword:  getEnv("SMTP_PASSWORD", ""),
-		SMTPFromEmail: getEnv("SMTP_FROM_EMAIL", "noreply@fitflow.com"),
-		SMTPFromName:  getEnv("SMTP_FROM_NAME", "FitFlow"),
+		SMTPFromEmail: getEnv("SMTP_FROM_EMAIL", "noreply@lamarifit.com"),
+		SMTPFromName:  getEnv("SMTP_FROM_NAME", "LamariFit"),
 		AppURL:        getEnv("APP_URL", "http://localhost:3000"),
 	}
 }

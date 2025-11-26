@@ -1,10 +1,10 @@
 package test
 
 import (
-	"fit-flow-api/config"
-	"fit-flow-api/database"
-	"fit-flow-api/routes"
 	"fmt"
+	"lamari-fit-api/config"
+	"lamari-fit-api/database"
+	"lamari-fit-api/routes"
 	"net/http/httptest"
 	"os"
 	"testing"
@@ -33,7 +33,7 @@ func SetupTestApp(t *testing.T) *httpexpect.Expect {
 		os.Setenv("DB_PORT", "5467")
 		os.Setenv("DB_USER", "postgres")
 		os.Setenv("DB_PASSWORD", "password")
-		os.Setenv("DB_NAME", "fitflow_test")
+		os.Setenv("DB_NAME", "lamarifit_test")
 		os.Setenv("DB_SSLMODE", "disable")
 		os.Setenv("JWT_SECRET", "test_secret_key_for_testing_only")
 		os.Setenv("JWT_EXPIRES_IN", "24h")

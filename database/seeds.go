@@ -1,7 +1,7 @@
 package database
 
 import (
-	"fit-flow-api/models"
+	"lamari-fit-api/models"
 	"log"
 	"strings"
 

@@ -1,4 +1,4 @@
-module fit-flow-api
+module lamari-fit-api
 
 go 1.23.0
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FitFlow API is a Go-based REST API for fitness tracking using Gin framework, PostgreSQL, and GORM ORM. Features JWT authentication, OAuth (Google/Apple), multi-language support, and comprehensive workout management.
+LamariFit API is a Go-based REST API for fitness tracking using Gin framework, PostgreSQL, and GORM ORM. Features JWT authentication, OAuth (Google/Apple), multi-language support, and comprehensive workout management.
 
 ## Essential Commands
 
@@ -13,7 +13,7 @@ FitFlow API is a Go-based REST API for fitness tracking using Gin framework, Pos
 make run              # Start the application
 make dev              # Run with auto-reload (requires air)
 make deps             # Install dependencies
-make build            # Build binary to ./bin/fitflow-api
+make build            # Build binary to ./bin/lamarifit-api
 make test             # Run tests
 make fmt              # Format code
 make lint             # Run linter
@@ -28,11 +28,11 @@ make migrate-create NAME=migration_name # Create new migration
 make dev-reset                         # Reset database (migrate + seed)
 
 # Via CLI tool (after make build)
-./bin/fitflow-api db seed              # Run seeders
-./bin/fitflow-api db seed:fresh        # Drop data and re-seed
-./bin/fitflow-api db reset             # Full reset
-./bin/fitflow-api db migrate           # Run migrations
-./bin/fitflow-api db migrate:fresh     # Drop tables and migrate
+./bin/lamarifit-api db seed              # Run seeders
+./bin/lamarifit-api db seed:fresh        # Drop data and re-seed
+./bin/lamarifit-api db reset             # Full reset
+./bin/lamarifit-api db migrate           # Run migrations
+./bin/lamarifit-api db migrate:fresh     # Drop tables and migrate
 ```
 
 ### Docker
@@ -49,7 +49,7 @@ docker-compose up -d  # Start PostgreSQL (port 5467) + Adminer (port 8081)
 - `routes/` - Route definitions grouped by resource
 - `utils/` - JWT handling, password hashing, response formatting
 - `migrations/` - Database migrations (19 total)
-- `cmd/fitflow/` - CLI commands for database operations
+- `cmd/lamarifit/` - CLI commands for database operations
 
 ### Core Models & Relationships
 ```

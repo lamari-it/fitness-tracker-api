@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fit-flow-api/config"
-	"fit-flow-api/database"
-	"fit-flow-api/routes"
+	"lamari-fit-api/config"
+	"lamari-fit-api/database"
+	"lamari-fit-api/routes"
 	"log"
 
 	"github.com/gin-gonic/gin"

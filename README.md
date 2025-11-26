@@ -1,4 +1,4 @@
-# FitFlow API
+# LamariFit API
 
 A Go REST API with PostgreSQL, GORM, JWT authentication, and OAuth integration for Google and Apple Sign-In.
 
@@ -28,7 +28,7 @@ A Go REST API with PostgreSQL, GORM, JWT authentication, and OAuth integration f
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd fit-flow-api
+cd lamari-fit-api
 ```
 
 2. Install dependencies:
@@ -38,7 +38,7 @@ go mod download
 
 3. Create a PostgreSQL database:
 ```sql
-CREATE DATABASE fitflow;
+CREATE DATABASE lamarifit;
 ```
 
 4. Copy environment variables:
@@ -214,7 +214,7 @@ GET /health
 | DB_PORT | Database port | 5432 |
 | DB_USER | Database user | postgres |
 | DB_PASSWORD | Database password | |
-| DB_NAME | Database name | fitflow |
+| DB_NAME | Database name | lamarifit |
 | DB_SSLMODE | SSL mode | disable |
 | USE_MIGRATIONS | Use golang-migrate instead of GORM AutoMigrate | false |
 | JWT_SECRET | JWT signing secret | |
@@ -231,7 +231,7 @@ GET /health
 ## Project Structure
 
 ```
-fit-flow-api/
+lamari-fit-api/
 ├── config/         # Configuration management
 ├── controllers/    # HTTP handlers
 ├── database/       # Database connection and migrations

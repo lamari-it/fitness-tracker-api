@@ -9,14 +9,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_USER: fitflow
-          POSTGRES_PASSWORD: fitflow
-          POSTGRES_DB: fitflow_test
+          POSTGRES_USER: lamarifit
+          POSTGRES_PASSWORD: lamarifit
+          POSTGRES_DB: lamarifit_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -42,25 +42,25 @@ jobs:
       env:
         DB_HOST: localhost
         DB_PORT: 5432
-        DB_USER: fitflow
-        DB_PASSWORD: fitflow
-        DB_NAME: fitflow_test
+        DB_USER: lamarifit
+        DB_PASSWORD: lamarifit
+        DB_NAME: lamarifit_test
         DB_SSLMODE: disable
         JWT_SECRET: test-secret-key-for-ci
         JWT_EXPIRES_IN: 24h
         USE_MIGRATIONS: false
         APP_ENV: test
       run: |
-        go build -o bin/fitflow-api cmd/fitflow/main.go
-        ./bin/fitflow-api db migrate
+        go build -o bin/lamarifit-api cmd/lamarifit/main.go
+        ./bin/lamarifit-api db migrate
 
     - name: Run tests
       env:
         DB_HOST: localhost
         DB_PORT: 5432
-        DB_USER: fitflow
-        DB_PASSWORD: fitflow
-        DB_NAME: fitflow_test
+        DB_USER: lamarifit
+        DB_PASSWORD: lamarifit
+        DB_NAME: lamarifit_test
         DB_SSLMODE: disable
         JWT_SECRET: test-secret-key-for-ci
         JWT_EXPIRES_IN: 24h

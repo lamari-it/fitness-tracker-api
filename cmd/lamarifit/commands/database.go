@@ -1,9 +1,9 @@
 package commands
 
 import (
-	"fit-flow-api/config"
-	"fit-flow-api/database"
 	"fmt"
+	"lamari-fit-api/config"
+	"lamari-fit-api/database"
 	"os"
 )
 
@@ -166,10 +166,10 @@ func HandleDatabaseCommand(args []string) {
 
 func printDatabaseUsage() {
 	fmt.Println(`Database Commands:
-  fitflow db seed              Run database seeders
-  fitflow db seed:fresh        Drop all data and re-seed
-  fitflow db reset             Reset database (migrate:fresh + seed)
-  fitflow db migrate           Run pending migrations
-  fitflow db migrate:fresh     Drop all tables and re-run migrations
-  fitflow db migrate:rollback  Rollback last migration batch`)
+  lamarifit db seed              Run database seeders
+  lamarifit db seed:fresh        Drop all data and re-seed
+  lamarifit db reset             Reset database (migrate:fresh + seed)
+  lamarifit db migrate           Run pending migrations
+  lamarifit db migrate:fresh     Drop all tables and re-run migrations
+  lamarifit db migrate:rollback  Rollback last migration batch`)
 }
