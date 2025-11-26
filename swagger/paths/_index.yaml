@@ -1,0 +1,208 @@
+# Paths Index
+# This file references all API endpoint definitions
+
+# Authentication
+/api/v1/auth/register:
+  $ref: './auth.yaml#/~1auth~1register'
+/api/v1/auth/login:
+  $ref: './auth.yaml#/~1auth~1login'
+/api/v1/auth/profile:
+  $ref: './auth.yaml#/~1auth~1profile'
+/api/v1/auth/google:
+  $ref: './auth.yaml#/~1auth~1google'
+/api/v1/auth/google/callback:
+  $ref: './auth.yaml#/~1auth~1google~1callback'
+/api/v1/auth/apple:
+  $ref: './auth.yaml#/~1auth~1apple'
+
+# Muscle Groups
+/api/v1/muscle-groups:
+  $ref: './muscle-groups.yaml#/~1muscle-groups'
+/api/v1/muscle-groups/{id}:
+  $ref: './muscle-groups.yaml#/~1muscle-groups~1{id}'
+
+# Exercises
+/api/v1/exercises:
+  $ref: './exercises.yaml#/~1exercises'
+/api/v1/exercises/{id}:
+  $ref: './exercises.yaml#/~1exercises~1{id}'
+/api/v1/exercises/by-slug/{slug}:
+  $ref: './exercises.yaml#/~1exercises~1by-slug~1{slug}'
+/api/v1/exercises/{id}/muscle-groups:
+  $ref: './exercises.yaml#/~1exercises~1{id}~1muscle-groups'
+/api/v1/exercises/{id}/muscle-groups/{muscle_group_id}:
+  $ref: './exercises.yaml#/~1exercises~1{id}~1muscle-groups~1{muscle_group_id}'
+/api/v1/exercises/{id}/equipment:
+  $ref: './exercises.yaml#/~1exercises~1{id}~1equipment'
+/api/v1/exercises/{id}/equipment/{equipment_id}:
+  $ref: './exercises.yaml#/~1exercises~1{id}~1equipment~1{equipment_id}'
+
+# Equipment
+/api/v1/equipment:
+  $ref: './equipment.yaml#/~1equipment'
+/api/v1/equipment/{id}:
+  $ref: './equipment.yaml#/~1equipment~1{id}'
+
+# Fitness Levels & Goals
+/api/v1/fitness-levels:
+  $ref: './fitness.yaml#/~1fitness-levels'
+/api/v1/fitness-levels/{id}:
+  $ref: './fitness.yaml#/~1fitness-levels~1{id}'
+/api/v1/fitness-goals:
+  $ref: './fitness.yaml#/~1fitness-goals'
+/api/v1/fitness-goals/{id}:
+  $ref: './fitness.yaml#/~1fitness-goals~1{id}'
+
+# User Settings & Profile
+/api/v1/user/settings:
+  $ref: './user.yaml#/~1user~1settings'
+/api/v1/user/fitness/level:
+  $ref: './user.yaml#/~1user~1fitness~1level'
+/api/v1/user/fitness-profile:
+  $ref: './user.yaml#/~1user~1fitness-profile'
+/api/v1/user/fitness-profile/log-weight:
+  $ref: './user.yaml#/~1user~1fitness-profile~1log-weight'
+/api/v1/user/weight-logs:
+  $ref: './user.yaml#/~1user~1weight-logs'
+/api/v1/user/weight-logs/stats:
+  $ref: './user.yaml#/~1user~1weight-logs~1stats'
+/api/v1/user/weight-logs/{id}:
+  $ref: './user.yaml#/~1user~1weight-logs~1{id}'
+/api/v1/user/equipment:
+  $ref: './user.yaml#/~1user~1equipment'
+/api/v1/user/equipment/bulk:
+  $ref: './user.yaml#/~1user~1equipment~1bulk'
+/api/v1/user/equipment/{id}:
+  $ref: './user.yaml#/~1user~1equipment~1{id}'
+/api/v1/user/equipment/location/{location}:
+  $ref: './user.yaml#/~1user~1equipment~1location~1{location}'
+
+# Workouts
+/api/v1/workouts:
+  $ref: './workouts.yaml#/~1workouts'
+/api/v1/workouts/{id}:
+  $ref: './workouts.yaml#/~1workouts~1{id}'
+/api/v1/workouts/{id}/duplicate:
+  $ref: './workouts.yaml#/~1workouts~1{id}~1duplicate'
+/api/v1/workouts/{id}/prescriptions:
+  $ref: './workouts.yaml#/~1workouts~1{id}~1prescriptions'
+/api/v1/workouts/{id}/prescriptions/reorder:
+  $ref: './workouts.yaml#/~1workouts~1{id}~1prescriptions~1reorder'
+/api/v1/workouts/{id}/prescriptions/{group_id}:
+  $ref: './workouts.yaml#/~1workouts~1{id}~1prescriptions~1{group_id}'
+/api/v1/workouts/{id}/prescriptions/{group_id}/exercises:
+  $ref: './workouts.yaml#/~1workouts~1{id}~1prescriptions~1{group_id}~1exercises'
+
+# Workout Plans
+/api/v1/workout-plans:
+  $ref: './workout-plans.yaml#/~1workout-plans'
+/api/v1/workout-plans/{id}:
+  $ref: './workout-plans.yaml#/~1workout-plans~1{id}'
+/api/v1/workout-plans/{id}/workouts:
+  $ref: './workout-plans.yaml#/~1workout-plans~1{id}~1workouts'
+/api/v1/workout-plans/{id}/workouts/{item_id}:
+  $ref: './workout-plans.yaml#/~1workout-plans~1{id}~1workouts~1{item_id}'
+
+# Enrollments
+/api/v1/enrollments:
+  $ref: './enrollments.yaml#/~1enrollments'
+/api/v1/enrollments/{id}:
+  $ref: './enrollments.yaml#/~1enrollments~1{id}'
+
+# Friends
+/api/v1/friends:
+  $ref: './friends.yaml#/~1friends'
+/api/v1/friends/{id}:
+  $ref: './friends.yaml#/~1friends~1{id}'
+/api/v1/friends/request:
+  $ref: './friends.yaml#/~1friends~1request'
+/api/v1/friends/requests:
+  $ref: './friends.yaml#/~1friends~1requests'
+/api/v1/friends/requests/{id}/{action}:
+  $ref: './friends.yaml#/~1friends~1requests~1{id}~1{action}'
+
+# Trainers
+/api/v1/trainers:
+  $ref: './trainers.yaml#/~1trainers'
+/api/v1/trainers/{id}:
+  $ref: './trainers.yaml#/~1trainers~1{id}'
+/api/v1/trainers/profile:
+  $ref: './trainers.yaml#/~1trainers~1profile'
+/api/v1/trainers/clients:
+  $ref: './trainers.yaml#/~1trainers~1clients'
+/api/v1/trainers/clients/{id}:
+  $ref: './trainers.yaml#/~1trainers~1clients~1{id}'
+/api/v1/trainers/email-invitations:
+  $ref: './trainers.yaml#/~1trainers~1email-invitations'
+/api/v1/trainers/email-invitations/{id}:
+  $ref: './trainers.yaml#/~1trainers~1email-invitations~1{id}'
+/api/v1/trainers/email-invitations/{id}/resend:
+  $ref: './trainers.yaml#/~1trainers~1email-invitations~1{id}~1resend'
+/api/v1/invitations/verify/{token}:
+  $ref: './trainers.yaml#/~1invitations~1verify~1{token}'
+/api/v1/specialties:
+  $ref: './trainers.yaml#/~1specialties'
+
+# Me (Client-side trainer relationships)
+/api/v1/me/trainers:
+  $ref: './me.yaml#/~1me~1trainers'
+/api/v1/me/trainer-invitations:
+  $ref: './me.yaml#/~1me~1trainer-invitations'
+/api/v1/me/trainer-invitations/{id}:
+  $ref: './me.yaml#/~1me~1trainer-invitations~1{id}'
+
+# RPE Scales
+/api/v1/rpe/scales:
+  $ref: './rpe.yaml#/~1rpe~1scales'
+/api/v1/rpe/scales/global:
+  $ref: './rpe.yaml#/~1rpe~1scales~1global'
+/api/v1/rpe/scales/{id}:
+  $ref: './rpe.yaml#/~1rpe~1scales~1{id}'
+/api/v1/rpe/scales/{id}/values:
+  $ref: './rpe.yaml#/~1rpe~1scales~1{id}~1values'
+
+# Workout Sessions
+/api/v1/workout-sessions:
+  $ref: './sessions.yaml#/~1workout-sessions'
+/api/v1/workout-sessions/{id}:
+  $ref: './sessions.yaml#/~1workout-sessions~1{id}'
+/api/v1/workout-sessions/{id}/end:
+  $ref: './sessions.yaml#/~1workout-sessions~1{id}~1end'
+
+# Session Blocks
+/api/v1/session-blocks/{id}:
+  $ref: './sessions.yaml#/~1session-blocks~1{id}'
+/api/v1/session-blocks/{id}/complete:
+  $ref: './sessions.yaml#/~1session-blocks~1{id}~1complete'
+/api/v1/session-blocks/{id}/skip:
+  $ref: './sessions.yaml#/~1session-blocks~1{id}~1skip'
+/api/v1/session-blocks/{id}/rpe:
+  $ref: './sessions.yaml#/~1session-blocks~1{id}~1rpe'
+
+# Session Exercises
+/api/v1/session-exercises/{id}:
+  $ref: './sessions.yaml#/~1session-exercises~1{id}'
+/api/v1/session-exercises/{id}/complete:
+  $ref: './sessions.yaml#/~1session-exercises~1{id}~1complete'
+/api/v1/session-exercises/{id}/skip:
+  $ref: './sessions.yaml#/~1session-exercises~1{id}~1skip'
+/api/v1/session-exercises/{id}/notes:
+  $ref: './sessions.yaml#/~1session-exercises~1{id}~1notes'
+/api/v1/session-exercises/{id}/sets:
+  $ref: './sessions.yaml#/~1session-exercises~1{id}~1sets'
+
+# Session Sets
+/api/v1/session-sets/{id}:
+  $ref: './sessions.yaml#/~1session-sets~1{id}'
+/api/v1/session-sets/{id}/complete:
+  $ref: './sessions.yaml#/~1session-sets~1{id}~1complete'
+
+# Translations (Admin only)
+/api/v1/translations:
+  $ref: './translations.yaml#/~1translations'
+/api/v1/translations/{id}:
+  $ref: './translations.yaml#/~1translations~1{id}'
+/api/v1/translations/resource/{resource_type}/{resource_id}:
+  $ref: './translations.yaml#/~1translations~1resource~1{resource_type}~1{resource_id}'
+/api/v1/translations/upsert:
+  $ref: './translations.yaml#/~1translations~1upsert'

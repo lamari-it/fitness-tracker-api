@@ -1,0 +1,45 @@
+# Common Parameters
+
+IdPathParam:
+  name: id
+  in: path
+  required: true
+  schema:
+    type: string
+    format: uuid
+  description: Resource UUID
+
+PageParam:
+  name: page
+  in: query
+  schema:
+    type: integer
+    minimum: 1
+    default: 1
+  description: Page number for pagination
+
+PageSizeParam:
+  name: limit
+  in: query
+  schema:
+    type: integer
+    minimum: 1
+    maximum: 100
+    default: 20
+  description: Number of items per page
+
+SearchParam:
+  name: search
+  in: query
+  schema:
+    type: string
+  description: Search query string
+
+LanguageHeader:
+  name: X-Language
+  in: header
+  schema:
+    type: string
+    enum: [en, es, fr]
+    default: en
+  description: Language preference for responses

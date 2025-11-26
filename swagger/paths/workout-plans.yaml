@@ -1,0 +1,296 @@
+# Workout Plan Endpoints
+
+/workout-plans:
+  get:
+    tags:
+      - Workout Plans
+    summary: List workout plans
+    description: Get all workout plans for the authenticated user
+    operationId: getWorkoutPlans
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum: [beginner, intermediate, advanced]
+      - name: is_template
+        in: query
+        schema:
+          type: boolean
+      - name: is_public
+        in: query
+        schema:
+          type: boolean
+    responses:
+      '200':
+        description: List of workout plans
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/workout.yaml#/WorkoutPlanResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - Workout Plans
+    summary: Create a workout plan
+    description: Create a new workout plan
+    operationId: createWorkoutPlan
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/CreateWorkoutPlanRequest'
+    responses:
+      '201':
+        description: Workout plan created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/WorkoutPlanResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/workout-plans/{id}:
+  get:
+    tags:
+      - Workout Plans
+    summary: Get a workout plan
+    description: Get a specific workout plan by ID
+    operationId: getWorkoutPlan
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Workout plan details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/WorkoutPlanResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  put:
+    tags:
+      - Workout Plans
+    summary: Update a workout plan
+    description: Update an existing workout plan
+    operationId: updateWorkoutPlan
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/UpdateWorkoutPlanRequest'
+    responses:
+      '200':
+        description: Workout plan updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/WorkoutPlanResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Workout Plans
+    summary: Delete a workout plan
+    description: Delete a workout plan
+    operationId: deleteWorkoutPlan
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Workout plan deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/workout-plans/{id}/workouts:
+  get:
+    tags:
+      - Workout Plans
+    summary: Get plan workouts
+    description: Get all workouts in a workout plan
+    operationId: getPlanWorkouts
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: List of plan items
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/workout.yaml#/WorkoutPlanItemResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  post:
+    tags:
+      - Workout Plans
+    summary: Add workout to plan
+    description: Add a workout to a workout plan
+    operationId: addWorkoutToPlan
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/AddWorkoutToPlanRequest'
+    responses:
+      '201':
+        description: Workout added to plan
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/WorkoutPlanItemResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/workout-plans/{id}/workouts/{item_id}:
+  put:
+    tags:
+      - Workout Plans
+    summary: Update plan item
+    description: Update a workout's position in the plan
+    operationId: updatePlanItem
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/UpdatePlanItemRequest'
+    responses:
+      '200':
+        description: Plan item updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/WorkoutPlanItemResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Workout Plans
+    summary: Remove workout from plan
+    description: Remove a workout from a workout plan
+    operationId: removeWorkoutFromPlan
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Workout removed from plan
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'

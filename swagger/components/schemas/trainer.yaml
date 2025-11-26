@@ -1,0 +1,251 @@
+# Trainer Schemas
+
+TrainerProfileResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    user_id:
+      type: string
+      format: uuid
+    bio:
+      type: string
+    specialties:
+      type: array
+      items:
+        $ref: '#/SpecialtyResponse'
+    hourly_rate:
+      type: number
+      format: float
+      nullable: true
+    location:
+      type: string
+    visibility:
+      type: string
+      enum: [public, link_only, private]
+    user:
+      $ref: './user.yaml#/UserResponse'
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+TrainerPublicResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    user_id:
+      type: string
+      format: uuid
+    bio:
+      type: string
+    specialties:
+      type: array
+      items:
+        $ref: '#/SpecialtyResponse'
+    hourly_rate:
+      type: number
+      format: float
+      nullable: true
+    location:
+      type: string
+    visibility:
+      type: string
+      enum: [public, link_only, private]
+    user:
+      $ref: '#/UserPublicResponse'
+    review_count:
+      type: integer
+    average_rating:
+      type: number
+      format: float
+    created_at:
+      type: string
+      format: date-time
+
+UserPublicResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    first_name:
+      type: string
+    last_name:
+      type: string
+
+CreateTrainerProfileRequest:
+  type: object
+  properties:
+    bio:
+      type: string
+      maxLength: 1000
+    specialty_ids:
+      type: array
+      maxItems: 20
+      items:
+        type: string
+        format: uuid
+    hourly_rate:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 9999.99
+      nullable: true
+    location:
+      type: string
+      maxLength: 500
+    visibility:
+      type: string
+      enum: [public, link_only, private]
+      default: private
+
+UpdateTrainerProfileRequest:
+  type: object
+  properties:
+    bio:
+      type: string
+      maxLength: 1000
+    specialty_ids:
+      type: array
+      maxItems: 20
+      items:
+        type: string
+        format: uuid
+    hourly_rate:
+      type: number
+      format: float
+      minimum: 0
+      maximum: 9999.99
+      nullable: true
+    location:
+      type: string
+      maxLength: 500
+    visibility:
+      type: string
+      enum: [public, link_only, private]
+
+SpecialtyResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    description:
+      type: string
+    created_at:
+      type: string
+      format: date-time
+
+TrainerClientLinkResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    trainer_id:
+      type: string
+      format: uuid
+    client_id:
+      type: string
+      format: uuid
+    status:
+      type: string
+      enum: [pending, active, inactive]
+    trainer:
+      $ref: '#/UserPublicResponse'
+    client:
+      $ref: '#/UserPublicResponse'
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+InviteClientRequest:
+  type: object
+  required:
+    - client_id
+  properties:
+    client_id:
+      type: string
+      format: uuid
+
+RespondToInvitationRequest:
+  type: object
+  required:
+    - action
+  properties:
+    action:
+      type: string
+      enum: [accept, reject]
+
+TrainerInvitationResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    trainer_id:
+      type: string
+      format: uuid
+    email:
+      type: string
+      format: email
+    token:
+      type: string
+    status:
+      type: string
+      enum: [pending, accepted, expired, cancelled]
+    expires_at:
+      type: string
+      format: date-time
+    created_at:
+      type: string
+      format: date-time
+
+CreateEmailInvitationRequest:
+  type: object
+  required:
+    - email
+  properties:
+    email:
+      type: string
+      format: email
+    message:
+      type: string
+      maxLength: 500
+
+FriendRequestResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    requester:
+      $ref: '#/UserPublicResponse'
+    addressee:
+      $ref: '#/UserPublicResponse'
+    status:
+      type: string
+      enum: [pending, accepted, rejected, blocked]
+    created_at:
+      type: string
+      format: date-time
+
+SendFriendRequestRequest:
+  type: object
+  required:
+    - addressee_id
+  properties:
+    addressee_id:
+      type: string
+      format: uuid

@@ -1,0 +1,609 @@
+# User Endpoints
+
+/user/settings:
+  get:
+    tags:
+      - User
+    summary: Get user settings
+    description: Get the authenticated user's settings
+    operationId: getUserSettings
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: User settings
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/UserSettingsResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  put:
+    tags:
+      - User
+    summary: Update user settings
+    description: Update the authenticated user's settings
+    operationId: updateUserSettings
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/user.yaml#/UpdateUserSettingsRequest'
+    responses:
+      '200':
+        description: Settings updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/UserSettingsResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/user/fitness/level:
+  put:
+    tags:
+      - User
+    summary: Update user fitness level
+    description: Update the authenticated user's fitness level
+    operationId: updateUserFitnessLevel
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/fitness.yaml#/UpdateUserFitnessLevelRequest'
+    responses:
+      '200':
+        description: Fitness level updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/UserFitnessProfileResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/user/fitness-profile:
+  get:
+    tags:
+      - User
+    summary: Get user fitness profile
+    description: Get the authenticated user's fitness profile
+    operationId: getUserFitnessProfile
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Fitness profile
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/UserFitnessProfileResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  post:
+    tags:
+      - User
+    summary: Create user fitness profile
+    description: Create a fitness profile for the authenticated user
+    operationId: createUserFitnessProfile
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/user.yaml#/CreateUserFitnessProfileRequest'
+    responses:
+      '201':
+        description: Fitness profile created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/UserFitnessProfileResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '409':
+        description: Profile already exists
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/ErrorResponse'
+
+  put:
+    tags:
+      - User
+    summary: Update user fitness profile
+    description: Update the authenticated user's fitness profile
+    operationId: updateUserFitnessProfile
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/user.yaml#/UpdateUserFitnessProfileRequest'
+    responses:
+      '200':
+        description: Fitness profile updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/UserFitnessProfileResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - User
+    summary: Delete user fitness profile
+    description: Delete the authenticated user's fitness profile
+    operationId: deleteUserFitnessProfile
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Fitness profile deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/user/fitness-profile/log-weight:
+  post:
+    tags:
+      - User
+    summary: Log weight from fitness profile
+    description: Log a weight entry from the fitness profile context
+    operationId: logWeightFromProfile
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/user.yaml#/CreateWeightLogRequest'
+    responses:
+      '201':
+        description: Weight logged
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/WeightLogResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/user/weight-logs:
+  get:
+    tags:
+      - User
+    summary: List weight logs
+    description: Get the authenticated user's weight logs
+    operationId: getWeightLogs
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: end_date
+        in: query
+        schema:
+          type: string
+          format: date
+    responses:
+      '200':
+        description: List of weight logs
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/user.yaml#/WeightLogResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - User
+    summary: Create weight log
+    description: Create a new weight log entry
+    operationId: createWeightLog
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/user.yaml#/CreateWeightLogRequest'
+    responses:
+      '201':
+        description: Weight log created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/WeightLogResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/user/weight-logs/stats:
+  get:
+    tags:
+      - User
+    summary: Get weight statistics
+    description: Get weight statistics for the authenticated user
+    operationId: getWeightStats
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: end_date
+        in: query
+        schema:
+          type: string
+          format: date
+    responses:
+      '200':
+        description: Weight statistics
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/WeightStatsResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/user/weight-logs/{id}:
+  get:
+    tags:
+      - User
+    summary: Get weight log
+    description: Get a specific weight log entry
+    operationId: getWeightLog
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Weight log details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/WeightLogResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  put:
+    tags:
+      - User
+    summary: Update weight log
+    description: Update a weight log entry
+    operationId: updateWeightLog
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/user.yaml#/UpdateWeightLogRequest'
+    responses:
+      '200':
+        description: Weight log updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/WeightLogResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - User
+    summary: Delete weight log
+    description: Delete a weight log entry
+    operationId: deleteWeightLog
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Weight log deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/user/equipment:
+  get:
+    tags:
+      - User
+    summary: List user equipment
+    description: Get all equipment owned by the authenticated user
+    operationId: getUserEquipment
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of user equipment
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/user.yaml#/UserEquipmentResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - User
+    summary: Add user equipment
+    description: Add equipment to the authenticated user's inventory
+    operationId: addUserEquipment
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/user.yaml#/AddUserEquipmentRequest'
+    responses:
+      '201':
+        description: Equipment added
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/UserEquipmentResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/user/equipment/bulk:
+  post:
+    tags:
+      - User
+    summary: Bulk add user equipment
+    description: Add multiple pieces of equipment at once
+    operationId: bulkAddUserEquipment
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/user.yaml#/BulkAddUserEquipmentRequest'
+    responses:
+      '201':
+        description: Equipment added
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/user.yaml#/UserEquipmentResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/user/equipment/{id}:
+  put:
+    tags:
+      - User
+    summary: Update user equipment
+    description: Update a user equipment entry
+    operationId: updateUserEquipment
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/user.yaml#/UpdateUserEquipmentRequest'
+    responses:
+      '200':
+        description: Equipment updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/UserEquipmentResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - User
+    summary: Remove user equipment
+    description: Remove equipment from the user's inventory
+    operationId: removeUserEquipment
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Equipment removed
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/user/equipment/location/{location}:
+  get:
+    tags:
+      - User
+    summary: Get user equipment by location
+    description: Get user equipment filtered by location (home, gym, etc.)
+    operationId: getUserEquipmentByLocation
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: location
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: List of equipment at location
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/user.yaml#/UserEquipmentResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'

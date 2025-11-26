@@ -2366,11 +2366,12 @@ func SeedTrainerProfiles() {
 
 	// First trainer profile
 	var existing1 models.TrainerProfile
+	hourlyRate1 := 75.00
 	if err := DB.Where("user_id = ?", users[0].ID).First(&existing1).Error; err != nil {
 		profile1 := models.TrainerProfile{
 			UserID:     users[0].ID,
 			Bio:        "Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding. Passionate about helping clients achieve their fitness goals through customized workout programs and nutrition guidance.",
-			HourlyRate: 75.00,
+			HourlyRate: &hourlyRate1,
 			Location:   "New York, NY",
 			Visibility: "public",
 		}
@@ -2389,11 +2390,12 @@ func SeedTrainerProfiles() {
 	// Second trainer profile if we have enough users
 	if len(users) >= 2 {
 		var existing2 models.TrainerProfile
+		hourlyRate2 := 60.00
 		if err := DB.Where("user_id = ?", users[1].ID).First(&existing2).Error; err != nil {
 			profile2 := models.TrainerProfile{
 				UserID:     users[1].ID,
 				Bio:        "Specializing in functional fitness and injury prevention. I help clients improve mobility, recover from injuries, and build sustainable fitness habits. Certified in rehabilitation and corrective exercise.",
-				HourlyRate: 60.00,
+				HourlyRate: &hourlyRate2,
 				Location:   "Los Angeles, CA",
 				Visibility: "public",
 			}

@@ -1,0 +1,159 @@
+# Enrollment Endpoints
+
+/enrollments:
+  get:
+    tags:
+      - Enrollments
+    summary: List user enrollments
+    description: Get all workout plan enrollments for the authenticated user
+    operationId: getUserEnrollments
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [active, paused, completed, cancelled]
+    responses:
+      '200':
+        description: List of enrollments
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/workout.yaml#/PlanEnrollmentResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - Enrollments
+    summary: Enroll in a plan
+    description: Enroll the authenticated user in a workout plan
+    operationId: enrollInPlan
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/EnrollInPlanRequest'
+    responses:
+      '201':
+        description: Enrollment created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/PlanEnrollmentResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '409':
+        description: Already enrolled in this plan
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/ErrorResponse'
+
+/enrollments/{id}:
+  get:
+    tags:
+      - Enrollments
+    summary: Get an enrollment
+    description: Get a specific enrollment by ID
+    operationId: getEnrollment
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Enrollment details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/PlanEnrollmentResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  put:
+    tags:
+      - Enrollments
+    summary: Update an enrollment
+    description: Update enrollment status or progress
+    operationId: updateEnrollment
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/UpdateEnrollmentRequest'
+    responses:
+      '200':
+        description: Enrollment updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/PlanEnrollmentResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Enrollments
+    summary: Cancel an enrollment
+    description: Cancel a workout plan enrollment
+    operationId: cancelEnrollment
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Enrollment cancelled
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'

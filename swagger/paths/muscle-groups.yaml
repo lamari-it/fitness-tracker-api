@@ -1,0 +1,148 @@
+# Muscle Group Endpoints
+
+/muscle-groups:
+  get:
+    tags:
+      - Muscle Groups
+    summary: List all muscle groups
+    description: Get a list of all muscle groups
+    operationId: getMuscleGroups
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+    responses:
+      '200':
+        description: List of muscle groups
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/exercise.yaml#/MuscleGroupResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - Muscle Groups
+    summary: Create a muscle group
+    description: Create a new muscle group
+    operationId: createMuscleGroup
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/exercise.yaml#/CreateMuscleGroupRequest'
+    responses:
+      '201':
+        description: Muscle group created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/MuscleGroupResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/muscle-groups/{id}:
+  get:
+    tags:
+      - Muscle Groups
+    summary: Get a muscle group
+    description: Get a specific muscle group by ID
+    operationId: getMuscleGroup
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Muscle group details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/MuscleGroupResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  put:
+    tags:
+      - Muscle Groups
+    summary: Update a muscle group
+    description: Update an existing muscle group
+    operationId: updateMuscleGroup
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/exercise.yaml#/UpdateMuscleGroupRequest'
+    responses:
+      '200':
+        description: Muscle group updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/MuscleGroupResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Muscle Groups
+    summary: Delete a muscle group
+    description: Delete a muscle group
+    operationId: deleteMuscleGroup
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Muscle group deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'

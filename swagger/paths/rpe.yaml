@@ -1,0 +1,205 @@
+# RPE Scale Endpoints
+
+/rpe/scales:
+  get:
+    tags:
+      - RPE
+    summary: List RPE scales
+    description: Get all RPE scales (global and user-created)
+    operationId: listRPEScales
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of RPE scales
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/session.yaml#/RPEScaleResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - RPE
+    summary: Create RPE scale
+    description: Create a custom RPE scale
+    operationId: createRPEScale
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/session.yaml#/CreateRPEScaleRequest'
+    responses:
+      '201':
+        description: RPE scale created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/session.yaml#/RPEScaleResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/rpe/scales/global:
+  get:
+    tags:
+      - RPE
+    summary: Get global RPE scale
+    description: Get the global/default RPE scale
+    operationId: getGlobalRPEScale
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Global RPE scale
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/session.yaml#/RPEScaleResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/rpe/scales/{id}:
+  get:
+    tags:
+      - RPE
+    summary: Get RPE scale
+    description: Get a specific RPE scale by ID
+    operationId: getRPEScale
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: RPE scale details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/session.yaml#/RPEScaleResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  put:
+    tags:
+      - RPE
+    summary: Update RPE scale
+    description: Update a custom RPE scale
+    operationId: updateRPEScale
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/session.yaml#/UpdateRPEScaleRequest'
+    responses:
+      '200':
+        description: RPE scale updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/session.yaml#/RPEScaleResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - RPE
+    summary: Delete RPE scale
+    description: Delete a custom RPE scale
+    operationId: deleteRPEScale
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: RPE scale deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/rpe/scales/{id}/values:
+  post:
+    tags:
+      - RPE
+    summary: Add RPE scale value
+    description: Add a value to an RPE scale
+    operationId: addRPEScaleValue
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/session.yaml#/RPEScaleValueInput'
+    responses:
+      '201':
+        description: Value added
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/session.yaml#/RPEScaleResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'

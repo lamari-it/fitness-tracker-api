@@ -1,0 +1,403 @@
+# Workout Endpoints
+
+/workouts:
+  get:
+    tags:
+      - Workouts
+    summary: List user workouts
+    description: Get all workouts for the authenticated user
+    operationId: getUserWorkouts
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum: [beginner, intermediate, advanced]
+      - name: is_template
+        in: query
+        schema:
+          type: boolean
+      - name: is_public
+        in: query
+        schema:
+          type: boolean
+      - name: search
+        in: query
+        schema:
+          type: string
+    responses:
+      '200':
+        description: List of workouts
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/workout.yaml#/WorkoutResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - Workouts
+    summary: Create a workout
+    description: Create a new workout
+    operationId: createWorkout
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/CreateWorkoutRequest'
+    responses:
+      '201':
+        description: Workout created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/WorkoutResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/workouts/{id}:
+  get:
+    tags:
+      - Workouts
+    summary: Get a workout
+    description: Get a specific workout by ID
+    operationId: getWorkout
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Workout details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/WorkoutResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  put:
+    tags:
+      - Workouts
+    summary: Update a workout
+    description: Update an existing workout
+    operationId: updateWorkout
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/UpdateWorkoutRequest'
+    responses:
+      '200':
+        description: Workout updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/WorkoutResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Workouts
+    summary: Delete a workout
+    description: Delete a workout
+    operationId: deleteWorkout
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Workout deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/workouts/{id}/duplicate:
+  post:
+    tags:
+      - Workouts
+    summary: Duplicate a workout
+    description: Create a copy of an existing workout
+    operationId: duplicateWorkout
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '201':
+        description: Workout duplicated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/WorkoutResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/workouts/{id}/prescriptions:
+  get:
+    tags:
+      - Workouts
+    summary: Get workout prescriptions
+    description: Get all prescription groups for a workout
+    operationId: getWorkoutPrescriptions
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: List of prescriptions
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/workout.yaml#/WorkoutPrescriptionResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  post:
+    tags:
+      - Workouts
+    summary: Create prescription group
+    description: Add a prescription group to a workout
+    operationId: createPrescriptionGroup
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/CreatePrescriptionGroupRequest'
+    responses:
+      '201':
+        description: Prescription group created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/workout.yaml#/WorkoutPrescriptionResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/workouts/{id}/prescriptions/reorder:
+  put:
+    tags:
+      - Workouts
+    summary: Reorder prescription groups
+    description: Change the order of prescription groups in a workout
+    operationId: reorderPrescriptionGroups
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/ReorderPrescriptionGroupsRequest'
+    responses:
+      '200':
+        description: Prescriptions reordered
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/workouts/{id}/prescriptions/{group_id}:
+  put:
+    tags:
+      - Workouts
+    summary: Update prescription group
+    description: Update a prescription group in a workout
+    operationId: updatePrescriptionGroup
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+      - name: group_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/CreatePrescriptionGroupRequest'
+    responses:
+      '200':
+        description: Prescription group updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/WorkoutPrescriptionResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Workouts
+    summary: Delete prescription group
+    description: Remove a prescription group from a workout
+    operationId: deletePrescriptionGroup
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+      - name: group_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Prescription group deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/workouts/{id}/prescriptions/{group_id}/exercises:
+  post:
+    tags:
+      - Workouts
+    summary: Add exercise to prescription group
+    description: Add an exercise to an existing prescription group
+    operationId: addExerciseToPrescriptionGroup
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+      - name: group_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/workout.yaml#/PrescriptionExerciseInput'
+    responses:
+      '201':
+        description: Exercise added to group
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/workout.yaml#/WorkoutPrescriptionResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'

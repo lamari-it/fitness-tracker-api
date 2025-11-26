@@ -1,0 +1,537 @@
+openapi: 3.0.3
+info:
+  title: FitFlow API
+  description: |
+    FitFlow is a comprehensive fitness tracking REST API built with Go, Gin framework, PostgreSQL, and GORM.
+
+    ## Features
+    - JWT Authentication with OAuth (Google/Apple) support
+    - Workout planning and tracking
+    - Exercise library management
+    - Trainer-client relationships
+    - Weight logging and fitness profiles
+    - RPE (Rate of Perceived Exertion) scales
+    - Multi-language support via X-Language header
+
+    ## Authentication
+    Most endpoints require a Bearer token in the Authorization header.
+    Obtain a token via `/api/v1/auth/login` or `/api/v1/auth/register`.
+
+    ## Response Format
+    All responses follow a standard format:
+    ```json
+    {
+      "success": true,
+      "message": "Operation completed successfully",
+      "data": { ... },
+      "meta": { ... }  // Optional, for pagination
+    }
+    ```
+
+    ## Weight Units
+    The API supports unified weight handling with automatic conversion:
+    - Input: Send `weight.value` and `weight.unit` (kg or lb)
+    - Storage: Weights are stored in kg
+    - Output: Returns `weight_kg` and `weight_unit` for display
+
+    ## Documentation Structure
+    This documentation is organized into modular files:
+    - `/components/schemas/` - Data models and request/response schemas
+    - `/components/parameters.yaml` - Reusable parameters
+    - `/components/responses.yaml` - Standard response definitions
+    - `/paths/` - API endpoint definitions grouped by resource
+  version: 1.0.0
+  contact:
+    name: FitFlow Support
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.fitflow.com
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: Authentication and authorization endpoints
+  - name: User
+    description: User settings, profiles, and equipment
+  - name: Exercises
+    description: Exercise library management
+  - name: Muscle Groups
+    description: Muscle group management
+  - name: Equipment
+    description: Equipment management
+  - name: Fitness
+    description: Fitness levels and goals
+  - name: Workouts
+    description: Workout management and prescriptions
+  - name: Workout Plans
+    description: Workout plan management
+  - name: Enrollments
+    description: Plan enrollment management
+  - name: Sessions
+    description: Workout session logging (blocks, exercises, sets)
+  - name: Trainers
+    description: Trainer profiles, clients, and invitations
+  - name: Friends
+    description: Friend relationships and requests
+  - name: Me
+    description: Current user's trainer relationships
+  - name: RPE
+    description: Rate of Perceived Exertion scales
+  - name: Translations
+    description: Admin translation management
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Health Check
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check if the API is running
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+
+  # Authentication
+  /api/v1/auth/register:
+    $ref: './paths/auth.yaml#/~1auth~1register'
+  /api/v1/auth/login:
+    $ref: './paths/auth.yaml#/~1auth~1login'
+  /api/v1/auth/profile:
+    $ref: './paths/auth.yaml#/~1auth~1profile'
+  /api/v1/auth/google:
+    $ref: './paths/auth.yaml#/~1auth~1google'
+  /api/v1/auth/google/callback:
+    $ref: './paths/auth.yaml#/~1auth~1google~1callback'
+  /api/v1/auth/apple:
+    $ref: './paths/auth.yaml#/~1auth~1apple'
+
+  # Muscle Groups
+  /api/v1/muscle-groups:
+    $ref: './paths/muscle-groups.yaml#/~1muscle-groups'
+  /api/v1/muscle-groups/{id}:
+    $ref: './paths/muscle-groups.yaml#/~1muscle-groups~1{id}'
+
+  # Exercises
+  /api/v1/exercises:
+    $ref: './paths/exercises.yaml#/~1exercises'
+  /api/v1/exercises/{id}:
+    $ref: './paths/exercises.yaml#/~1exercises~1{id}'
+  /api/v1/exercises/by-slug/{slug}:
+    $ref: './paths/exercises.yaml#/~1exercises~1by-slug~1{slug}'
+  /api/v1/exercises/{id}/muscle-groups:
+    $ref: './paths/exercises.yaml#/~1exercises~1{id}~1muscle-groups'
+  /api/v1/exercises/{id}/muscle-groups/{muscle_group_id}:
+    $ref: './paths/exercises.yaml#/~1exercises~1{id}~1muscle-groups~1{muscle_group_id}'
+  /api/v1/exercises/{id}/equipment:
+    $ref: './paths/exercises.yaml#/~1exercises~1{id}~1equipment'
+  /api/v1/exercises/{id}/equipment/{equipment_id}:
+    $ref: './paths/exercises.yaml#/~1exercises~1{id}~1equipment~1{equipment_id}'
+
+  # Equipment
+  /api/v1/equipment:
+    $ref: './paths/equipment.yaml#/~1equipment'
+  /api/v1/equipment/{id}:
+    $ref: './paths/equipment.yaml#/~1equipment~1{id}'
+
+  # Fitness Levels & Goals
+  /api/v1/fitness-levels:
+    $ref: './paths/fitness.yaml#/~1fitness-levels'
+  /api/v1/fitness-levels/{id}:
+    $ref: './paths/fitness.yaml#/~1fitness-levels~1{id}'
+  /api/v1/fitness-goals:
+    $ref: './paths/fitness.yaml#/~1fitness-goals'
+  /api/v1/fitness-goals/{id}:
+    $ref: './paths/fitness.yaml#/~1fitness-goals~1{id}'
+
+  # User Settings & Profile
+  /api/v1/user/settings:
+    $ref: './paths/user.yaml#/~1user~1settings'
+  /api/v1/user/fitness/level:
+    $ref: './paths/user.yaml#/~1user~1fitness~1level'
+  /api/v1/user/fitness-profile:
+    $ref: './paths/user.yaml#/~1user~1fitness-profile'
+  /api/v1/user/fitness-profile/log-weight:
+    $ref: './paths/user.yaml#/~1user~1fitness-profile~1log-weight'
+  /api/v1/user/weight-logs:
+    $ref: './paths/user.yaml#/~1user~1weight-logs'
+  /api/v1/user/weight-logs/stats:
+    $ref: './paths/user.yaml#/~1user~1weight-logs~1stats'
+  /api/v1/user/weight-logs/{id}:
+    $ref: './paths/user.yaml#/~1user~1weight-logs~1{id}'
+  /api/v1/user/equipment:
+    $ref: './paths/user.yaml#/~1user~1equipment'
+  /api/v1/user/equipment/bulk:
+    $ref: './paths/user.yaml#/~1user~1equipment~1bulk'
+  /api/v1/user/equipment/{id}:
+    $ref: './paths/user.yaml#/~1user~1equipment~1{id}'
+  /api/v1/user/equipment/location/{location}:
+    $ref: './paths/user.yaml#/~1user~1equipment~1location~1{location}'
+
+  # Workouts
+  /api/v1/workouts:
+    $ref: './paths/workouts.yaml#/~1workouts'
+  /api/v1/workouts/{id}:
+    $ref: './paths/workouts.yaml#/~1workouts~1{id}'
+  /api/v1/workouts/{id}/duplicate:
+    $ref: './paths/workouts.yaml#/~1workouts~1{id}~1duplicate'
+  /api/v1/workouts/{id}/prescriptions:
+    $ref: './paths/workouts.yaml#/~1workouts~1{id}~1prescriptions'
+  /api/v1/workouts/{id}/prescriptions/reorder:
+    $ref: './paths/workouts.yaml#/~1workouts~1{id}~1prescriptions~1reorder'
+  /api/v1/workouts/{id}/prescriptions/{group_id}:
+    $ref: './paths/workouts.yaml#/~1workouts~1{id}~1prescriptions~1{group_id}'
+  /api/v1/workouts/{id}/prescriptions/{group_id}/exercises:
+    $ref: './paths/workouts.yaml#/~1workouts~1{id}~1prescriptions~1{group_id}~1exercises'
+
+  # Workout Plans
+  /api/v1/workout-plans:
+    $ref: './paths/workout-plans.yaml#/~1workout-plans'
+  /api/v1/workout-plans/{id}:
+    $ref: './paths/workout-plans.yaml#/~1workout-plans~1{id}'
+  /api/v1/workout-plans/{id}/workouts:
+    $ref: './paths/workout-plans.yaml#/~1workout-plans~1{id}~1workouts'
+  /api/v1/workout-plans/{id}/workouts/{item_id}:
+    $ref: './paths/workout-plans.yaml#/~1workout-plans~1{id}~1workouts~1{item_id}'
+
+  # Enrollments
+  /api/v1/enrollments:
+    $ref: './paths/enrollments.yaml#/~1enrollments'
+  /api/v1/enrollments/{id}:
+    $ref: './paths/enrollments.yaml#/~1enrollments~1{id}'
+
+  # Friends
+  /api/v1/friends:
+    $ref: './paths/friends.yaml#/~1friends'
+  /api/v1/friends/{id}:
+    $ref: './paths/friends.yaml#/~1friends~1{id}'
+  /api/v1/friends/request:
+    $ref: './paths/friends.yaml#/~1friends~1request'
+  /api/v1/friends/requests:
+    $ref: './paths/friends.yaml#/~1friends~1requests'
+  /api/v1/friends/requests/{id}/{action}:
+    $ref: './paths/friends.yaml#/~1friends~1requests~1{id}~1{action}'
+
+  # Trainers
+  /api/v1/trainers:
+    $ref: './paths/trainers.yaml#/~1trainers'
+  /api/v1/trainers/{id}:
+    $ref: './paths/trainers.yaml#/~1trainers~1{id}'
+  /api/v1/trainers/profile:
+    $ref: './paths/trainers.yaml#/~1trainers~1profile'
+  /api/v1/trainers/clients:
+    $ref: './paths/trainers.yaml#/~1trainers~1clients'
+  /api/v1/trainers/clients/{id}:
+    $ref: './paths/trainers.yaml#/~1trainers~1clients~1{id}'
+  /api/v1/trainers/email-invitations:
+    $ref: './paths/trainers.yaml#/~1trainers~1email-invitations'
+  /api/v1/trainers/email-invitations/{id}:
+    $ref: './paths/trainers.yaml#/~1trainers~1email-invitations~1{id}'
+  /api/v1/trainers/email-invitations/{id}/resend:
+    $ref: './paths/trainers.yaml#/~1trainers~1email-invitations~1{id}~1resend'
+  /api/v1/invitations/verify/{token}:
+    $ref: './paths/trainers.yaml#/~1invitations~1verify~1{token}'
+  /api/v1/specialties:
+    $ref: './paths/trainers.yaml#/~1specialties'
+
+  # Me (Client-side trainer relationships)
+  /api/v1/me/trainers:
+    $ref: './paths/me.yaml#/~1me~1trainers'
+  /api/v1/me/trainer-invitations:
+    $ref: './paths/me.yaml#/~1me~1trainer-invitations'
+  /api/v1/me/trainer-invitations/{id}:
+    $ref: './paths/me.yaml#/~1me~1trainer-invitations~1{id}'
+
+  # RPE Scales
+  /api/v1/rpe/scales:
+    $ref: './paths/rpe.yaml#/~1rpe~1scales'
+  /api/v1/rpe/scales/global:
+    $ref: './paths/rpe.yaml#/~1rpe~1scales~1global'
+  /api/v1/rpe/scales/{id}:
+    $ref: './paths/rpe.yaml#/~1rpe~1scales~1{id}'
+  /api/v1/rpe/scales/{id}/values:
+    $ref: './paths/rpe.yaml#/~1rpe~1scales~1{id}~1values'
+
+  # Workout Sessions
+  /api/v1/workout-sessions:
+    $ref: './paths/sessions.yaml#/~1workout-sessions'
+  /api/v1/workout-sessions/{id}:
+    $ref: './paths/sessions.yaml#/~1workout-sessions~1{id}'
+  /api/v1/workout-sessions/{id}/end:
+    $ref: './paths/sessions.yaml#/~1workout-sessions~1{id}~1end'
+
+  # Session Blocks
+  /api/v1/session-blocks/{id}:
+    $ref: './paths/sessions.yaml#/~1session-blocks~1{id}'
+  /api/v1/session-blocks/{id}/complete:
+    $ref: './paths/sessions.yaml#/~1session-blocks~1{id}~1complete'
+  /api/v1/session-blocks/{id}/skip:
+    $ref: './paths/sessions.yaml#/~1session-blocks~1{id}~1skip'
+  /api/v1/session-blocks/{id}/rpe:
+    $ref: './paths/sessions.yaml#/~1session-blocks~1{id}~1rpe'
+
+  # Session Exercises
+  /api/v1/session-exercises/{id}:
+    $ref: './paths/sessions.yaml#/~1session-exercises~1{id}'
+  /api/v1/session-exercises/{id}/complete:
+    $ref: './paths/sessions.yaml#/~1session-exercises~1{id}~1complete'
+  /api/v1/session-exercises/{id}/skip:
+    $ref: './paths/sessions.yaml#/~1session-exercises~1{id}~1skip'
+  /api/v1/session-exercises/{id}/notes:
+    $ref: './paths/sessions.yaml#/~1session-exercises~1{id}~1notes'
+  /api/v1/session-exercises/{id}/sets:
+    $ref: './paths/sessions.yaml#/~1session-exercises~1{id}~1sets'
+
+  # Session Sets
+  /api/v1/session-sets/{id}:
+    $ref: './paths/sessions.yaml#/~1session-sets~1{id}'
+  /api/v1/session-sets/{id}/complete:
+    $ref: './paths/sessions.yaml#/~1session-sets~1{id}~1complete'
+
+  # Translations (Admin only)
+  /api/v1/translations:
+    $ref: './paths/translations.yaml#/~1translations'
+  /api/v1/translations/{id}:
+    $ref: './paths/translations.yaml#/~1translations~1{id}'
+  /api/v1/translations/resource/{resource_type}/{resource_id}:
+    $ref: './paths/translations.yaml#/~1translations~1resource~1{resource_type}~1{resource_id}'
+  /api/v1/translations/upsert:
+    $ref: './paths/translations.yaml#/~1translations~1upsert'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login or register endpoints
+
+  parameters:
+    IdPathParam:
+      $ref: './components/parameters.yaml#/IdPathParam'
+    PageParam:
+      $ref: './components/parameters.yaml#/PageParam'
+    PageSizeParam:
+      $ref: './components/parameters.yaml#/PageSizeParam'
+    LanguageHeader:
+      $ref: './components/parameters.yaml#/LanguageHeader'
+
+  responses:
+    SuccessResponse:
+      $ref: './components/responses.yaml#/SuccessResponse'
+    ErrorResponse:
+      $ref: './components/responses.yaml#/ErrorResponse'
+    BadRequestResponse:
+      $ref: './components/responses.yaml#/BadRequestResponse'
+    UnauthorizedResponse:
+      $ref: './components/responses.yaml#/UnauthorizedResponse'
+    ForbiddenResponse:
+      $ref: './components/responses.yaml#/ForbiddenResponse'
+    NotFoundResponse:
+      $ref: './components/responses.yaml#/NotFoundResponse'
+    ValidationErrorResponse:
+      $ref: './components/responses.yaml#/ValidationErrorResponse'
+
+  schemas:
+    # Common
+    WeightInput:
+      $ref: './components/schemas/common.yaml#/WeightInput'
+    WeightOutput:
+      $ref: './components/schemas/common.yaml#/WeightOutput'
+    PaginationMeta:
+      $ref: './components/schemas/common.yaml#/PaginationMeta'
+
+    # Auth
+    RegisterRequest:
+      $ref: './components/schemas/auth.yaml#/RegisterRequest'
+    LoginRequest:
+      $ref: './components/schemas/auth.yaml#/LoginRequest'
+    AuthResponse:
+      $ref: './components/schemas/auth.yaml#/AuthResponse'
+    AppleAuthRequest:
+      $ref: './components/schemas/auth.yaml#/AppleAuthRequest'
+
+    # User
+    UserResponse:
+      $ref: './components/schemas/user.yaml#/UserResponse'
+    UserSettingsResponse:
+      $ref: './components/schemas/user.yaml#/UserSettingsResponse'
+    UpdateUserSettingsRequest:
+      $ref: './components/schemas/user.yaml#/UpdateUserSettingsRequest'
+    UserFitnessProfileResponse:
+      $ref: './components/schemas/user.yaml#/UserFitnessProfileResponse'
+    CreateUserFitnessProfileRequest:
+      $ref: './components/schemas/user.yaml#/CreateUserFitnessProfileRequest'
+    UpdateUserFitnessProfileRequest:
+      $ref: './components/schemas/user.yaml#/UpdateUserFitnessProfileRequest'
+    WeightLogResponse:
+      $ref: './components/schemas/user.yaml#/WeightLogResponse'
+    CreateWeightLogRequest:
+      $ref: './components/schemas/user.yaml#/CreateWeightLogRequest'
+    UpdateWeightLogRequest:
+      $ref: './components/schemas/user.yaml#/UpdateWeightLogRequest'
+    WeightStatsResponse:
+      $ref: './components/schemas/user.yaml#/WeightStatsResponse'
+    UserEquipmentResponse:
+      $ref: './components/schemas/user.yaml#/UserEquipmentResponse'
+    AddUserEquipmentRequest:
+      $ref: './components/schemas/user.yaml#/AddUserEquipmentRequest'
+    BulkAddUserEquipmentRequest:
+      $ref: './components/schemas/user.yaml#/BulkAddUserEquipmentRequest'
+    UpdateUserEquipmentRequest:
+      $ref: './components/schemas/user.yaml#/UpdateUserEquipmentRequest'
+
+    # Exercise
+    ExerciseResponse:
+      $ref: './components/schemas/exercise.yaml#/ExerciseResponse'
+    CreateExerciseRequest:
+      $ref: './components/schemas/exercise.yaml#/CreateExerciseRequest'
+    UpdateExerciseRequest:
+      $ref: './components/schemas/exercise.yaml#/UpdateExerciseRequest'
+    MuscleGroupResponse:
+      $ref: './components/schemas/exercise.yaml#/MuscleGroupResponse'
+    CreateMuscleGroupRequest:
+      $ref: './components/schemas/exercise.yaml#/CreateMuscleGroupRequest'
+    UpdateMuscleGroupRequest:
+      $ref: './components/schemas/exercise.yaml#/UpdateMuscleGroupRequest'
+    ExerciseMuscleGroupResponse:
+      $ref: './components/schemas/exercise.yaml#/ExerciseMuscleGroupResponse'
+    AssignMuscleGroupRequest:
+      $ref: './components/schemas/exercise.yaml#/AssignMuscleGroupRequest'
+    EquipmentResponse:
+      $ref: './components/schemas/exercise.yaml#/EquipmentResponse'
+    CreateEquipmentRequest:
+      $ref: './components/schemas/exercise.yaml#/CreateEquipmentRequest'
+    UpdateEquipmentRequest:
+      $ref: './components/schemas/exercise.yaml#/UpdateEquipmentRequest'
+    AssignEquipmentRequest:
+      $ref: './components/schemas/exercise.yaml#/AssignEquipmentRequest'
+
+    # Fitness
+    FitnessLevelResponse:
+      $ref: './components/schemas/fitness.yaml#/FitnessLevelResponse'
+    CreateFitnessLevelRequest:
+      $ref: './components/schemas/fitness.yaml#/CreateFitnessLevelRequest'
+    UpdateFitnessLevelRequest:
+      $ref: './components/schemas/fitness.yaml#/UpdateFitnessLevelRequest'
+    FitnessGoalResponse:
+      $ref: './components/schemas/fitness.yaml#/FitnessGoalResponse'
+    CreateFitnessGoalRequest:
+      $ref: './components/schemas/fitness.yaml#/CreateFitnessGoalRequest'
+    UpdateFitnessGoalRequest:
+      $ref: './components/schemas/fitness.yaml#/UpdateFitnessGoalRequest'
+    UserFitnessGoalResponse:
+      $ref: './components/schemas/fitness.yaml#/UserFitnessGoalResponse'
+    UpdateUserFitnessLevelRequest:
+      $ref: './components/schemas/fitness.yaml#/UpdateUserFitnessLevelRequest'
+
+    # Workout
+    WorkoutResponse:
+      $ref: './components/schemas/workout.yaml#/WorkoutResponse'
+    CreateWorkoutRequest:
+      $ref: './components/schemas/workout.yaml#/CreateWorkoutRequest'
+    UpdateWorkoutRequest:
+      $ref: './components/schemas/workout.yaml#/UpdateWorkoutRequest'
+    WorkoutPrescriptionResponse:
+      $ref: './components/schemas/workout.yaml#/WorkoutPrescriptionResponse'
+    CreatePrescriptionGroupRequest:
+      $ref: './components/schemas/workout.yaml#/CreatePrescriptionGroupRequest'
+    PrescriptionExerciseInput:
+      $ref: './components/schemas/workout.yaml#/PrescriptionExerciseInput'
+    ReorderPrescriptionGroupsRequest:
+      $ref: './components/schemas/workout.yaml#/ReorderPrescriptionGroupsRequest'
+    WorkoutPlanResponse:
+      $ref: './components/schemas/workout.yaml#/WorkoutPlanResponse'
+    CreateWorkoutPlanRequest:
+      $ref: './components/schemas/workout.yaml#/CreateWorkoutPlanRequest'
+    UpdateWorkoutPlanRequest:
+      $ref: './components/schemas/workout.yaml#/UpdateWorkoutPlanRequest'
+    WorkoutPlanItemResponse:
+      $ref: './components/schemas/workout.yaml#/WorkoutPlanItemResponse'
+    AddWorkoutToPlanRequest:
+      $ref: './components/schemas/workout.yaml#/AddWorkoutToPlanRequest'
+    UpdatePlanItemRequest:
+      $ref: './components/schemas/workout.yaml#/UpdatePlanItemRequest'
+    PlanEnrollmentResponse:
+      $ref: './components/schemas/workout.yaml#/PlanEnrollmentResponse'
+    EnrollInPlanRequest:
+      $ref: './components/schemas/workout.yaml#/EnrollInPlanRequest'
+    UpdateEnrollmentRequest:
+      $ref: './components/schemas/workout.yaml#/UpdateEnrollmentRequest'
+
+    # Session
+    WorkoutSessionResponse:
+      $ref: './components/schemas/session.yaml#/WorkoutSessionResponse'
+    CreateWorkoutSessionRequest:
+      $ref: './components/schemas/session.yaml#/CreateWorkoutSessionRequest'
+    UpdateWorkoutSessionRequest:
+      $ref: './components/schemas/session.yaml#/UpdateWorkoutSessionRequest'
+    SessionBlockResponse:
+      $ref: './components/schemas/session.yaml#/SessionBlockResponse'
+    UpdateSessionBlockRPERequest:
+      $ref: './components/schemas/session.yaml#/UpdateSessionBlockRPERequest'
+    SessionExerciseResponse:
+      $ref: './components/schemas/session.yaml#/SessionExerciseResponse'
+    UpdateSessionExerciseNotesRequest:
+      $ref: './components/schemas/session.yaml#/UpdateSessionExerciseNotesRequest'
+    SessionSetResponse:
+      $ref: './components/schemas/session.yaml#/SessionSetResponse'
+    AddSetRequest:
+      $ref: './components/schemas/session.yaml#/AddSetRequest'
+    UpdateSessionSetRequest:
+      $ref: './components/schemas/session.yaml#/UpdateSessionSetRequest'
+    RPEScaleResponse:
+      $ref: './components/schemas/session.yaml#/RPEScaleResponse'
+    RPEScaleValueResponse:
+      $ref: './components/schemas/session.yaml#/RPEScaleValueResponse'
+    CreateRPEScaleRequest:
+      $ref: './components/schemas/session.yaml#/CreateRPEScaleRequest'
+    RPEScaleValueInput:
+      $ref: './components/schemas/session.yaml#/RPEScaleValueInput'
+    UpdateRPEScaleRequest:
+      $ref: './components/schemas/session.yaml#/UpdateRPEScaleRequest'
+
+    # Trainer
+    TrainerProfileResponse:
+      $ref: './components/schemas/trainer.yaml#/TrainerProfileResponse'
+    TrainerPublicResponse:
+      $ref: './components/schemas/trainer.yaml#/TrainerPublicResponse'
+    UserPublicResponse:
+      $ref: './components/schemas/trainer.yaml#/UserPublicResponse'
+    CreateTrainerProfileRequest:
+      $ref: './components/schemas/trainer.yaml#/CreateTrainerProfileRequest'
+    UpdateTrainerProfileRequest:
+      $ref: './components/schemas/trainer.yaml#/UpdateTrainerProfileRequest'
+    SpecialtyResponse:
+      $ref: './components/schemas/trainer.yaml#/SpecialtyResponse'
+    TrainerClientLinkResponse:
+      $ref: './components/schemas/trainer.yaml#/TrainerClientLinkResponse'
+    InviteClientRequest:
+      $ref: './components/schemas/trainer.yaml#/InviteClientRequest'
+    RespondToInvitationRequest:
+      $ref: './components/schemas/trainer.yaml#/RespondToInvitationRequest'
+    TrainerInvitationResponse:
+      $ref: './components/schemas/trainer.yaml#/TrainerInvitationResponse'
+    CreateEmailInvitationRequest:
+      $ref: './components/schemas/trainer.yaml#/CreateEmailInvitationRequest'
+    FriendRequestResponse:
+      $ref: './components/schemas/trainer.yaml#/FriendRequestResponse'
+    SendFriendRequestRequest:
+      $ref: './components/schemas/trainer.yaml#/SendFriendRequestRequest'

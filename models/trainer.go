@@ -12,7 +12,7 @@ type TrainerProfile struct {
 	ID         uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	UserID     uuid.UUID      `gorm:"type:uuid;not null;unique" json:"user_id"`
 	Bio        string         `gorm:"type:text" json:"bio"`
-	HourlyRate float64        `gorm:"type:numeric(10,2)" json:"hourly_rate"`
+	HourlyRate *float64       `gorm:"type:numeric(10,2)" json:"hourly_rate,omitempty"`
 	Location   string         `gorm:"type:text" json:"location"`
 	Visibility string         `gorm:"type:varchar(20);default:'public'" json:"visibility"` // public, link_only, private
 	CreatedAt  time.Time      `json:"created_at"`
@@ -76,7 +76,7 @@ func (tcl *TrainerClientLink) BeforeCreate(tx *gorm.DB) (err error) {
 type CreateTrainerProfileRequest struct {
 	Bio          string      `json:"bio" binding:"omitempty,max=1000"`
 	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
-	HourlyRate   float64     `json:"hourly_rate" binding:"omitempty,gte=0,lte=9999.99"`
+	HourlyRate   *float64    `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
 	Location     string      `json:"location" binding:"omitempty,max=500"`
 	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
 }
@@ -84,7 +84,7 @@ type CreateTrainerProfileRequest struct {
 type UpdateTrainerProfileRequest struct {
 	Bio          string      `json:"bio" binding:"omitempty,max=1000"`
 	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
-	HourlyRate   float64     `json:"hourly_rate" binding:"omitempty,gte=0,lte=9999.99"`
+	HourlyRate   *float64    `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
 	Location     string      `json:"location" binding:"omitempty,max=500"`
 	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
 }
@@ -95,7 +95,7 @@ type TrainerProfileResponse struct {
 	UserID      uuid.UUID           `json:"user_id"`
 	Bio         string              `json:"bio"`
 	Specialties []SpecialtyResponse `json:"specialties"`
-	HourlyRate  float64             `json:"hourly_rate"`
+	HourlyRate  *float64            `json:"hourly_rate,omitempty"`
 	Location    string              `json:"location"`
 	Visibility  string              `json:"visibility"`
 	User        *UserResponse       `json:"user,omitempty"`
@@ -108,7 +108,7 @@ type TrainerPublicResponse struct {
 	UserID        uuid.UUID           `json:"user_id"`
 	Bio           string              `json:"bio"`
 	Specialties   []SpecialtyResponse `json:"specialties"`
-	HourlyRate    float64             `json:"hourly_rate"`
+	HourlyRate    *float64            `json:"hourly_rate,omitempty"`
 	Location      string              `json:"location"`
 	Visibility    string              `json:"visibility"`
 	User          *UserPublicResponse `json:"user"`
@@ -239,8 +239,8 @@ func (tp *TrainerProfile) Validate() error {
 	if len(tp.Specialties) > 20 {
 		return fmt.Errorf("specialties must have at most 20 items")
 	}
-	// HourlyRate: allow 0-9999.99
-	if tp.HourlyRate < 0 || tp.HourlyRate > 9999.99 {
+	// HourlyRate: allow nil or 0-9999.99
+	if tp.HourlyRate != nil && (*tp.HourlyRate < 0 || *tp.HourlyRate > 9999.99) {
 		return fmt.Errorf("hourly rate must be between 0 and 9999.99")
 	}
 	// Location: allow empty or 1-500 characters

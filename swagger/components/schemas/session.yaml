@@ -1,0 +1,332 @@
+# Session Schemas (Workout Logging)
+
+WorkoutSessionResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    user_id:
+      type: string
+      format: uuid
+    workout_id:
+      type: string
+      format: uuid
+    workout:
+      $ref: './workout.yaml#/WorkoutResponse'
+    status:
+      type: string
+      enum: [in_progress, completed, cancelled]
+    started_at:
+      type: string
+      format: date-time
+    ended_at:
+      type: string
+      format: date-time
+    duration_mins:
+      type: integer
+    overall_rpe:
+      type: number
+      format: float
+    notes:
+      type: string
+    blocks:
+      type: array
+      items:
+        $ref: '#/SessionBlockResponse'
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CreateWorkoutSessionRequest:
+  type: object
+  required:
+    - workout_id
+  properties:
+    workout_id:
+      type: string
+      format: uuid
+    notes:
+      type: string
+      maxLength: 1000
+
+UpdateWorkoutSessionRequest:
+  type: object
+  properties:
+    overall_rpe:
+      type: number
+      format: float
+      minimum: 1
+      maximum: 10
+    notes:
+      type: string
+      maxLength: 1000
+
+SessionBlockResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    workout_session_id:
+      type: string
+      format: uuid
+    prescription_group_id:
+      type: string
+      format: uuid
+    group_type:
+      type: string
+      enum: [standard, superset, circuit, drop_set, giant_set]
+    order:
+      type: integer
+    status:
+      type: string
+      enum: [pending, in_progress, completed, skipped]
+    block_rpe:
+      type: number
+      format: float
+    exercises:
+      type: array
+      items:
+        $ref: '#/SessionExerciseResponse'
+    created_at:
+      type: string
+      format: date-time
+
+UpdateSessionBlockRPERequest:
+  type: object
+  required:
+    - rpe
+  properties:
+    rpe:
+      type: number
+      format: float
+      minimum: 1
+      maximum: 10
+
+SessionExerciseResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    session_block_id:
+      type: string
+      format: uuid
+    exercise_id:
+      type: string
+      format: uuid
+    exercise:
+      $ref: './exercise.yaml#/ExerciseResponse'
+    prescription_id:
+      type: string
+      format: uuid
+    order:
+      type: integer
+    status:
+      type: string
+      enum: [pending, in_progress, completed, skipped]
+    notes:
+      type: string
+    sets:
+      type: array
+      items:
+        $ref: '#/SessionSetResponse'
+    created_at:
+      type: string
+      format: date-time
+
+UpdateSessionExerciseNotesRequest:
+  type: object
+  properties:
+    notes:
+      type: string
+      maxLength: 1000
+
+SessionSetResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    session_exercise_id:
+      type: string
+      format: uuid
+    set_number:
+      type: integer
+    reps_completed:
+      type: integer
+    weight_kg:
+      type: number
+      format: float
+    weight_unit:
+      type: string
+      enum: [kg, lb]
+    duration_seconds:
+      type: integer
+    is_timed:
+      type: boolean
+    rpe:
+      type: number
+      format: float
+    status:
+      type: string
+      enum: [pending, completed, skipped]
+    is_warmup:
+      type: boolean
+    is_dropset:
+      type: boolean
+    notes:
+      type: string
+    completed_at:
+      type: string
+      format: date-time
+    created_at:
+      type: string
+      format: date-time
+
+AddSetRequest:
+  type: object
+  properties:
+    reps_completed:
+      type: integer
+      minimum: 0
+    weight:
+      $ref: './common.yaml#/WeightInput'
+    duration_seconds:
+      type: integer
+      minimum: 0
+    is_timed:
+      type: boolean
+      default: false
+    rpe:
+      type: number
+      format: float
+      minimum: 1
+      maximum: 10
+    is_warmup:
+      type: boolean
+      default: false
+    is_dropset:
+      type: boolean
+      default: false
+    notes:
+      type: string
+      maxLength: 500
+
+UpdateSessionSetRequest:
+  type: object
+  properties:
+    reps_completed:
+      type: integer
+      minimum: 0
+    weight:
+      $ref: './common.yaml#/WeightInput'
+    duration_seconds:
+      type: integer
+      minimum: 0
+    rpe:
+      type: number
+      format: float
+      minimum: 1
+      maximum: 10
+    is_warmup:
+      type: boolean
+    is_dropset:
+      type: boolean
+    notes:
+      type: string
+      maxLength: 500
+
+RPEScaleResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    description:
+      type: string
+    is_global:
+      type: boolean
+    user_id:
+      type: string
+      format: uuid
+    values:
+      type: array
+      items:
+        $ref: '#/RPEScaleValueResponse'
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+RPEScaleValueResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    rpe_scale_id:
+      type: string
+      format: uuid
+    value:
+      type: number
+      format: float
+    label:
+      type: string
+    description:
+      type: string
+
+CreateRPEScaleRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 500
+    values:
+      type: array
+      items:
+        $ref: '#/RPEScaleValueInput'
+
+RPEScaleValueInput:
+  type: object
+  required:
+    - value
+    - label
+  properties:
+    value:
+      type: number
+      format: float
+      minimum: 1
+      maximum: 10
+    label:
+      type: string
+      minLength: 1
+      maxLength: 50
+    description:
+      type: string
+      maxLength: 200
+
+UpdateRPEScaleRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 500

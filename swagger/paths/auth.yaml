@@ -1,0 +1,160 @@
+# Auth Endpoints
+
+/auth/register:
+  post:
+    tags:
+      - Authentication
+    summary: Register a new user
+    description: Create a new user account with email and password
+    operationId: register
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/auth.yaml#/RegisterRequest'
+    responses:
+      '201':
+        description: User registered successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/auth.yaml#/AuthResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '409':
+        description: Email already exists
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/ErrorResponse'
+
+/auth/login:
+  post:
+    tags:
+      - Authentication
+    summary: Login user
+    description: Authenticate user with email and password
+    operationId: login
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/auth.yaml#/LoginRequest'
+    responses:
+      '200':
+        description: Login successful
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/auth.yaml#/AuthResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/auth/profile:
+  get:
+    tags:
+      - Authentication
+    summary: Get current user profile
+    description: Get the authenticated user's profile information
+    operationId: getProfile
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Profile retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/user.yaml#/UserResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/auth/google:
+  get:
+    tags:
+      - Authentication
+    summary: Initiate Google OAuth login
+    description: Redirect to Google OAuth consent screen
+    operationId: googleLogin
+    responses:
+      '302':
+        description: Redirect to Google OAuth
+
+/auth/google/callback:
+  get:
+    tags:
+      - Authentication
+    summary: Google OAuth callback
+    description: Handle callback from Google OAuth
+    operationId: googleCallback
+    parameters:
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: state
+        in: query
+        schema:
+          type: string
+    responses:
+      '200':
+        description: OAuth successful
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/auth.yaml#/AuthResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+
+/auth/apple:
+  post:
+    tags:
+      - Authentication
+    summary: Apple Sign-In
+    description: Authenticate using Apple Sign-In
+    operationId: appleLogin
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/auth.yaml#/AppleAuthRequest'
+    responses:
+      '200':
+        description: Authentication successful
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/auth.yaml#/AuthResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'

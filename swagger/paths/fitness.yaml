@@ -1,0 +1,290 @@
+# Fitness Endpoints (Fitness Levels and Goals)
+
+/fitness-levels:
+  get:
+    tags:
+      - Fitness
+    summary: List all fitness levels
+    description: Get a list of all fitness levels
+    operationId: getAllFitnessLevels
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of fitness levels
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/fitness.yaml#/FitnessLevelResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - Fitness
+    summary: Create fitness level
+    description: Create a new fitness level
+    operationId: createFitnessLevel
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/fitness.yaml#/CreateFitnessLevelRequest'
+    responses:
+      '201':
+        description: Fitness level created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/fitness.yaml#/FitnessLevelResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/fitness-levels/{id}:
+  get:
+    tags:
+      - Fitness
+    summary: Get fitness level
+    description: Get a specific fitness level by ID
+    operationId: getFitnessLevel
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Fitness level details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/fitness.yaml#/FitnessLevelResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  put:
+    tags:
+      - Fitness
+    summary: Update fitness level
+    description: Update an existing fitness level
+    operationId: updateFitnessLevel
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/fitness.yaml#/UpdateFitnessLevelRequest'
+    responses:
+      '200':
+        description: Fitness level updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/fitness.yaml#/FitnessLevelResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Fitness
+    summary: Delete fitness level
+    description: Delete a fitness level
+    operationId: deleteFitnessLevel
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Fitness level deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/fitness-goals:
+  get:
+    tags:
+      - Fitness
+    summary: List all fitness goals
+    description: Get a list of all fitness goals
+    operationId: getAllFitnessGoals
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+    responses:
+      '200':
+        description: List of fitness goals
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/fitness.yaml#/FitnessGoalResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - Fitness
+    summary: Create fitness goal
+    description: Create a new fitness goal
+    operationId: createFitnessGoal
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/fitness.yaml#/CreateFitnessGoalRequest'
+    responses:
+      '201':
+        description: Fitness goal created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/fitness.yaml#/FitnessGoalResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/fitness-goals/{id}:
+  get:
+    tags:
+      - Fitness
+    summary: Get fitness goal
+    description: Get a specific fitness goal by ID
+    operationId: getFitnessGoal
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Fitness goal details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/fitness.yaml#/FitnessGoalResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  put:
+    tags:
+      - Fitness
+    summary: Update fitness goal
+    description: Update an existing fitness goal
+    operationId: updateFitnessGoal
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/fitness.yaml#/UpdateFitnessGoalRequest'
+    responses:
+      '200':
+        description: Fitness goal updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/fitness.yaml#/FitnessGoalResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Fitness
+    summary: Delete fitness goal
+    description: Delete a fitness goal
+    operationId: deleteFitnessGoal
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Fitness goal deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'

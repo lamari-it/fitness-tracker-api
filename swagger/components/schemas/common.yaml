@@ -1,0 +1,124 @@
+# Common Schemas
+
+UUID:
+  type: string
+  format: uuid
+  example: "123e4567-e89b-12d3-a456-426614174000"
+
+Timestamp:
+  type: string
+  format: date-time
+  example: "2024-01-15T10:30:00Z"
+
+Date:
+  type: string
+  format: date
+  example: "2024-01-15"
+
+WeightInput:
+  type: object
+  required:
+    - weight_value
+    - weight_unit
+  properties:
+    weight_value:
+      type: number
+      format: float
+      example: 80.5
+      description: Weight value
+    weight_unit:
+      type: string
+      enum: [kg, lb]
+      example: "kg"
+      description: Weight unit (kg or lb)
+
+WeightOutput:
+  type: object
+  properties:
+    weight_value:
+      type: number
+      format: float
+      example: 80.5
+    weight_unit:
+      type: string
+      enum: [kg, lb]
+      example: "kg"
+
+PaginationMeta:
+  type: object
+  properties:
+    page:
+      type: integer
+      example: 1
+    limit:
+      type: integer
+      example: 20
+    total:
+      type: integer
+      example: 100
+    total_pages:
+      type: integer
+      example: 5
+
+SuccessResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      example: true
+    message:
+      type: string
+      example: "Operation completed successfully"
+    data:
+      type: object
+
+PaginatedResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      example: true
+    message:
+      type: string
+    data:
+      type: array
+      items: {}
+    meta:
+      $ref: '#/PaginationMeta'
+
+ErrorResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      example: false
+    message:
+      type: string
+      example: "An error occurred"
+    errors:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+
+ValidationErrorResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      example: false
+    message:
+      type: string
+      example: "Validation failed"
+    errors:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      example:
+        email:
+          - "Email is required"
+        password:
+          - "Password must be at least 8 characters"
