@@ -13,7 +13,7 @@ import (
 type TrainerProfileData struct {
 	Bio          string      `json:"bio" binding:"omitempty,max=1000"`
 	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
-	HourlyRate   float64     `json:"hourly_rate" binding:"omitempty,gte=0,lte=9999.99"`
+	HourlyRate   *float64    `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
 	Location     string      `json:"location" binding:"omitempty,max=500"`
 	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
 }

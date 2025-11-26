@@ -144,7 +144,7 @@ func UpdateTrainerProfile(c *gin.Context) {
 			return
 		}
 	}
-	if req.HourlyRate > 0 {
+	if req.HourlyRate != nil {
 		trainerProfile.HourlyRate = req.HourlyRate
 	}
 	if req.Location != "" {
