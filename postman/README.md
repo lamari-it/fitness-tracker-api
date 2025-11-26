@@ -1,11 +1,11 @@
-# FitFlow API Postman Workspace
+# LamariFit API Postman Workspace
 
-This directory contains a complete Postman workspace for testing the FitFlow API, including collection and environment files.
+This directory contains a complete Postman workspace for testing the LamariFit API, including collection and environment files.
 
 ## Files
 
-- `FitFlow-API.postman_collection.json` - Complete API collection with all endpoints
-- `FitFlow-API.postman_environment.json` - Environment variables and configuration
+- `LamariFit-API.postman_collection.json` - Complete API collection with all endpoints
+- `LamariFit-API.postman_environment.json` - Environment variables and configuration
 - `README.md` - This documentation file
 
 ## Setup Instructions
@@ -15,13 +15,13 @@ This directory contains a complete Postman workspace for testing the FitFlow API
 1. Open Postman
 2. Click "Import" in the top left
 3. Import both files:
-   - `FitFlow-API.postman_collection.json`
-   - `FitFlow-API.postman_environment.json`
+   - `LamariFit-API.postman_collection.json`
+   - `LamariFit-API.postman_environment.json`
 
 ### 2. Select Environment
 
 1. In Postman, click the environment dropdown (top right)
-2. Select "FitFlow API Environment"
+2. Select "LamariFit API Environment"
 
 ### 3. Configure Environment Variables
 
@@ -129,7 +129,7 @@ The collection includes JavaScript test scripts that automatically:
 
 ### 3. Missing Environment Variables
 - Error: Variables not found
-- Solution: Select "FitFlow API Environment" in Postman
+- Solution: Select "LamariFit API Environment" in Postman
 
 ### 4. Token Expired
 - Error: 401 Unauthorized

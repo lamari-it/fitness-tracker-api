@@ -145,8 +145,8 @@ Returns list of all available specialties sorted alphabetically.
 
 ### For Fresh Development Environment:
 1. Run `make build` to rebuild the application
-2. Run `./bin/fitflow-api db migrate:fresh` to drop and recreate tables
-3. Run `./bin/fitflow-api db seed` to seed data including specialties
+2. Run `./bin/lamarifit-api db migrate:fresh` to drop and recreate tables
+3. Run `./bin/lamarifit-api db seed` to seed data including specialties
 
 ### For Production/Existing Data:
 1. Run migrations in order:

@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fit-flow-api/config"
+	"lamari-fit-api/config"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"

@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"fit-flow-api/controllers"
-	"fit-flow-api/middleware"
+	"lamari-fit-api/controllers"
+	"lamari-fit-api/middleware"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

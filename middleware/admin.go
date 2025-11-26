@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"fit-flow-api/database"
-	"fit-flow-api/models"
+	"lamari-fit-api/database"
+	"lamari-fit-api/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

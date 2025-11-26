@@ -11,7 +11,7 @@ DB_HOST ?= localhost
 DB_PORT ?= 5432
 DB_USER ?= postgres
 DB_PASSWORD ?= password
-DB_NAME ?= fitflow
+DB_NAME ?= lamarifit
 DB_SSL_MODE ?= disable
 
 .PHONY: build run test clean deps help migrate-up migrate-down migrate-create migrate-force migrate-version migrate-drop
@@ -22,10 +22,10 @@ help: ## Show available commands
 
 # Build commands
 build: ## Build the application
-	go build -o bin/fitflow-api main.go
+	go build -o bin/lamarifit-api main.go
 
 build-prod: ## Build for production
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bin/fitflow-api main.go
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bin/lamarifit-api main.go
 
 # Run commands
 run: ## Run the application
@@ -98,10 +98,10 @@ dev-fresh: ## Fresh database setup (migrate up from clean state)
 
 # Legacy database commands (kept for compatibility)
 createdb: ## Create database
-	createdb fitflow
+	createdb lamarifit
 
 dropdb: ## Drop database
-	dropdb fitflow
+	dropdb lamarifit
 
 # Tool installation and checks
 install-migrate: ## Install golang-migrate tool

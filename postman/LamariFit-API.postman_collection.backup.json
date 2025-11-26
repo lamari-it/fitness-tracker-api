@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "FitFlow API",
-    "description": "Complete API collection for FitFlow - A comprehensive fitness tracking API with authentication, workout planning, exercise management, and social features",
+    "name": "LamariFit API",
+    "description": "Complete API collection for LamariFit - A comprehensive fitness tracking API with authentication, workout planning, exercise management, and social features",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "version": "2.0.0"
   },

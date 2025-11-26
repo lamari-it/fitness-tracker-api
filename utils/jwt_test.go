@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fit-flow-api/config"
+	"lamari-fit-api/config"
 	"testing"
 
 	"github.com/google/uuid"

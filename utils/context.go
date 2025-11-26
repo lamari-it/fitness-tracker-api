@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"fit-flow-api/models"
 	"fmt"
+	"lamari-fit-api/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

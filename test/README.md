@@ -1,13 +1,13 @@
-# FitFlow API Tests
+# LamariFit API Tests
 
-This directory contains the test suite for the FitFlow API using the [httpexpect](https://github.com/gavv/httpexpect) library.
+This directory contains the test suite for the LamariFit API using the [httpexpect](https://github.com/gavv/httpexpect) library.
 
 ## Setup
 
 ### Prerequisites
 
 1. PostgreSQL database running (default on port 5467 for tests)
-2. Test database created (fitflow_test)
+2. Test database created (lamarifit_test)
 3. Environment configuration
 
 ### Configuration
@@ -21,9 +21,9 @@ cp .env.test.example .env.test
 Default test database configuration:
 - Host: localhost
 - Port: 5467
-- Database: fitflow_test
-- User: fitflow_user
-- Password: fitflow_password
+- Database: lamarifit_test
+- User: lamarifit_user
+- Password: lamarifit_password
 
 ## Running Tests
 

@@ -21,7 +21,7 @@ All API responses must follow the standard format:
 
 Add this import to your controller:
 ```go
-import "fit-flow-api/utils"
+import "lamari-fit-api/utils"
 ```
 
 ### 2. Replace Direct JSON Responses
@@ -190,7 +190,7 @@ func Register(c *gin.Context) {
 
 Use this checklist when migrating each controller:
 
-- [ ] Import `fit-flow-api/utils` package
+- [ ] Import `lamari-fit-api/utils` package
 - [ ] Replace all `c.JSON()` calls with appropriate utils functions
 - [ ] Update validation error handling to use `HandleBindingError`
 - [ ] Convert custom validations to use `ValidationErrors` type

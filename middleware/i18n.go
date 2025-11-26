@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"fit-flow-api/utils"
+	"lamari-fit-api/utils"
 
 	"github.com/gin-gonic/gin"
 )

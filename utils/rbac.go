@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fit-flow-api/models"
+	"lamari-fit-api/models"
 
 	"gorm.io/gorm"
 )

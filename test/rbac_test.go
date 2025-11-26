@@ -1,9 +1,9 @@
 package test
 
 import (
-	"fit-flow-api/database"
-	"fit-flow-api/models"
-	"fit-flow-api/utils"
+	"lamari-fit-api/database"
+	"lamari-fit-api/models"
+	"lamari-fit-api/utils"
 	"testing"
 )
 

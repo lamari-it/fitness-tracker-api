@@ -1,7 +1,7 @@
-# FitFlow API Documentation
+# LamariFit API Documentation
 
 ## Overview
-This document provides comprehensive documentation for the FitFlow API, including all endpoints, request/response formats, and database schema.
+This document provides comprehensive documentation for the LamariFit API, including all endpoints, request/response formats, and database schema.
 
 ## Base URL
 ```

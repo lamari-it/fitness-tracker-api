@@ -1,7 +1,7 @@
 package test
 
 import (
-	"fit-flow-api/models"
+	"lamari-fit-api/models"
 	"testing"
 	"time"
 
