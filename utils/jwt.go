@@ -17,7 +17,7 @@ type JWTClaim struct {
 func GenerateJWT(userID uuid.UUID, email string) (string, error) {
 	expirationTime, err := time.ParseDuration(config.AppConfig.JWTExpires)
 	if err != nil {
-		expirationTime = 24 * time.Hour
+		expirationTime = time.Hour // Default to 1 hour
 	}
 
 	claims := &JWTClaim{

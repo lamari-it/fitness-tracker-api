@@ -3,7 +3,7 @@ package controllers
 // PaginationQuery represents common pagination parameters with validation
 type PaginationQuery struct {
 	Page  int `form:"page" validate:"min=1" binding:"omitempty,min=1"`
-	Limit int `form:"limit" validate:"min=1,max=100" binding:"omitempty,min=1,max=50"`
+	Limit int `form:"limit" validate:"min=1,max=100" binding:"omitempty,min=1,max=100"`
 }
 
 // ExerciseQuery represents query parameters for exercise endpoints
@@ -14,6 +14,16 @@ type ExerciseQuery struct {
 	Equipment     string `form:"equipment" validate:"omitempty,max=50" binding:"omitempty,max=50"`
 	Bodyweight    string `form:"bodyweight" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
 	PrimaryOnly   string `form:"primary_only" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
+	IsFavorited   string `form:"is_favorited" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
+}
+
+// WorkoutQuery represents query parameters for workout endpoints
+type WorkoutQuery struct {
+	PaginationQuery
+	Search        string `form:"search" validate:"omitempty,max=100" binding:"omitempty,max=100"`
+	MuscleGroupID string `form:"muscle_group_id" validate:"omitempty,uuid" binding:"omitempty,uuid"`
+	ExerciseID    string `form:"exercise_id" validate:"omitempty,uuid" binding:"omitempty,uuid"`
+	IsFavorited   string `form:"is_favorited" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
 }
 
 // EquipmentQuery represents query parameters for equipment endpoints
@@ -84,8 +94,8 @@ func SetDefaultPagination(query *PaginationQuery) {
 	if query.Limit == 0 {
 		query.Limit = 10
 	}
-	if query.Limit > 50 {
-		query.Limit = 50
+	if query.Limit > 100 {
+		query.Limit = 100
 	}
 }
 

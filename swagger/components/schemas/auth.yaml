@@ -83,6 +83,26 @@ LoginRequest:
       minLength: 1
       maxLength: 128
       example: "SecurePass123!"
+    device_info:
+      type: string
+      maxLength: 255
+      description: Optional device identifier for session management
+      example: "iPhone 15 Pro"
+
+RefreshTokenRequest:
+  type: object
+  required:
+    - refresh_token
+  properties:
+    refresh_token:
+      type: string
+      description: The refresh token to exchange for a new token pair
+      example: "dGVzdF9yZWZyZXNoX3Rva2VuXzEyMzQ1Njc4OTA..."
+    device_info:
+      type: string
+      maxLength: 255
+      description: Optional device identifier for session management
+      example: "iPhone 15 Pro"
 
 AuthResponse:
   type: object
@@ -98,11 +118,60 @@ AuthResponse:
       properties:
         user:
           $ref: './user.yaml#/UserResponse'
+        access_token:
+          type: string
+          description: JWT access token for API authentication (15 minute expiry)
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refresh_token:
+          type: string
+          description: Refresh token to obtain new access tokens (7 day expiry)
+          example: "dGVzdF9yZWZyZXNoX3Rva2VuXzEyMzQ1Njc4OTA..."
+        expires_in:
+          type: integer
+          description: Access token expiry time in seconds
+          example: 3600
+        token_type:
+          type: string
+          description: Token type for Authorization header
+          example: "Bearer"
         token:
           type: string
+          description: "Deprecated: Use access_token instead. Kept for backward compatibility."
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          deprecated: true
         trainer_profile:
           $ref: './trainer.yaml#/TrainerProfileResponse'
+
+SessionResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Session ID
+    device_info:
+      type: string
+      description: Device identifier provided during login
+      example: "iPhone 15 Pro"
+    ip_address:
+      type: string
+      description: IP address used during login
+      example: "192.168.1.1"
+    user_agent:
+      type: string
+      description: User agent string from the login request
+      example: "Mozilla/5.0..."
+    last_used_at:
+      type: string
+      format: date-time
+      description: When the session was last used for token refresh
+    created_at:
+      type: string
+      format: date-time
+      description: When the session was created
+    is_current:
+      type: boolean
+      description: Whether this is the current session (requires X-Refresh-Token header)
 
 AppleAuthRequest:
   type: object

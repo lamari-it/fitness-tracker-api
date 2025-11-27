@@ -5,6 +5,7 @@ import (
 	"lamari-fit-api/models"
 	"lamari-fit-api/utils"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,13 +29,23 @@ type RegisterRequest struct {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email,max=255"`
-	Password string `json:"password" binding:"required,min=1,max=128"`
+	Email      string `json:"email" binding:"required,email,max=255"`
+	Password   string `json:"password" binding:"required,min=1,max=128"`
+	DeviceInfo string `json:"device_info" binding:"omitempty,max=255"`
+}
+
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+	DeviceInfo   string `json:"device_info" binding:"omitempty,max=255"`
 }
 
 type AuthResponse struct {
 	User           models.UserResponse            `json:"user"`
-	Token          string                         `json:"token"`
+	AccessToken    string                         `json:"access_token"`
+	RefreshToken   string                         `json:"refresh_token"`
+	ExpiresIn      int64                          `json:"expires_in"`
+	TokenType      string                         `json:"token_type"`
+	Token          string                         `json:"token"` // Deprecated: use access_token
 	TrainerProfile *models.TrainerProfileResponse `json:"trainer_profile,omitempty"`
 }
 
@@ -192,15 +203,39 @@ func Register(c *gin.Context) {
 		}
 	}
 
-	token, err := utils.GenerateJWT(user.ID, user.Email)
+	accessToken, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to generate authentication token.")
 		return
 	}
 
+	// Generate refresh token
+	refreshToken, tokenHash, err := utils.GenerateRefreshToken()
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to generate refresh token.")
+		return
+	}
+
+	// Store refresh token in database
+	refreshTokenRecord := models.RefreshToken{
+		UserID:    user.ID,
+		TokenHash: tokenHash,
+		IPAddress: c.ClientIP(),
+		UserAgent: c.GetHeader("User-Agent"),
+		ExpiresAt: utils.GetRefreshTokenExpiration(),
+	}
+	if err := database.DB.Create(&refreshTokenRecord).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to create session.")
+		return
+	}
+
 	response := AuthResponse{
-		User:  user.ToResponse(),
-		Token: token,
+		User:         user.ToResponse(),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    utils.GetAccessTokenExpiresIn(),
+		TokenType:    "Bearer",
+		Token:        accessToken, // Deprecated: backward compatibility
 	}
 
 	if trainerProfile != nil {
@@ -234,18 +269,251 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := utils.GenerateJWT(user.ID, user.Email)
+	accessToken, err := utils.GenerateJWT(user.ID, user.Email)
 	if err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to generate authentication token.")
 		return
 	}
 
+	// Generate refresh token
+	refreshToken, tokenHash, err := utils.GenerateRefreshToken()
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to generate refresh token.")
+		return
+	}
+
+	// Store refresh token in database
+	refreshTokenRecord := models.RefreshToken{
+		UserID:     user.ID,
+		TokenHash:  tokenHash,
+		DeviceInfo: req.DeviceInfo,
+		IPAddress:  c.ClientIP(),
+		UserAgent:  c.GetHeader("User-Agent"),
+		ExpiresAt:  utils.GetRefreshTokenExpiration(),
+	}
+	if err := database.DB.Create(&refreshTokenRecord).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to create session.")
+		return
+	}
+
 	response := AuthResponse{
-		User:  user.ToResponse(),
-		Token: token,
+		User:         user.ToResponse(),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    utils.GetAccessTokenExpiresIn(),
+		TokenType:    "Bearer",
+		Token:        accessToken, // Deprecated: backward compatibility
 	}
 
 	utils.SuccessResponse(c, "Login successful.", response)
+}
+
+// RefreshToken exchanges a refresh token for a new access/refresh token pair
+func RefreshToken(c *gin.Context) {
+	var req RefreshTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	// Hash the provided token to look it up
+	tokenHash := utils.HashRefreshToken(req.RefreshToken)
+
+	// Find the refresh token
+	var refreshTokenRecord models.RefreshToken
+	if err := database.DB.Where("token_hash = ?", tokenHash).First(&refreshTokenRecord).Error; err != nil {
+		utils.UnauthorizedResponse(c, "Invalid refresh token.")
+		return
+	}
+
+	// Check if token was revoked (potential token theft - revoke all user tokens)
+	if refreshTokenRecord.IsRevoked() {
+		// Security: revoke ALL tokens for this user (reuse detection)
+		database.DB.Model(&models.RefreshToken{}).
+			Where("user_id = ? AND revoked_at IS NULL", refreshTokenRecord.UserID).
+			Update("revoked_at", time.Now())
+		utils.UnauthorizedResponse(c, "Refresh token has been revoked. Please login again.")
+		return
+	}
+
+	// Check if token is expired
+	if refreshTokenRecord.IsExpired() {
+		utils.UnauthorizedResponse(c, "Refresh token has expired. Please login again.")
+		return
+	}
+
+	// Get the user
+	var user models.User
+	if err := database.DB.Preload("Roles").First(&user, "id = ?", refreshTokenRecord.UserID).Error; err != nil {
+		utils.UnauthorizedResponse(c, "User not found.")
+		return
+	}
+
+	if !user.IsActive {
+		utils.ForbiddenResponse(c, "Your account has been deactivated.")
+		return
+	}
+
+	// Generate new access token
+	accessToken, err := utils.GenerateJWT(user.ID, user.Email)
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to generate access token.")
+		return
+	}
+
+	// Generate new refresh token (rotation)
+	newRefreshToken, newTokenHash, err := utils.GenerateRefreshToken()
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to generate refresh token.")
+		return
+	}
+
+	// Revoke old refresh token and create new one
+	tx := database.DB.Begin()
+
+	// Revoke the old token
+	refreshTokenRecord.Revoke()
+	if err := tx.Save(&refreshTokenRecord).Error; err != nil {
+		tx.Rollback()
+		utils.InternalServerErrorResponse(c, "Failed to rotate refresh token.")
+		return
+	}
+
+	// Create new refresh token record
+	deviceInfo := req.DeviceInfo
+	if deviceInfo == "" {
+		deviceInfo = refreshTokenRecord.DeviceInfo // Keep existing device info
+	}
+
+	newRefreshTokenRecord := models.RefreshToken{
+		UserID:     user.ID,
+		TokenHash:  newTokenHash,
+		DeviceInfo: deviceInfo,
+		IPAddress:  c.ClientIP(),
+		UserAgent:  c.GetHeader("User-Agent"),
+		ExpiresAt:  utils.GetRefreshTokenExpiration(),
+	}
+	if err := tx.Create(&newRefreshTokenRecord).Error; err != nil {
+		tx.Rollback()
+		utils.InternalServerErrorResponse(c, "Failed to create new session.")
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to complete token refresh.")
+		return
+	}
+
+	response := AuthResponse{
+		User:         user.ToResponse(),
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+		ExpiresIn:    utils.GetAccessTokenExpiresIn(),
+		TokenType:    "Bearer",
+		Token:        accessToken, // Deprecated: backward compatibility
+	}
+
+	utils.SuccessResponse(c, "Token refreshed successfully.", response)
+}
+
+// Logout revokes the current session's refresh token
+func Logout(c *gin.Context) {
+	var req RefreshTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.HandleBindingError(c, err)
+		return
+	}
+
+	// Hash the provided token
+	tokenHash := utils.HashRefreshToken(req.RefreshToken)
+
+	// Find and revoke the refresh token
+	result := database.DB.Model(&models.RefreshToken{}).
+		Where("token_hash = ? AND revoked_at IS NULL", tokenHash).
+		Update("revoked_at", time.Now())
+
+	if result.RowsAffected == 0 {
+		utils.NotFoundResponse(c, "Session not found or already revoked.")
+		return
+	}
+
+	utils.SuccessResponse(c, "Logged out successfully.", nil)
+}
+
+// LogoutAll revokes all refresh tokens for the current user
+func LogoutAll(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	// Revoke all refresh tokens for this user
+	result := database.DB.Model(&models.RefreshToken{}).
+		Where("user_id = ? AND revoked_at IS NULL", userID.(uuid.UUID)).
+		Update("revoked_at", time.Now())
+
+	utils.SuccessResponse(c, "Logged out from all devices successfully.", map[string]int64{
+		"sessions_revoked": result.RowsAffected,
+	})
+}
+
+// GetSessions returns all active sessions for the current user
+func GetSessions(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	// Get current token hash from header (if available) to mark current session
+	currentTokenHash := ""
+	if authHeader := c.GetHeader("X-Refresh-Token"); authHeader != "" {
+		currentTokenHash = utils.HashRefreshToken(authHeader)
+	}
+
+	var refreshTokens []models.RefreshToken
+	if err := database.DB.Where("user_id = ? AND revoked_at IS NULL AND expires_at > ?",
+		userID.(uuid.UUID), time.Now()).
+		Order("created_at DESC").
+		Find(&refreshTokens).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to fetch sessions.")
+		return
+	}
+
+	sessions := make([]models.SessionResponse, len(refreshTokens))
+	for i, rt := range refreshTokens {
+		sessions[i] = rt.ToSessionResponse(currentTokenHash)
+	}
+
+	utils.SuccessResponse(c, "Sessions fetched successfully.", sessions)
+}
+
+// RevokeSession revokes a specific session by its ID
+func RevokeSession(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.UnauthorizedResponse(c, "User not authenticated.")
+		return
+	}
+
+	sessionID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.BadRequestResponse(c, "Invalid session ID.", nil)
+		return
+	}
+
+	// Find and revoke the session (only if it belongs to the current user)
+	result := database.DB.Model(&models.RefreshToken{}).
+		Where("id = ? AND user_id = ? AND revoked_at IS NULL", sessionID, userID.(uuid.UUID)).
+		Update("revoked_at", time.Now())
+
+	if result.RowsAffected == 0 {
+		utils.NotFoundResponse(c, "Session not found or already revoked.")
+		return
+	}
+
+	utils.SuccessResponse(c, "Session revoked successfully.", nil)
 }
 
 func GetProfile(c *gin.Context) {

@@ -63,6 +63,7 @@ func AutoMigrate() {
 	err := DB.AutoMigrate(
 		// Core user & auth (no dependencies)
 		&models.User{},
+		&models.RefreshToken{},
 		&models.Role{},
 		&models.Permission{},
 		&models.RolePermission{},
@@ -158,6 +159,7 @@ func DropAllData(db *gorm.DB) error {
 
 	// Delete in reverse order to respect foreign key constraints
 	tables := []interface{}{
+		&models.RefreshToken{},
 		&models.WorkoutCommentReaction{},
 		&models.WorkoutComment{},
 		&models.SharedWorkout{},
@@ -214,6 +216,8 @@ func DropAllData(db *gorm.DB) error {
 func DropAllTables(db *gorm.DB) error {
 	// Drop tables in reverse order to respect foreign key constraints
 	tables := []interface{}{
+		// Auth tokens (before User)
+		&models.RefreshToken{},
 		// Social
 		&models.WorkoutCommentReaction{},
 		&models.WorkoutComment{},

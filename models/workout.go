@@ -129,3 +129,73 @@ func (pe *PlanEnrollment) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	return
 }
+
+// ExerciseResponse is the response DTO for exercises including favorite status
+type ExerciseResponse struct {
+	ID            uuid.UUID              `json:"id"`
+	Slug          string                 `json:"slug"`
+	Name          string                 `json:"name"`
+	Description   string                 `json:"description"`
+	IsBodyweight  bool                   `json:"is_bodyweight"`
+	Instructions  string                 `json:"instructions"`
+	VideoURL      string                 `json:"video_url"`
+	MuscleGroups  []ExerciseMuscleGroup  `json:"muscle_groups,omitempty"`
+	Equipment     []ExerciseEquipment    `json:"equipment,omitempty"`
+	ExerciseTypes []ExerciseExerciseType `json:"exercise_types,omitempty"`
+	IsFavorited   bool                   `json:"is_favorited"`
+	CreatedAt     time.Time              `json:"created_at"`
+	UpdatedAt     time.Time              `json:"updated_at"`
+}
+
+// ToResponse converts Exercise to ExerciseResponse with favorite status
+func (e *Exercise) ToResponse(isFavorited bool) ExerciseResponse {
+	return ExerciseResponse{
+		ID:            e.ID,
+		Slug:          e.Slug,
+		Name:          e.Name,
+		Description:   e.Description,
+		IsBodyweight:  e.IsBodyweight,
+		Instructions:  e.Instructions,
+		VideoURL:      e.VideoURL,
+		MuscleGroups:  e.MuscleGroups,
+		Equipment:     e.Equipment,
+		ExerciseTypes: e.ExerciseTypes,
+		IsFavorited:   isFavorited,
+		CreatedAt:     e.CreatedAt,
+		UpdatedAt:     e.UpdatedAt,
+	}
+}
+
+// WorkoutResponse is the response DTO for workouts including favorite status
+type WorkoutResponse struct {
+	ID                uuid.UUID             `json:"id"`
+	UserID            uuid.UUID             `json:"user_id"`
+	Title             string                `json:"title"`
+	Description       string                `json:"description"`
+	DifficultyLevel   string                `json:"difficulty_level"`
+	EstimatedDuration *int                  `json:"estimated_duration"`
+	IsTemplate        bool                  `json:"is_template"`
+	Visibility        string                `json:"visibility"`
+	Prescriptions     []WorkoutPrescription `json:"prescriptions,omitempty"`
+	IsFavorited       bool                  `json:"is_favorited"`
+	CreatedAt         time.Time             `json:"created_at"`
+	UpdatedAt         time.Time             `json:"updated_at"`
+}
+
+// ToResponse converts Workout to WorkoutResponse with favorite status
+func (w *Workout) ToResponse(isFavorited bool) WorkoutResponse {
+	return WorkoutResponse{
+		ID:                w.ID,
+		UserID:            w.UserID,
+		Title:             w.Title,
+		Description:       w.Description,
+		DifficultyLevel:   w.DifficultyLevel,
+		EstimatedDuration: w.EstimatedDuration,
+		IsTemplate:        w.IsTemplate,
+		Visibility:        w.Visibility,
+		Prescriptions:     w.Prescriptions,
+		IsFavorited:       isFavorited,
+		CreatedAt:         w.CreatedAt,
+		UpdatedAt:         w.UpdatedAt,
+	}
+}

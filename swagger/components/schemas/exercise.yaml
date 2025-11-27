@@ -24,6 +24,9 @@ ExerciseResponse:
       type: boolean
     is_unilateral:
       type: boolean
+    is_favorited:
+      type: boolean
+      description: Whether the authenticated user has favorited this exercise
     video_url:
       type: string
     image_url:

@@ -28,8 +28,27 @@
           enum: [private, public, friends]
       - name: search
         in: query
+        description: Search workouts by title
         schema:
           type: string
+          maxLength: 100
+      - name: muscle_group_id
+        in: query
+        description: Filter workouts containing exercises that target this muscle group
+        schema:
+          type: string
+          format: uuid
+      - name: exercise_id
+        in: query
+        description: Filter workouts containing this specific exercise
+        schema:
+          type: string
+          format: uuid
+      - name: is_favorited
+        in: query
+        description: Filter to only show favorited workouts
+        schema:
+          type: boolean
     responses:
       '200':
         description: List of workouts

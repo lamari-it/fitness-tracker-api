@@ -116,9 +116,34 @@ func GoogleCallback(c *gin.Context) {
 		return
 	}
 
+	// Generate refresh token
+	refreshToken, tokenHash, err := utils.GenerateRefreshToken()
+	if err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to generate refresh token.")
+		return
+	}
+
+	// Store refresh token in database
+	refreshTokenRecord := models.RefreshToken{
+		UserID:     user.ID,
+		TokenHash:  tokenHash,
+		DeviceInfo: "Google OAuth",
+		IPAddress:  c.ClientIP(),
+		UserAgent:  c.GetHeader("User-Agent"),
+		ExpiresAt:  utils.GetRefreshTokenExpiration(),
+	}
+	if err := database.DB.Create(&refreshTokenRecord).Error; err != nil {
+		utils.InternalServerErrorResponse(c, "Failed to create session.")
+		return
+	}
+
 	response2 := AuthResponse{
-		User:  user.ToResponse(),
-		Token: jwtToken,
+		User:         user.ToResponse(),
+		AccessToken:  jwtToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    utils.GetAccessTokenExpiresIn(),
+		TokenType:    "Bearer",
+		Token:        jwtToken, // Deprecated: backward compatibility
 	}
 
 	utils.SuccessResponse(c, "Google login successful.", response2)

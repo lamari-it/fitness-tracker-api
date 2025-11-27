@@ -16,6 +16,7 @@ type Config struct {
 	DBSSLMode           string
 	JWTSecret           string
 	JWTExpires          string
+	RefreshTokenExpires string
 	GoogleClientID      string
 	GoogleClientSecret  string
 	GoogleRedirectURL   string
@@ -52,7 +53,8 @@ func LoadConfig() {
 		DBName:              getEnv("DB_NAME", "lamarifit"),
 		DBSSLMode:           getEnv("DB_SSLMODE", "disable"),
 		JWTSecret:           getEnv("JWT_SECRET", "your-secret-key"),
-		JWTExpires:          getEnv("JWT_EXPIRES_IN", "24h"),
+		JWTExpires:          getEnv("JWT_EXPIRES_IN", "15m"),
+		RefreshTokenExpires: getEnv("REFRESH_TOKEN_EXPIRES", "168h"),
 		GoogleClientID:      getEnv("GOOGLE_CLIENT_ID", ""),
 		GoogleClientSecret:  getEnv("GOOGLE_CLIENT_SECRET", ""),
 		GoogleRedirectURL:   getEnv("GOOGLE_REDIRECT_URL", ""),

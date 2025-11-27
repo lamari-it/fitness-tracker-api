@@ -558,6 +558,311 @@ func testLogin(t *testing.T, e *httpexpect.Expect) {
 	})
 }
 
+func TestRefreshTokenEndpoints(t *testing.T) {
+	e := SetupTestApp(t)
+	CleanDatabase(t)
+	SeedTestRoles(t)
+
+	t.Run("Refresh Token Flow", func(t *testing.T) {
+		testRefreshTokenFlow(t, e)
+	})
+}
+
+func testRefreshTokenFlow(t *testing.T, e *httpexpect.Expect) {
+	// First create and login a user
+	userData := map[string]interface{}{
+		"email":            "refreshtest@example.com",
+		"password":         "RefreshPassword123!",
+		"password_confirm": "RefreshPassword123!",
+		"first_name":       "Refresh",
+		"last_name":        "Test",
+	}
+
+	registerResponse := e.POST("/api/v1/auth/register").
+		WithJSON(userData).
+		Expect().
+		Status(201).
+		JSON().
+		Object()
+
+	// Check that we get both tokens
+	data := registerResponse.Value("data").Object()
+	data.Value("access_token").String().NotEmpty()
+	data.Value("refresh_token").String().NotEmpty()
+	data.Value("expires_in").Number().Gt(0)
+	data.Value("token_type").String().IsEqual("Bearer")
+	data.Value("token").String().NotEmpty() // Backward compatibility
+
+	refreshToken := data.Value("refresh_token").String().Raw()
+	_ = data.Value("access_token").String().Raw() // Used for verification only
+
+	t.Run("Login Returns Both Tokens", func(t *testing.T) {
+		loginData := map[string]interface{}{
+			"email":       "refreshtest@example.com",
+			"password":    "RefreshPassword123!",
+			"device_info": "Test Device",
+		}
+
+		loginResponse := e.POST("/api/v1/auth/login").
+			WithJSON(loginData).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		loginData2 := loginResponse.Value("data").Object()
+		loginData2.Value("access_token").String().NotEmpty()
+		loginData2.Value("refresh_token").String().NotEmpty()
+		loginData2.Value("expires_in").Number().Gt(0)
+		loginData2.Value("token_type").String().IsEqual("Bearer")
+	})
+
+	t.Run("Successful Token Refresh", func(t *testing.T) {
+		refreshData := map[string]interface{}{
+			"refresh_token": refreshToken,
+		}
+
+		response := e.POST("/api/v1/auth/refresh").
+			WithJSON(refreshData).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		response.Value("message").String().Contains("refresh")
+
+		// Check new tokens are returned
+		newData := response.Value("data").Object()
+		newData.Value("access_token").String().NotEmpty()
+		newData.Value("refresh_token").String().NotEmpty()
+		newData.Value("expires_in").Number().Gt(0)
+
+		// Old token should no longer work (rotation)
+		oldRefreshData := map[string]interface{}{
+			"refresh_token": refreshToken,
+		}
+
+		e.POST("/api/v1/auth/refresh").
+			WithJSON(oldRefreshData).
+			Expect().
+			Status(401)
+	})
+
+	t.Run("Invalid Refresh Token", func(t *testing.T) {
+		refreshData := map[string]interface{}{
+			"refresh_token": "invalid_token_here",
+		}
+
+		response := e.POST("/api/v1/auth/refresh").
+			WithJSON(refreshData).
+			Expect().
+			Status(401).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsFalse()
+	})
+
+	t.Run("Logout Single Session", func(t *testing.T) {
+		// Login to get a new refresh token
+		loginData := map[string]interface{}{
+			"email":    "refreshtest@example.com",
+			"password": "RefreshPassword123!",
+		}
+
+		loginResponse := e.POST("/api/v1/auth/login").
+			WithJSON(loginData).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		newRefreshToken := loginResponse.Value("data").Object().Value("refresh_token").String().Raw()
+
+		// Logout using the refresh token
+		logoutData := map[string]interface{}{
+			"refresh_token": newRefreshToken,
+		}
+
+		logoutResponse := e.POST("/api/v1/auth/logout").
+			WithJSON(logoutData).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		logoutResponse.Value("success").Boolean().IsTrue()
+
+		// Verify token no longer works
+		refreshData := map[string]interface{}{
+			"refresh_token": newRefreshToken,
+		}
+
+		e.POST("/api/v1/auth/refresh").
+			WithJSON(refreshData).
+			Expect().
+			Status(401)
+	})
+
+	t.Run("Logout All Sessions", func(t *testing.T) {
+		// Login multiple times to create multiple sessions
+		loginData := map[string]interface{}{
+			"email":       "refreshtest@example.com",
+			"password":    "RefreshPassword123!",
+			"device_info": "Device 1",
+		}
+
+		loginResponse1 := e.POST("/api/v1/auth/login").
+			WithJSON(loginData).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		accessToken1 := loginResponse1.Value("data").Object().Value("access_token").String().Raw()
+		refreshToken1 := loginResponse1.Value("data").Object().Value("refresh_token").String().Raw()
+
+		loginData["device_info"] = "Device 2"
+		loginResponse2 := e.POST("/api/v1/auth/login").
+			WithJSON(loginData).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		refreshToken2 := loginResponse2.Value("data").Object().Value("refresh_token").String().Raw()
+
+		// Logout all using the access token
+		logoutAllResponse := e.POST("/api/v1/auth/logout-all").
+			WithHeader("Authorization", "Bearer "+accessToken1).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		logoutAllResponse.Value("success").Boolean().IsTrue()
+		logoutAllResponse.Value("data").Object().Value("sessions_revoked").Number().Ge(2)
+
+		// Verify both refresh tokens no longer work
+		e.POST("/api/v1/auth/refresh").
+			WithJSON(map[string]interface{}{"refresh_token": refreshToken1}).
+			Expect().
+			Status(401)
+
+		e.POST("/api/v1/auth/refresh").
+			WithJSON(map[string]interface{}{"refresh_token": refreshToken2}).
+			Expect().
+			Status(401)
+	})
+
+	t.Run("Get Sessions", func(t *testing.T) {
+		// Login to create a session
+		loginData := map[string]interface{}{
+			"email":       "refreshtest@example.com",
+			"password":    "RefreshPassword123!",
+			"device_info": "Test Sessions Device",
+		}
+
+		loginResponse := e.POST("/api/v1/auth/login").
+			WithJSON(loginData).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		accessToken := loginResponse.Value("data").Object().Value("access_token").String().Raw()
+
+		// Get sessions
+		sessionsResponse := e.GET("/api/v1/auth/sessions").
+			WithHeader("Authorization", "Bearer "+accessToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		sessionsResponse.Value("success").Boolean().IsTrue()
+		sessionsResponse.Value("data").Array().NotEmpty()
+
+		// Check session structure
+		session := sessionsResponse.Value("data").Array().Value(0).Object()
+		session.Value("id").String().NotEmpty()
+		session.Value("device_info").String().NotEmpty()
+		session.Value("created_at").String().NotEmpty()
+	})
+
+	t.Run("Revoke Specific Session", func(t *testing.T) {
+		// Login twice
+		loginData := map[string]interface{}{
+			"email":       "refreshtest@example.com",
+			"password":    "RefreshPassword123!",
+			"device_info": "Main Device",
+		}
+
+		loginResponse1 := e.POST("/api/v1/auth/login").
+			WithJSON(loginData).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		accessToken := loginResponse1.Value("data").Object().Value("access_token").String().Raw()
+
+		loginData["device_info"] = "Other Device"
+		e.POST("/api/v1/auth/login").
+			WithJSON(loginData).
+			Expect().
+			Status(200)
+
+		// Get sessions
+		sessionsResponse := e.GET("/api/v1/auth/sessions").
+			WithHeader("Authorization", "Bearer "+accessToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		// Get the second session ID
+		sessions := sessionsResponse.Value("data").Array()
+		if sessions.Length().Raw() > 1 {
+			sessionID := sessions.Value(1).Object().Value("id").String().Raw()
+
+			// Revoke that session
+			revokeResponse := e.DELETE("/api/v1/auth/sessions/"+sessionID).
+				WithHeader("Authorization", "Bearer "+accessToken).
+				Expect().
+				Status(200).
+				JSON().
+				Object()
+
+			revokeResponse.Value("success").Boolean().IsTrue()
+		}
+	})
+
+	t.Run("Access Token Still Works After Refresh", func(t *testing.T) {
+		// Login to get fresh tokens
+		loginData := map[string]interface{}{
+			"email":    "refreshtest@example.com",
+			"password": "RefreshPassword123!",
+		}
+
+		loginResponse := e.POST("/api/v1/auth/login").
+			WithJSON(loginData).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		newAccessToken := loginResponse.Value("data").Object().Value("access_token").String().Raw()
+
+		// Access token should still work (JWT is stateless)
+		e.GET("/api/v1/auth/profile").
+			WithHeader("Authorization", "Bearer "+newAccessToken).
+			Expect().
+			Status(200)
+	})
+}
+
 // Test protected endpoint with token
 func TestProtectedEndpoint(t *testing.T) {
 	e := SetupTestApp(t)

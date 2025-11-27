@@ -5,7 +5,6 @@ import (
 	"lamari-fit-api/database"
 	"lamari-fit-api/models"
 	"lamari-fit-api/utils"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -70,40 +69,93 @@ func GetUserWorkouts(c *gin.Context) {
 		return
 	}
 
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-
-	if page < 1 {
-		page = 1
-	}
-	if limit < 1 || limit > 50 {
-		limit = 10
+	var params WorkoutQuery
+	if err := c.ShouldBindQuery(&params); err != nil {
+		utils.HandleBindingError(c, err)
+		return
 	}
 
-	offset := (page - 1) * limit
+	// Set default pagination values
+	SetDefaultPagination(&params.PaginationQuery)
 
-	var workouts []models.Workout
+	offset := (params.Page - 1) * params.Limit
+
+	query := database.DB.Model(&models.Workout{}).Where("user_id = ?", userUUID)
+
+	// Apply search filter
+	if params.Search != "" {
+		query = query.Where("title ILIKE ?", "%"+params.Search+"%")
+	}
+
+	// Apply muscle group filter
+	if params.MuscleGroupID != "" {
+		query = query.Where(`id IN (
+			SELECT DISTINCT wp.workout_id
+			FROM workout_prescriptions wp
+			JOIN exercise_muscle_groups emg ON wp.exercise_id = emg.exercise_id
+			WHERE emg.muscle_group_id = ? AND wp.deleted_at IS NULL
+		)`, params.MuscleGroupID)
+	}
+
+	// Apply exercise filter
+	if params.ExerciseID != "" {
+		query = query.Where(`id IN (
+			SELECT DISTINCT workout_id FROM workout_prescriptions
+			WHERE exercise_id = ? AND deleted_at IS NULL
+		)`, params.ExerciseID)
+	}
+
+	// Apply is_favorited filter if requested
+	if params.IsFavorited == "true" {
+		var favoriteIDs []uuid.UUID
+		database.DB.Model(&models.UserFavoriteWorkout{}).
+			Where("user_id = ?", userUUID).
+			Pluck("workout_id", &favoriteIDs)
+
+		if len(favoriteIDs) == 0 {
+			utils.PaginatedResponse(c, "Workouts fetched successfully.", []models.WorkoutResponse{}, params.Page, params.Limit, 0)
+			return
+		}
+		query = query.Where("id IN ?", favoriteIDs)
+	}
+
 	var total int64
-
-	if err := database.DB.Model(&models.Workout{}).Where("user_id = ?", userUUID).Count(&total).Error; err != nil {
+	if err := query.Count(&total).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to count workouts.")
 		return
 	}
 
-	if err := database.DB.Where("user_id = ?", userUUID).
+	var workouts []models.Workout
+	if err := query.
 		Preload("Prescriptions", func(db *gorm.DB) *gorm.DB {
 			return db.Order("group_order ASC, exercise_order ASC")
 		}).
 		Preload("Prescriptions.Exercise").
 		Offset(offset).
-		Limit(limit).
+		Limit(params.Limit).
 		Order("created_at DESC").
 		Find(&workouts).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to fetch workouts.")
 		return
 	}
 
-	utils.PaginatedResponse(c, "Workouts fetched successfully.", workouts, page, limit, int(total))
+	// Build favorite set for O(1) lookup
+	favoriteSet := make(map[uuid.UUID]bool)
+	var favoriteIDs []uuid.UUID
+	database.DB.Model(&models.UserFavoriteWorkout{}).
+		Where("user_id = ?", userUUID).
+		Pluck("workout_id", &favoriteIDs)
+	for _, id := range favoriteIDs {
+		favoriteSet[id] = true
+	}
+
+	// Map to response DTOs with is_favorited
+	responses := make([]models.WorkoutResponse, len(workouts))
+	for i, w := range workouts {
+		responses[i] = w.ToResponse(favoriteSet[w.ID])
+	}
+
+	utils.PaginatedResponse(c, "Workouts fetched successfully.", responses, params.Page, params.Limit, int(total))
 }
 
 func GetWorkout(c *gin.Context) {
@@ -129,6 +181,13 @@ func GetWorkout(c *gin.Context) {
 		return
 	}
 
+	// Check if user has favorited this workout
+	var favoriteCount int64
+	database.DB.Model(&models.UserFavoriteWorkout{}).
+		Where("user_id = ? AND workout_id = ?", userUUID, workoutID).
+		Count(&favoriteCount)
+	isFavorited := favoriteCount > 0
+
 	// Group prescriptions by group_id for response
 	groupedPrescriptions := models.GroupPrescriptionsByGroupID(workout.Prescriptions)
 
@@ -145,6 +204,7 @@ func GetWorkout(c *gin.Context) {
 		"estimated_duration": workout.EstimatedDuration,
 		"is_template":        workout.IsTemplate,
 		"visibility":         workout.Visibility,
+		"is_favorited":       isFavorited,
 		"created_at":         workout.CreatedAt,
 		"updated_at":         workout.UpdatedAt,
 		"prescriptions":      groupedPrescriptions,

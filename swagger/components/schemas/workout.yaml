@@ -24,6 +24,9 @@ WorkoutResponse:
     visibility:
       type: string
       enum: [private, public, friends]
+    is_favorited:
+      type: boolean
+      description: Whether the authenticated user has favorited this workout
     prescriptions:
       type: array
       items:

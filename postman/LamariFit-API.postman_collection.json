@@ -283,11 +283,14 @@
                 "exec": [
                   "if (pm.response.code === 201) {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('auth_token', jsonData.data.token);",
+                  "    pm.environment.set('auth_token', jsonData.data.access_token || jsonData.data.token);",
+                  "    pm.environment.set('refresh_token', jsonData.data.refresh_token);",
                   "    pm.environment.set('user_id', jsonData.data.user.id);",
                   "    pm.environment.set('user_email', jsonData.data.user.email);",
                   "    pm.test('Registration successful', function () {",
-                  "        pm.expect(jsonData.data.token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.access_token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.refresh_token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.expires_in).to.be.a('number');",
                   "        pm.expect(jsonData.data.user.email).to.be.a('string');",
                   "        pm.expect(jsonData.data.user.roles).to.be.an('array');",
                   "        pm.expect(jsonData.data.user.roles.length).to.equal(1);",
@@ -336,14 +339,16 @@
                 "exec": [
                   "if (pm.response.code === 201) {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('auth_token', jsonData.data.token);",
+                  "    pm.environment.set('auth_token', jsonData.data.access_token || jsonData.data.token);",
+                  "    pm.environment.set('refresh_token', jsonData.data.refresh_token);",
                   "    pm.environment.set('user_id', jsonData.data.user.id);",
                   "    pm.environment.set('user_email', jsonData.data.user.email);",
                   "    if (jsonData.data.trainer_profile) {",
                   "        pm.environment.set('trainer_profile_id', jsonData.data.trainer_profile.id);",
                   "    }",
                   "    pm.test('Registration as trainer successful', function () {",
-                  "        pm.expect(jsonData.data.token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.access_token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.refresh_token).to.be.a('string');",
                   "        pm.expect(jsonData.data.user.email).to.be.a('string');",
                   "        pm.expect(jsonData.data.trainer_profile).to.be.an('object');",
                   "        pm.expect(jsonData.data.trainer_profile.visibility).to.be.a('string');",
@@ -396,11 +401,14 @@
                 "exec": [
                   "if (pm.response.code === 200) {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('auth_token', jsonData.data.token);",
+                  "    pm.environment.set('auth_token', jsonData.data.access_token || jsonData.data.token);",
+                  "    pm.environment.set('refresh_token', jsonData.data.refresh_token);",
                   "    pm.environment.set('user_id', jsonData.data.user.id);",
                   "    pm.environment.set('user_email', jsonData.data.user.email);",
                   "    pm.test('Login successful', function () {",
-                  "        pm.expect(jsonData.data.token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.access_token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.refresh_token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.expires_in).to.be.a('number');",
                   "        pm.expect(jsonData.data.user.email).to.be.a('string');",
                   "        pm.expect(jsonData.data.user.roles).to.be.an('array');",
                   "    });",
@@ -420,7 +428,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"device_info\": \"Postman Test Client\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/login",
@@ -481,9 +489,242 @@
             "description": "Get current user profile (requires authentication)"
           },
           "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('auth_token', jsonData.data.access_token || jsonData.data.token);",
+                  "    pm.environment.set('refresh_token', jsonData.data.refresh_token);",
+                  "    pm.test('Token refresh successful', function () {",
+                  "        pm.expect(jsonData.data.access_token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.refresh_token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.expires_in).to.be.a('number');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Exchange a refresh token for a new access/refresh token pair. The old refresh token is revoked (token rotation)."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout (Current Session)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Logout successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});",
+                  "pm.environment.unset('refresh_token');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revoke the current session's refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout All Sessions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Logout all sessions successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.sessions_revoked).to.be.a('number');",
+                  "});",
+                  "pm.environment.unset('refresh_token');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout-all",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout-all"
+              ]
+            },
+            "description": "Revoke all refresh tokens for the authenticated user (logout from all devices)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Sessions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Sessions retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    if (jsonData.data.length > 0) {",
+                  "        pm.expect(jsonData.data[0]).to.have.property('id');",
+                  "        pm.expect(jsonData.data[0]).to.have.property('device_info');",
+                  "        pm.expect(jsonData.data[0]).to.have.property('created_at');",
+                  "        pm.environment.set('session_id', jsonData.data[0].id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "X-Refresh-Token",
+                "value": "{{refresh_token}}",
+                "description": "Optional: Include to mark current session"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/sessions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "sessions"
+              ]
+            },
+            "description": "Get all active sessions for the authenticated user"
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke Specific Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Session revoked successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/sessions/{{session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "sessions",
+                "{{session_id}}"
+              ]
+            },
+            "description": "Revoke a specific session by its ID"
+          },
+          "response": []
         }
       ],
-      "description": "Standard email/password authentication endpoints"
+      "description": "Standard email/password authentication endpoints with refresh token support. Access tokens expire in 1 hour, refresh tokens expire in 7 days."
     },
     {
       "name": "OAuth",
@@ -518,11 +759,13 @@
                 "exec": [
                   "if (pm.response.code === 200) {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('auth_token', jsonData.data.token);",
+                  "    pm.environment.set('auth_token', jsonData.data.access_token || jsonData.data.token);",
+                  "    pm.environment.set('refresh_token', jsonData.data.refresh_token);",
                   "    pm.environment.set('user_id', jsonData.data.user.id);",
                   "    pm.environment.set('user_email', jsonData.data.user.email);",
                   "    pm.test('Apple Sign-In successful', function () {",
-                  "        pm.expect(jsonData.data.token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.access_token).to.be.a('string');",
+                  "        pm.expect(jsonData.data.refresh_token).to.be.a('string');",
                   "        pm.expect(jsonData.data.user.provider).to.equal('apple');",
                   "    });",
                   "}"
@@ -861,7 +1104,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/exercises",
+              "raw": "{{base_url}}/api/v1/exercises?is_favorited=true",
               "host": [
                 "{{base_url}}"
               ],
@@ -869,9 +1112,41 @@
                 "api",
                 "v1",
                 "exercises"
+              ],
+              "query": [
+                {
+                  "key": "is_favorited",
+                  "value": "true",
+                  "description": "Filter to only show favorited exercises",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search exercises by name",
+                  "disabled": true
+                },
+                {
+                  "key": "muscle_group_id",
+                  "value": "",
+                  "description": "Filter by muscle group UUID",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Get all exercises with optional filtering"
+            "description": "Get all exercises with optional filtering. Response includes is_favorited field for each exercise."
           },
           "response": []
         },
@@ -3709,10 +3984,16 @@
                 {
                   "key": "limit",
                   "value": "10"
+                },
+                {
+                  "key": "is_favorited",
+                  "value": "true",
+                  "description": "Filter to only show favorited workouts",
+                  "disabled": true
                 }
               ]
             },
-            "description": "Get all workouts for the authenticated user with pagination"
+            "description": "Get all workouts for the authenticated user with pagination. Response includes is_favorited field for each workout."
           },
           "response": []
         },

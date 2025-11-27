@@ -33,14 +33,24 @@ func SetupRoutes(r *gin.Engine) {
 	{
 		auth := api.Group("/auth")
 		{
+			// Public auth routes
 			auth.POST("/register", controllers.Register)
 			auth.POST("/login", controllers.Login)
+			auth.POST("/refresh", controllers.RefreshToken)
+			auth.POST("/logout", controllers.Logout)
 			auth.GET("/google", controllers.GoogleLogin)
 			auth.GET("/google/callback", controllers.GoogleCallback)
 			auth.POST("/apple", controllers.AppleLogin)
 
-			auth.Use(middleware.AuthMiddleware())
-			auth.GET("/profile", controllers.GetProfile)
+			// Protected auth routes
+			authProtected := auth.Group("/")
+			authProtected.Use(middleware.AuthMiddleware())
+			{
+				authProtected.GET("/profile", controllers.GetProfile)
+				authProtected.POST("/logout-all", controllers.LogoutAll)
+				authProtected.GET("/sessions", controllers.GetSessions)
+				authProtected.DELETE("/sessions/:id", controllers.RevokeSession)
+			}
 		}
 
 		// Public invitation verification (no auth required)

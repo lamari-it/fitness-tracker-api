@@ -37,6 +37,11 @@
         description: Search by name
         schema:
           type: string
+      - name: is_favorited
+        in: query
+        description: Filter to only show favorited exercises (requires authentication)
+        schema:
+          type: boolean
     responses:
       '200':
         description: List of exercises

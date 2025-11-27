@@ -146,8 +146,12 @@ func GetExercises(c *gin.Context) {
 
 	offset := (params.Page - 1) * params.Limit
 
+	// Check if user is authenticated
+	userID, authenticated := utils.GetAuthUserID(c)
+
 	query := database.DB.Model(&models.Exercise{}).
 		Preload("MuscleGroups.MuscleGroup").
+		Preload("Equipment.Equipment").
 		Preload("ExerciseTypes.ExerciseType")
 
 	if params.Search != "" {
@@ -174,6 +178,24 @@ func GetExercises(c *gin.Context) {
 		query = query.Where("is_bodyweight = ?", isBodyweight)
 	}
 
+	// Apply is_favorited filter if requested
+	if params.IsFavorited == "true" {
+		if !authenticated {
+			utils.PaginatedResponse(c, "Exercises retrieved successfully.", []models.ExerciseResponse{}, params.Page, params.Limit, 0)
+			return
+		}
+		var favoriteIDs []uuid.UUID
+		database.DB.Model(&models.UserFavoriteExercise{}).
+			Where("user_id = ?", userID).
+			Pluck("exercise_id", &favoriteIDs)
+
+		if len(favoriteIDs) == 0 {
+			utils.PaginatedResponse(c, "Exercises retrieved successfully.", []models.ExerciseResponse{}, params.Page, params.Limit, 0)
+			return
+		}
+		query = query.Where("exercises.id IN ?", favoriteIDs)
+	}
+
 	// Get total count
 	var total int64
 	query.Count(&total)
@@ -184,7 +206,25 @@ func GetExercises(c *gin.Context) {
 		return
 	}
 
-	utils.PaginatedResponse(c, "Exercises retrieved successfully.", exercises, params.Page, params.Limit, int(total))
+	// Build favorite set for O(1) lookup
+	favoriteSet := make(map[uuid.UUID]bool)
+	if authenticated {
+		var favoriteIDs []uuid.UUID
+		database.DB.Model(&models.UserFavoriteExercise{}).
+			Where("user_id = ?", userID).
+			Pluck("exercise_id", &favoriteIDs)
+		for _, id := range favoriteIDs {
+			favoriteSet[id] = true
+		}
+	}
+
+	// Map to response DTOs with is_favorited
+	responses := make([]models.ExerciseResponse, len(exercises))
+	for i, ex := range exercises {
+		responses[i] = ex.ToResponse(favoriteSet[ex.ID])
+	}
+
+	utils.PaginatedResponse(c, "Exercises retrieved successfully.", responses, params.Page, params.Limit, int(total))
 }
 
 func GetExercise(c *gin.Context) {
@@ -202,13 +242,25 @@ func GetExercise(c *gin.Context) {
 	var exercise models.Exercise
 	if err := database.DB.Where("id = ?", exerciseID).
 		Preload("MuscleGroups.MuscleGroup").
+		Preload("Equipment.Equipment").
 		Preload("ExerciseTypes.ExerciseType").
 		First(&exercise).Error; err != nil {
 		utils.NotFoundResponse(c, "Exercise not found.")
 		return
 	}
 
-	utils.SuccessResponse(c, "Exercise retrieved successfully.", exercise)
+	// Check if user has favorited this exercise
+	isFavorited := false
+	userID, authenticated := utils.GetAuthUserID(c)
+	if authenticated {
+		var count int64
+		database.DB.Model(&models.UserFavoriteExercise{}).
+			Where("user_id = ? AND exercise_id = ?", userID, exerciseID).
+			Count(&count)
+		isFavorited = count > 0
+	}
+
+	utils.SuccessResponse(c, "Exercise retrieved successfully.", exercise.ToResponse(isFavorited))
 }
 
 func GetExerciseBySlug(c *gin.Context) {
@@ -229,7 +281,18 @@ func GetExerciseBySlug(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, "Exercise retrieved successfully.", exercise)
+	// Check if user has favorited this exercise
+	isFavorited := false
+	userID, authenticated := utils.GetAuthUserID(c)
+	if authenticated {
+		var count int64
+		database.DB.Model(&models.UserFavoriteExercise{}).
+			Where("user_id = ? AND exercise_id = ?", userID, exercise.ID).
+			Count(&count)
+		isFavorited = count > 0
+	}
+
+	utils.SuccessResponse(c, "Exercise retrieved successfully.", exercise.ToResponse(isFavorited))
 }
 
 func UpdateExercise(c *gin.Context) {

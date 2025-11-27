@@ -149,7 +149,7 @@ func testFavorites(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Check Exercise is Favorited", func(t *testing.T) {
-		response := e.GET("/api/v1/user/favorites/" + exerciseID + "/check").
+		response := e.GET("/api/v1/user/favorites/"+exerciseID+"/check").
 			WithHeader("Authorization", "Bearer "+token).
 			WithQuery("type", "exercise").
 			Expect().
@@ -162,7 +162,7 @@ func testFavorites(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Check Non-Favorited Exercise", func(t *testing.T) {
-		response := e.GET("/api/v1/user/favorites/" + exercise2ID + "/check").
+		response := e.GET("/api/v1/user/favorites/"+exercise2ID+"/check").
 			WithHeader("Authorization", "Bearer "+token).
 			WithQuery("type", "exercise").
 			Expect().
@@ -236,7 +236,7 @@ func testFavorites(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Remove Exercise from Favorites", func(t *testing.T) {
-		response := e.DELETE("/api/v1/user/favorites/" + exerciseID).
+		response := e.DELETE("/api/v1/user/favorites/"+exerciseID).
 			WithHeader("Authorization", "Bearer "+token).
 			WithQuery("type", "exercise").
 			Expect().
@@ -249,7 +249,7 @@ func testFavorites(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Check Exercise is No Longer Favorited", func(t *testing.T) {
-		response := e.GET("/api/v1/user/favorites/" + exerciseID + "/check").
+		response := e.GET("/api/v1/user/favorites/"+exerciseID+"/check").
 			WithHeader("Authorization", "Bearer "+token).
 			WithQuery("type", "exercise").
 			Expect().
@@ -261,7 +261,7 @@ func testFavorites(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Remove Non-Existent Exercise Favorite", func(t *testing.T) {
-		response := e.DELETE("/api/v1/user/favorites/" + exerciseID).
+		response := e.DELETE("/api/v1/user/favorites/"+exerciseID).
 			WithHeader("Authorization", "Bearer "+token).
 			WithQuery("type", "exercise").
 			Expect().
@@ -312,7 +312,7 @@ func testFavorites(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Check Workout is Favorited", func(t *testing.T) {
-		response := e.GET("/api/v1/user/favorites/" + workoutID + "/check").
+		response := e.GET("/api/v1/user/favorites/"+workoutID+"/check").
 			WithHeader("Authorization", "Bearer "+token).
 			WithQuery("type", "workout").
 			Expect().
@@ -365,7 +365,7 @@ func testFavorites(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Remove Workout from Favorites", func(t *testing.T) {
-		response := e.DELETE("/api/v1/user/favorites/" + workoutID).
+		response := e.DELETE("/api/v1/user/favorites/"+workoutID).
 			WithHeader("Authorization", "Bearer "+token).
 			WithQuery("type", "workout").
 			Expect().
@@ -378,7 +378,7 @@ func testFavorites(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Check Workout is No Longer Favorited", func(t *testing.T) {
-		response := e.GET("/api/v1/user/favorites/" + workoutID + "/check").
+		response := e.GET("/api/v1/user/favorites/"+workoutID+"/check").
 			WithHeader("Authorization", "Bearer "+token).
 			WithQuery("type", "workout").
 			Expect().
@@ -491,14 +491,14 @@ func testFavorites(t *testing.T, e *httpexpect.Expect) {
 	})
 
 	t.Run("Remove Favorite Without Auth", func(t *testing.T) {
-		e.DELETE("/api/v1/user/favorites/" + exerciseID).
+		e.DELETE("/api/v1/user/favorites/"+exerciseID).
 			WithQuery("type", "exercise").
 			Expect().
 			Status(401)
 	})
 
 	t.Run("Check Favorite Without Auth", func(t *testing.T) {
-		e.GET("/api/v1/user/favorites/" + exerciseID + "/check").
+		e.GET("/api/v1/user/favorites/"+exerciseID+"/check").
 			WithQuery("type", "exercise").
 			Expect().
 			Status(401)
@@ -575,5 +575,205 @@ func testFavorites(t *testing.T, e *httpexpect.Expect) {
 			Object()
 
 		resp2.Value("data").Array().Length().IsEqual(1)
+	})
+
+	// =====================
+	// is_favorited Filter Tests
+	// =====================
+
+	t.Run("GET /exercises returns is_favorited field", func(t *testing.T) {
+		// User 1 has exercise2 favorited (from earlier test)
+		response := e.GET("/api/v1/exercises").
+			WithHeader("Authorization", "Bearer "+token).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		exercises := response.Value("data").Array()
+		exercises.Length().Ge(2)
+
+		// Find our favorited and non-favorited exercises and check is_favorited field
+		foundFavorited := false
+		foundNonFavorited := false
+		for i := 0; i < int(exercises.Length().Raw()); i++ {
+			ex := exercises.Value(i).Object()
+			exID := ex.Value("id").String().Raw()
+			isFavorited := ex.Value("is_favorited").Boolean().Raw()
+
+			if exID == exercise2ID {
+				if isFavorited {
+					foundFavorited = true
+				}
+			}
+			if exID == exerciseID {
+				if !isFavorited {
+					foundNonFavorited = true
+				}
+			}
+		}
+		if !foundFavorited {
+			t.Error("Expected exercise2 to have is_favorited=true")
+		}
+		if !foundNonFavorited {
+			t.Error("Expected exercise1 (removed from favorites) to have is_favorited=false")
+		}
+	})
+
+	t.Run("GET /exercises?is_favorited=true filters to favorites only", func(t *testing.T) {
+		// User 1 has only exercise2 favorited
+		response := e.GET("/api/v1/exercises").
+			WithHeader("Authorization", "Bearer "+token).
+			WithQuery("is_favorited", "true").
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		exercises := response.Value("data").Array()
+		exercises.Length().IsEqual(1)
+
+		// The only exercise should be exercise2 (the favorited one)
+		exercises.Value(0).Object().Value("id").String().IsEqual(exercise2ID)
+		exercises.Value(0).Object().Value("is_favorited").Boolean().IsTrue()
+	})
+
+	t.Run("GET /exercises/:id returns is_favorited field", func(t *testing.T) {
+		// Check favorited exercise
+		response := e.GET("/api/v1/exercises/"+exercise2ID).
+			WithHeader("Authorization", "Bearer "+token).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		response.Value("data").Object().Value("is_favorited").Boolean().IsTrue()
+
+		// Check non-favorited exercise
+		response2 := e.GET("/api/v1/exercises/"+exerciseID).
+			WithHeader("Authorization", "Bearer "+token).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response2.Value("success").Boolean().IsTrue()
+		response2.Value("data").Object().Value("is_favorited").Boolean().IsFalse()
+	})
+
+	t.Run("GET /workouts returns is_favorited field", func(t *testing.T) {
+		// User 1 has workout2 favorited (workout1 was removed earlier)
+		response := e.GET("/api/v1/workouts").
+			WithHeader("Authorization", "Bearer "+token).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		workouts := response.Value("data").Array()
+		workouts.Length().Ge(2)
+
+		// Find our favorited and non-favorited workouts and check is_favorited field
+		foundFavorited := false
+		foundNonFavorited := false
+		for i := 0; i < int(workouts.Length().Raw()); i++ {
+			w := workouts.Value(i).Object()
+			wID := w.Value("id").String().Raw()
+			isFavorited := w.Value("is_favorited").Boolean().Raw()
+
+			if wID == workout2ID {
+				if isFavorited {
+					foundFavorited = true
+				}
+			}
+			if wID == workoutID {
+				if !isFavorited {
+					foundNonFavorited = true
+				}
+			}
+		}
+		if !foundFavorited {
+			t.Error("Expected workout2 to have is_favorited=true")
+		}
+		if !foundNonFavorited {
+			t.Error("Expected workout1 (removed from favorites) to have is_favorited=false")
+		}
+	})
+
+	t.Run("GET /workouts?is_favorited=true filters to favorites only", func(t *testing.T) {
+		// User 1 has only workout2 favorited
+		response := e.GET("/api/v1/workouts").
+			WithHeader("Authorization", "Bearer "+token).
+			WithQuery("is_favorited", "true").
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		workouts := response.Value("data").Array()
+		workouts.Length().IsEqual(1)
+
+		// The only workout should be workout2 (the favorited one)
+		workouts.Value(0).Object().Value("id").String().IsEqual(workout2ID)
+		workouts.Value(0).Object().Value("is_favorited").Boolean().IsTrue()
+	})
+
+	t.Run("GET /workouts/:id returns is_favorited field", func(t *testing.T) {
+		// Check favorited workout
+		response := e.GET("/api/v1/workouts/"+workout2ID).
+			WithHeader("Authorization", "Bearer "+token).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		response.Value("data").Object().Value("is_favorited").Boolean().IsTrue()
+
+		// Check non-favorited workout
+		response2 := e.GET("/api/v1/workouts/"+workoutID).
+			WithHeader("Authorization", "Bearer "+token).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response2.Value("success").Boolean().IsTrue()
+		response2.Value("data").Object().Value("is_favorited").Boolean().IsFalse()
+	})
+
+	t.Run("is_favorited filter returns empty for user with no favorites", func(t *testing.T) {
+		// Create a third user with no favorites
+		user3Data := map[string]interface{}{
+			"email":            "favorites3@example.com",
+			"password":         "FavoritesPass123!",
+			"password_confirm": "FavoritesPass123!",
+			"first_name":       "Favorites3",
+			"last_name":        "User3",
+		}
+
+		e.POST("/api/v1/auth/register").
+			WithJSON(user3Data).
+			Expect().
+			Status(201)
+
+		token3 := GetAuthToken(e, "favorites3@example.com", "FavoritesPass123!")
+
+		// Get exercises with is_favorited=true for user with no favorites
+		response := e.GET("/api/v1/exercises").
+			WithHeader("Authorization", "Bearer "+token3).
+			WithQuery("is_favorited", "true").
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		response.Value("data").Array().Length().IsEqual(0)
 	})
 }
