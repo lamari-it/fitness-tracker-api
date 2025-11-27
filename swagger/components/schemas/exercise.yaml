@@ -36,6 +36,10 @@ ExerciseResponse:
       type: array
       items:
         $ref: '#/EquipmentResponse'
+    exercise_types:
+      type: array
+      items:
+        $ref: '#/ExerciseExerciseTypeResponse'
     created_at:
       type: string
       format: date-time
@@ -269,3 +273,79 @@ AssignEquipmentRequest:
     is_required:
       type: boolean
       default: false
+
+# Exercise Types
+ExerciseTypeResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    slug:
+      type: string
+      example: compound
+    name:
+      type: string
+      example: Compound
+    description:
+      type: string
+      example: Multi-joint exercises that work multiple muscle groups simultaneously
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+
+CreateExerciseTypeRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      example: Compound
+    description:
+      type: string
+      maxLength: 500
+      example: Multi-joint exercises that work multiple muscle groups simultaneously
+
+UpdateExerciseTypeRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 500
+
+ExerciseExerciseTypeResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    exercise_id:
+      type: string
+      format: uuid
+    exercise_type_id:
+      type: string
+      format: uuid
+    exercise_type:
+      $ref: '#/ExerciseTypeResponse'
+    created_at:
+      type: string
+      format: date-time
+
+AssignExerciseTypeRequest:
+  type: object
+  required:
+    - exercise_type_id
+  properties:
+    exercise_type_id:
+      type: string
+      format: uuid

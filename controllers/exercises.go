@@ -125,9 +125,10 @@ func CreateExercise(c *gin.Context) {
 
 	tx.Commit()
 
-	// Load the exercise with muscle groups for response
+	// Load the exercise with muscle groups and types for response
 	database.DB.Where("id = ?", exercise.ID).
 		Preload("MuscleGroups.MuscleGroup").
+		Preload("ExerciseTypes.ExerciseType").
 		First(&exercise)
 
 	utils.CreatedResponse(c, "Exercise created successfully.", exercise)
@@ -146,7 +147,8 @@ func GetExercises(c *gin.Context) {
 	offset := (params.Page - 1) * params.Limit
 
 	query := database.DB.Model(&models.Exercise{}).
-		Preload("MuscleGroups.MuscleGroup")
+		Preload("MuscleGroups.MuscleGroup").
+		Preload("ExerciseTypes.ExerciseType")
 
 	if params.Search != "" {
 		query = query.Where("name ILIKE ?", "%"+params.Search+"%")
@@ -200,6 +202,7 @@ func GetExercise(c *gin.Context) {
 	var exercise models.Exercise
 	if err := database.DB.Where("id = ?", exerciseID).
 		Preload("MuscleGroups.MuscleGroup").
+		Preload("ExerciseTypes.ExerciseType").
 		First(&exercise).Error; err != nil {
 		utils.NotFoundResponse(c, "Exercise not found.")
 		return
@@ -220,6 +223,7 @@ func GetExerciseBySlug(c *gin.Context) {
 	if err := database.DB.Where("slug = ?", slug).
 		Preload("MuscleGroups.MuscleGroup").
 		Preload("Equipment.Equipment").
+		Preload("ExerciseTypes.ExerciseType").
 		First(&exercise).Error; err != nil {
 		utils.NotFoundResponse(c, "Exercise not found.")
 		return
@@ -266,9 +270,10 @@ func UpdateExercise(c *gin.Context) {
 		return
 	}
 
-	// Load the exercise with muscle groups for response
+	// Load the exercise with muscle groups and types for response
 	database.DB.Where("id = ?", exercise.ID).
 		Preload("MuscleGroups.MuscleGroup").
+		Preload("ExerciseTypes.ExerciseType").
 		First(&exercise)
 
 	utils.SuccessResponse(c, "Exercise updated successfully.", exercise)

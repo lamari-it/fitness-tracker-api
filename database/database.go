@@ -82,9 +82,11 @@ func AutoMigrate() {
 		// Exercise reference data
 		&models.MuscleGroup{},
 		&models.Equipment{},
+		&models.ExerciseType{},
 		&models.Exercise{},
 		&models.ExerciseMuscleGroup{},
 		&models.ExerciseEquipment{},
+		&models.ExerciseExerciseType{},
 		&models.UserEquipment{},
 
 		// Fitness reference data
@@ -175,9 +177,11 @@ func DropAllData(db *gorm.DB) error {
 		&models.UserEquipment{},
 		&models.ExerciseEquipment{},
 		&models.ExerciseMuscleGroup{},
+		&models.ExerciseExerciseType{},
 		&models.Exercise{},
 		&models.Equipment{},
 		&models.MuscleGroup{},
+		&models.ExerciseType{},
 		&models.FitnessGoal{},
 		&models.FitnessLevel{},
 		&models.Friendship{},
@@ -231,10 +235,12 @@ func DropAllTables(db *gorm.DB) error {
 		// Exercise relationships
 		&models.ExerciseEquipment{},
 		&models.ExerciseMuscleGroup{},
+		&models.ExerciseExerciseType{},
 		&models.Exercise{},
 		// Reference data
 		&models.Equipment{},
 		&models.MuscleGroup{},
+		&models.ExerciseType{},
 		&models.FitnessGoal{},
 		&models.FitnessLevel{},
 		// Social/Friends
