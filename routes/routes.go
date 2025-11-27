@@ -181,6 +181,15 @@ func SetupRoutes(r *gin.Engine) {
 				userEquipment.GET("/location/:location", controllers.GetUserEquipmentByLocation)
 			}
 
+			// User Favorites
+			userFavorites := protected.Group("/user/favorites")
+			{
+				userFavorites.GET("", controllers.GetFavorites)
+				userFavorites.POST("", controllers.AddFavorite)
+				userFavorites.DELETE("/:id", controllers.RemoveFavorite)
+				userFavorites.GET("/:id/check", controllers.CheckFavorite)
+			}
+
 			// Workout Plans
 			workoutPlans := protected.Group("/workout-plans")
 			{

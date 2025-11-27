@@ -87,6 +87,14 @@
 /api/v1/user/equipment/location/{location}:
   $ref: './user.yaml#/~1user~1equipment~1location~1{location}'
 
+# User Favorites
+/api/v1/user/favorites:
+  $ref: './favorites.yaml#/~1user~1favorites'
+/api/v1/user/favorites/{id}:
+  $ref: './favorites.yaml#/~1user~1favorites~1{id}'
+/api/v1/user/favorites/{id}/check:
+  $ref: './favorites.yaml#/~1user~1favorites~1{id}~1check'
+
 # Workouts
 /api/v1/workouts:
   $ref: './workouts.yaml#/~1workouts'
