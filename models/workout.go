@@ -88,10 +88,11 @@ type Exercise struct {
 	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
-	Prescriptions    []WorkoutPrescription `gorm:"foreignKey:ExerciseID" json:"prescriptions,omitempty"`
-	SessionExercises []SessionExercise     `gorm:"foreignKey:ExerciseID" json:"session_exercises,omitempty"`
-	MuscleGroups     []ExerciseMuscleGroup `gorm:"foreignKey:ExerciseID" json:"muscle_groups,omitempty"`
-	Equipment        []ExerciseEquipment   `gorm:"foreignKey:ExerciseID" json:"equipment,omitempty"`
+	Prescriptions    []WorkoutPrescription  `gorm:"foreignKey:ExerciseID" json:"prescriptions,omitempty"`
+	SessionExercises []SessionExercise      `gorm:"foreignKey:ExerciseID" json:"session_exercises,omitempty"`
+	MuscleGroups     []ExerciseMuscleGroup  `gorm:"foreignKey:ExerciseID" json:"muscle_groups,omitempty"`
+	Equipment        []ExerciseEquipment    `gorm:"foreignKey:ExerciseID" json:"equipment,omitempty"`
+	ExerciseTypes    []ExerciseExerciseType `gorm:"foreignKey:ExerciseID" json:"exercise_types,omitempty"`
 }
 
 func (wp *WorkoutPlan) BeforeCreate(tx *gorm.DB) (err error) {

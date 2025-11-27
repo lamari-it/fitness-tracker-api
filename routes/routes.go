@@ -70,6 +70,16 @@ func SetupRoutes(r *gin.Engine) {
 				muscleGroups.DELETE("/:id", controllers.DeleteMuscleGroup)
 			}
 
+			// Exercise Types
+			exerciseTypes := protected.Group("/exercise-types")
+			{
+				exerciseTypes.GET("/", controllers.GetExerciseTypes)
+				exerciseTypes.GET("/:id", controllers.GetExerciseType)
+				exerciseTypes.POST("/", controllers.CreateExerciseType)
+				exerciseTypes.PUT("/:id", controllers.UpdateExerciseType)
+				exerciseTypes.DELETE("/:id", controllers.DeleteExerciseType)
+			}
+
 			// Exercises
 			exercises := protected.Group("/exercises")
 			{
@@ -89,6 +99,11 @@ func SetupRoutes(r *gin.Engine) {
 				exercises.POST("/:id/equipment", controllers.AssignEquipmentToExercise)
 				exercises.GET("/:id/equipment", controllers.GetExerciseEquipment)
 				exercises.DELETE("/:id/equipment/:equipment_id", controllers.RemoveEquipmentFromExercise)
+
+				// Exercise-Type relationships
+				exercises.POST("/:id/types", controllers.AssignExerciseType)
+				exercises.GET("/:id/types", controllers.GetExerciseTypesByExercise)
+				exercises.DELETE("/:id/types/:type_id", controllers.RemoveExerciseType)
 			}
 
 			// Equipment

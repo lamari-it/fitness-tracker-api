@@ -386,3 +386,240 @@
         $ref: '../components/responses.yaml#/UnauthorizedResponse'
       '404':
         $ref: '../components/responses.yaml#/NotFoundResponse'
+
+# Exercise Types Endpoints
+/exercise-types:
+  get:
+    tags:
+      - Exercise Types
+    summary: List all exercise types
+    description: Get a list of all exercise types
+    operationId: getExerciseTypes
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of exercise types
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/exercise.yaml#/ExerciseTypeResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - Exercise Types
+    summary: Create an exercise type
+    description: Create a new exercise type (admin only)
+    operationId: createExerciseType
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/exercise.yaml#/CreateExerciseTypeRequest'
+    responses:
+      '201':
+        description: Exercise type created
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/ExerciseTypeResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+/exercise-types/{id}:
+  get:
+    tags:
+      - Exercise Types
+    summary: Get an exercise type
+    description: Get a specific exercise type by ID
+    operationId: getExerciseType
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Exercise type details
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/ExerciseTypeResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  put:
+    tags:
+      - Exercise Types
+    summary: Update an exercise type
+    description: Update an existing exercise type (admin only)
+    operationId: updateExerciseType
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/exercise.yaml#/UpdateExerciseTypeRequest'
+    responses:
+      '200':
+        description: Exercise type updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/ExerciseTypeResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  delete:
+    tags:
+      - Exercise Types
+    summary: Delete an exercise type
+    description: Delete an exercise type (admin only)
+    operationId: deleteExerciseType
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: Exercise type deleted
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/exercises/{id}/types:
+  get:
+    tags:
+      - Exercises
+    summary: Get exercise types for an exercise
+    description: Get all types associated with an exercise
+    operationId: getExerciseTypesByExercise
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    responses:
+      '200':
+        description: List of exercise types
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/exercise.yaml#/ExerciseExerciseTypeResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+  post:
+    tags:
+      - Exercises
+    summary: Assign exercise type to exercise
+    description: Associate an exercise type with an exercise
+    operationId: assignExerciseTypeToExercise
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/exercise.yaml#/AssignExerciseTypeRequest'
+    responses:
+      '201':
+        description: Exercise type assigned
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/exercise.yaml#/ExerciseExerciseTypeResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/exercises/{id}/types/{type_id}:
+  delete:
+    tags:
+      - Exercises
+    summary: Remove exercise type from exercise
+    description: Remove an exercise type association from an exercise
+    operationId: removeExerciseTypeFromExercise
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '../components/parameters.yaml#/IdPathParam'
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Exercise type removed
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'

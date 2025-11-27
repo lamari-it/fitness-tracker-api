@@ -36,6 +36,16 @@
   $ref: './exercises.yaml#/~1exercises~1{id}~1equipment'
 /api/v1/exercises/{id}/equipment/{equipment_id}:
   $ref: './exercises.yaml#/~1exercises~1{id}~1equipment~1{equipment_id}'
+/api/v1/exercises/{id}/types:
+  $ref: './exercises.yaml#/~1exercises~1{id}~1types'
+/api/v1/exercises/{id}/types/{type_id}:
+  $ref: './exercises.yaml#/~1exercises~1{id}~1types~1{type_id}'
+
+# Exercise Types
+/api/v1/exercise-types:
+  $ref: './exercises.yaml#/~1exercise-types'
+/api/v1/exercise-types/{id}:
+  $ref: './exercises.yaml#/~1exercise-types~1{id}'
 
 # Equipment
 /api/v1/equipment:

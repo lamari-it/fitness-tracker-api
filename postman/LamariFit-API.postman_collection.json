@@ -1277,6 +1277,300 @@
       "description": "Exercise management endpoints with muscle group and equipment relationships"
     },
     {
+      "name": "Exercise Types",
+      "item": [
+        {
+          "name": "Get All Exercise Types",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Exercise types retrieved successfully', function () {",
+                  "        pm.expect(jsonData.data).to.be.an('array');",
+                  "    });",
+                  "    if (jsonData.data.length > 0) {",
+                  "        pm.environment.set('exercise_type_id', jsonData.data[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercise-types",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercise-types"
+              ]
+            },
+            "description": "Get all exercise types"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exercise Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercise-types/{{exercise_type_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercise-types",
+                "{{exercise_type_id}}"
+              ]
+            },
+            "description": "Get a specific exercise type by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Exercise Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('new_exercise_type_id', jsonData.data.id);",
+                  "    pm.test('Exercise type created successfully', function () {",
+                  "        pm.expect(jsonData.data.id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.name).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Exercise Type\",\n  \"description\": \"A test exercise type for testing purposes\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercise-types",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercise-types"
+              ]
+            },
+            "description": "Create a new exercise type (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Exercise Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Exercise Type\",\n  \"description\": \"An updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercise-types/{{new_exercise_type_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercise-types",
+                "{{new_exercise_type_id}}"
+              ]
+            },
+            "description": "Update an existing exercise type (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Exercise Type",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercise-types/{{new_exercise_type_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercise-types",
+                "{{new_exercise_type_id}}"
+              ]
+            },
+            "description": "Delete an exercise type (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Types for Exercise",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}/types",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercises",
+                "{{exercise_id}}",
+                "types"
+              ]
+            },
+            "description": "Get all exercise types associated with an exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Type to Exercise",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('exercise_exercise_type_id', jsonData.data.id);",
+                  "    pm.test('Exercise type assigned successfully', function () {",
+                  "        pm.expect(jsonData.data.id).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exercise_type_id\": \"{{exercise_type_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}/types",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercises",
+                "{{exercise_id}}",
+                "types"
+              ]
+            },
+            "description": "Assign an exercise type to an exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Type from Exercise",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/exercises/{{exercise_id}}/types/{{exercise_type_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "exercises",
+                "{{exercise_id}}",
+                "types",
+                "{{exercise_type_id}}"
+              ]
+            },
+            "description": "Remove an exercise type from an exercise"
+          },
+          "response": []
+        }
+      ],
+      "description": "Exercise type management endpoints - categorize exercises by type (compound, isolation, isometric, etc.)"
+    },
+    {
       "name": "Equipment",
       "item": [
         {

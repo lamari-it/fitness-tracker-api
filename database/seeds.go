@@ -65,6 +65,177 @@ func SeedMuscleGroups() {
 	}
 }
 
+func SeedExerciseTypes() {
+	exerciseTypes := []models.ExerciseType{
+		{Slug: "compound", Name: "Compound", Description: "Multi-joint movements"},
+		{Slug: "isolation", Name: "Isolation", Description: "Targeted single-joint exercises"},
+		{Slug: "isometric", Name: "Isometric", Description: "Static holds"},
+		{Slug: "plyometric", Name: "Plyometric", Description: "Explosive / jump-based"},
+		{Slug: "cardio", Name: "Cardio", Description: "Heart rate / conditioning"},
+		{Slug: "mobility", Name: "Mobility", Description: "Movement quality / joint prep"},
+		{Slug: "stretching", Name: "Stretching", Description: "Flexibility / cool-down"},
+		{Slug: "push", Name: "Push", Description: "Exercises where force is pushed away from the body"},
+		{Slug: "pull", Name: "Pull", Description: "Exercises where force is pulled toward the body"},
+	}
+
+	for _, exerciseType := range exerciseTypes {
+		var existing models.ExerciseType
+		if err := DB.Where("slug = ?", exerciseType.Slug).First(&existing).Error; err != nil {
+			if err := DB.Create(&exerciseType).Error; err != nil {
+				log.Printf("Failed to create exercise type %s: %v", exerciseType.Name, err)
+			} else {
+				log.Printf("Created exercise type: %s", exerciseType.Name)
+			}
+		} else {
+			log.Printf("Exercise type already exists: %s", exerciseType.Name)
+		}
+	}
+}
+
+// GetExerciseTypeMappings returns a map of exercise slug to exercise type slugs
+func GetExerciseTypeMappings() map[string][]string {
+	return map[string][]string{
+		// Chest Exercises
+		"push_ups":              {"compound", "push"},
+		"bench_press":           {"compound", "push"},
+		"incline_bench_press":   {"compound", "push"},
+		"decline_bench_press":   {"compound", "push"},
+		"dumbbell_bench_press":  {"compound", "push"},
+		"dumbbell_flyes":        {"isolation", "push"},
+		"chest_dips":            {"compound", "push"},
+		"cable_crossovers":      {"isolation", "push"},
+
+		// Back Exercises
+		"pull_ups":              {"compound", "pull"},
+		"chin_ups":              {"compound", "pull"},
+		"lat_pulldowns":         {"compound", "pull"},
+		"barbell_rows":          {"compound", "pull"},
+		"dumbbell_rows":         {"compound", "pull"},
+		"cable_rows":            {"compound", "pull"},
+		"face_pulls":            {"isolation", "pull"},
+		"deadlifts":             {"compound", "pull"},
+		"rack_pulls":            {"compound", "pull"},
+		"inverted_rows":         {"compound", "pull"},
+
+		// Shoulder Exercises
+		"overhead_press":        {"compound", "push"},
+		"dumbbell_shoulder_press": {"compound", "push"},
+		"lateral_raises":        {"isolation", "push"},
+		"rear_delt_flyes":       {"isolation", "pull"},
+		"front_raises":          {"isolation", "push"},
+		"arnold_press":          {"compound", "push"},
+		"upright_rows":          {"compound", "pull"},
+		"pike_push_ups":         {"compound", "push"},
+		"handstand_push_ups":    {"compound", "push"},
+
+		// Arm Exercises
+		"bicep_curls":           {"isolation", "pull"},
+		"hammer_curls":          {"isolation", "pull"},
+		"preacher_curls":        {"isolation", "pull"},
+		"concentration_curls":   {"isolation", "pull"},
+		"tricep_dips":           {"compound", "push"},
+		"tricep_pushdowns":      {"isolation", "push"},
+		"skull_crushers":        {"isolation", "push"},
+		"overhead_tricep_extension": {"isolation", "push"},
+		"close_grip_bench_press": {"compound", "push"},
+
+		// Leg Exercises
+		"squats":                {"compound", "push"},
+		"front_squats":          {"compound", "push"},
+		"goblet_squats":         {"compound", "push"},
+		"leg_press":             {"compound", "push"},
+		"lunges":                {"compound", "push"},
+		"walking_lunges":        {"compound", "push"},
+		"bulgarian_split_squats": {"compound", "push"},
+		"step_ups":              {"compound", "push"},
+		"leg_extensions":        {"isolation", "push"},
+		"leg_curls":             {"isolation", "pull"},
+		"romanian_deadlifts":    {"compound", "pull"},
+		"hip_thrusts":           {"compound", "push"},
+		"glute_bridges":         {"compound", "push"},
+		"calf_raises":           {"isolation", "push"},
+		"seated_calf_raises":    {"isolation", "push"},
+		"box_jumps":             {"plyometric", "push"},
+		"jump_squats":           {"plyometric", "push"},
+
+		// Core Exercises
+		"crunches":              {"isolation"},
+		"sit_ups":               {"compound"},
+		"planks":                {"isometric"},
+		"side_planks":           {"isometric"},
+		"russian_twists":        {"isolation"},
+		"bicycle_crunches":      {"compound"},
+		"leg_raises":            {"isolation"},
+		"hanging_leg_raises":    {"isolation"},
+		"ab_wheel_rollouts":     {"compound"},
+		"mountain_climbers":     {"cardio", "compound"},
+		"dead_bugs":             {"isolation"},
+		"hollow_body_holds":     {"isometric"},
+		"superman":              {"isometric"},
+		"back_extensions":       {"compound"},
+		"hyperextensions":       {"compound"},
+		"good_mornings":         {"compound"},
+		"cable_woodchops":       {"compound"},
+		"pallof_press":          {"isometric"},
+
+		// Cardio Exercises
+		"burpees":               {"cardio", "plyometric", "compound"},
+		"high_knees":            {"cardio", "plyometric"},
+		"jumping_jacks":         {"cardio"},
+		"bear_crawls":           {"cardio", "compound"},
+		"crab_walks":            {"cardio", "compound"},
+		"treadmill_running":     {"cardio"},
+		"stationary_bike":       {"cardio"},
+		"rowing_machine":        {"cardio", "compound", "pull"},
+		"elliptical_machine":    {"cardio"},
+		"jump_rope":             {"cardio", "plyometric"},
+		"stair_climbing":        {"cardio"},
+
+		// Olympic Lifts
+		"clean_and_jerk":        {"compound", "pull", "push"},
+		"snatch":                {"compound", "pull"},
+		"power_cleans":          {"compound", "pull"},
+		"hang_cleans":           {"compound", "pull"},
+		"clean_pulls":           {"compound", "pull"},
+		"push_press":            {"compound", "push"},
+
+		// Functional Exercises
+		"farmers_walk":          {"compound"},
+		"kettlebell_swings":     {"compound", "pull"},
+		"turkish_get_ups":       {"compound"},
+		"battle_ropes":          {"cardio", "compound"},
+		"medicine_ball_slams":   {"plyometric", "compound"},
+		"box_step_overs":        {"cardio", "compound"},
+		"wall_balls":            {"plyometric", "compound", "push"},
+
+		// Unilateral Exercises
+		"single_leg_glute_bridge": {"compound", "push"},
+		"single_leg_deadlift":   {"compound", "pull"},
+		"pistol_squats":         {"compound", "push"},
+		"single_leg_calf_raises": {"isolation", "push"},
+		"bird_dog":              {"isometric"},
+
+		// Stretching and Mobility
+		"cat_cow_stretch":       {"mobility", "stretching"},
+		"childs_pose":           {"mobility", "stretching"},
+		"downward_dog":          {"mobility", "stretching"},
+		"pigeon_pose":           {"mobility", "stretching"},
+		"seated_forward_fold":   {"stretching"},
+		"standing_hamstring_stretch": {"stretching"},
+		"hip_flexor_stretch":    {"stretching", "mobility"},
+		"chest_stretch":         {"stretching"},
+		"tricep_stretch":        {"stretching"},
+		"shoulder_stretch":      {"stretching"},
+		"standing_quad_stretch": {"stretching"},
+		"standing_calf_stretch": {"stretching"},
+		"shoulder_rolls":        {"mobility"},
+		"arm_circles":           {"mobility"},
+		"neck_rolls":            {"mobility"},
+		"hip_circles":           {"mobility"},
+		"leg_swings":            {"mobility"},
+	}
+}
+
 func SeedExercises() {
 	// First, get muscle group IDs
 	muscleGroupMap := make(map[string]uuid.UUID)
@@ -82,8 +253,19 @@ func SeedExercises() {
 		equipmentMap[eq.Slug] = eq.ID
 	}
 
+	// Get exercise type IDs
+	exerciseTypeMap := make(map[string]uuid.UUID)
+	var exerciseTypes []models.ExerciseType
+	DB.Find(&exerciseTypes)
+	for _, et := range exerciseTypes {
+		exerciseTypeMap[et.Slug] = et.ID
+	}
+
 	// Get equipment mappings
 	exerciseEquipmentMappings := GetExerciseEquipmentMappings()
+
+	// Get exercise type mappings
+	exerciseTypeMappings := GetExerciseTypeMappings()
 
 	exercises := []struct {
 		Exercise     models.Exercise
@@ -2057,6 +2239,24 @@ func SeedExercises() {
 					}
 				}
 			}
+
+			// Assign exercise types
+			if typeList, exists := exerciseTypeMappings[exerciseData.Exercise.Slug]; exists {
+				for _, typeSlug := range typeList {
+					if exerciseTypeID, exists := exerciseTypeMap[typeSlug]; exists {
+						assignment := models.ExerciseExerciseType{
+							ExerciseID:     exerciseData.Exercise.ID,
+							ExerciseTypeID: exerciseTypeID,
+						}
+
+						if err := DB.Create(&assignment).Error; err != nil {
+							log.Printf("Failed to assign exercise type %s to exercise %s: %v", typeSlug, exerciseData.Exercise.Name, err)
+						} else {
+							log.Printf("Assigned exercise type %s to exercise %s", typeSlug, exerciseData.Exercise.Name)
+						}
+					}
+				}
+			}
 		} else {
 			log.Printf("Exercise already exists: %s", exerciseData.Exercise.Name)
 		}
@@ -2533,6 +2733,7 @@ func SeedDatabase() {
 	log.Println("Starting database seeding...")
 	SeedMuscleGroups()
 	SeedEquipment()
+	SeedExerciseTypes()
 	SeedExercises()
 	SeedFitnessLevels()
 	SeedFitnessGoals()
