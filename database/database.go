@@ -89,6 +89,10 @@ func AutoMigrate() {
 		&models.ExerciseExerciseType{},
 		&models.UserEquipment{},
 
+		// User favorites
+		&models.UserFavoriteExercise{},
+		&models.UserFavoriteWorkout{},
+
 		// Fitness reference data
 		&models.FitnessLevel{},
 		&models.FitnessGoal{},
@@ -174,6 +178,8 @@ func DropAllData(db *gorm.DB) error {
 		&models.Role{},
 		&models.Permission{},
 		&models.UserFitnessGoal{},
+		&models.UserFavoriteExercise{},
+		&models.UserFavoriteWorkout{},
 		&models.UserEquipment{},
 		&models.ExerciseEquipment{},
 		&models.ExerciseMuscleGroup{},
@@ -230,6 +236,9 @@ func DropAllTables(db *gorm.DB) error {
 		&models.WeightLog{},
 		&models.UserFitnessGoal{},
 		&models.UserFitnessProfile{},
+		// User favorites
+		&models.UserFavoriteExercise{},
+		&models.UserFavoriteWorkout{},
 		// User equipment
 		&models.UserEquipment{},
 		// Exercise relationships

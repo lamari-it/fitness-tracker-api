@@ -2888,6 +2888,340 @@
       "description": "User equipment management endpoints for tracking home and gym equipment"
     },
     {
+      "name": "User Favorites",
+      "item": [
+        {
+          "name": "Get Favorite Exercises",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/favorites?type=exercise&page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "favorites"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "exercise"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated list of user's favorite exercises"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Favorite Workouts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/favorites?type=workout&page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "favorites"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "workout"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated list of user's favorite workouts"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Favorite Exercise",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Exercise favorited successfully', function () {",
+                  "        pm.expect(jsonData.data.id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.type).to.eql('exercise');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_id\": \"{{exercise_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/favorites?type=exercise",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "favorites"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "exercise"
+                }
+              ]
+            },
+            "description": "Add an exercise to user's favorites"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Favorite Workout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Workout favorited successfully', function () {",
+                  "        pm.expect(jsonData.data.id).to.be.a('string');",
+                  "        pm.expect(jsonData.data.type).to.eql('workout');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_id\": \"{{workout_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/favorites?type=workout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "favorites"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "workout"
+                }
+              ]
+            },
+            "description": "Add a workout to user's favorites"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Favorite Status (Exercise)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/favorites/{{exercise_id}}/check?type=exercise",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "favorites",
+                "{{exercise_id}}",
+                "check"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "exercise"
+                }
+              ]
+            },
+            "description": "Check if an exercise is in user's favorites"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Favorite Status (Workout)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/favorites/{{workout_id}}/check?type=workout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "favorites",
+                "{{workout_id}}",
+                "check"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "workout"
+                }
+              ]
+            },
+            "description": "Check if a workout is in user's favorites"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Favorite Exercise",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/favorites/{{exercise_id}}?type=exercise",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "favorites",
+                "{{exercise_id}}"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "exercise"
+                }
+              ]
+            },
+            "description": "Remove an exercise from user's favorites"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Favorite Workout",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/user/favorites/{{workout_id}}?type=workout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "user",
+                "favorites",
+                "{{workout_id}}"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "workout"
+                }
+              ]
+            },
+            "description": "Remove a workout from user's favorites"
+          },
+          "response": []
+        }
+      ],
+      "description": "User favorites management endpoints for favoriting exercises and workouts"
+    },
+    {
       "name": "Workout Plans",
       "item": [
         {

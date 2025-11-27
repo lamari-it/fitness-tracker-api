@@ -1,0 +1,176 @@
+# User Favorites Endpoints
+
+/user/favorites:
+  get:
+    tags:
+      - User Favorites
+    summary: Get user's favorites
+    description: Get a paginated list of user's favorite exercises or workouts
+    operationId: getFavorites
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: type
+        in: query
+        required: true
+        description: The type of favorites to retrieve
+        schema:
+          type: string
+          enum: [exercise, workout]
+      - $ref: '../components/parameters.yaml#/PageParam'
+      - $ref: '../components/parameters.yaml#/PageSizeParam'
+    responses:
+      '200':
+        description: List of favorites
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/schemas/favorite.yaml#/FavoriteResponse'
+                    meta:
+                      $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+
+  post:
+    tags:
+      - User Favorites
+    summary: Add a favorite
+    description: Add an exercise or workout to user's favorites
+    operationId: addFavorite
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: type
+        in: query
+        required: true
+        description: The type of item to favorite
+        schema:
+          type: string
+          enum: [exercise, workout]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/favorite.yaml#/AddFavoriteRequest'
+          examples:
+            favoriteExercise:
+              summary: Favorite an exercise
+              value:
+                item_id: "123e4567-e89b-12d3-a456-426614174000"
+            favoriteWorkout:
+              summary: Favorite a workout
+              value:
+                item_id: "123e4567-e89b-12d3-a456-426614174001"
+    responses:
+      '201':
+        description: Favorite added
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/favorite.yaml#/FavoriteResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+      '409':
+        description: Item is already favorited
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/ErrorResponse'
+
+/user/favorites/{id}:
+  delete:
+    tags:
+      - User Favorites
+    summary: Remove a favorite
+    description: Remove an exercise or workout from user's favorites
+    operationId: removeFavorite
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The ID of the exercise or workout to unfavorite
+        schema:
+          type: string
+          format: uuid
+      - name: type
+        in: query
+        required: true
+        description: The type of item to unfavorite
+        schema:
+          type: string
+          enum: [exercise, workout]
+    responses:
+      '200':
+        description: Favorite removed
+        content:
+          application/json:
+            schema:
+              $ref: '../components/responses.yaml#/SuccessResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'
+      '404':
+        $ref: '../components/responses.yaml#/NotFoundResponse'
+
+/user/favorites/{id}/check:
+  get:
+    tags:
+      - User Favorites
+    summary: Check favorite status
+    description: Check if an exercise or workout is favorited by the user
+    operationId: checkFavorite
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The ID of the exercise or workout to check
+        schema:
+          type: string
+          format: uuid
+      - name: type
+        in: query
+        required: true
+        description: The type of item to check
+        schema:
+          type: string
+          enum: [exercise, workout]
+    responses:
+      '200':
+        description: Favorite status
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/responses.yaml#/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/schemas/favorite.yaml#/CheckFavoriteResponse'
+      '400':
+        $ref: '../components/responses.yaml#/BadRequestResponse'
+      '401':
+        $ref: '../components/responses.yaml#/UnauthorizedResponse'

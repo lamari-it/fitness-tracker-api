@@ -1,0 +1,39 @@
+# Favorite Schemas
+
+FavoriteResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    type:
+      type: string
+      enum: [exercise, workout]
+      description: The type of favorited item
+    item_id:
+      type: string
+      format: uuid
+      description: The ID of the favorited exercise or workout
+    item:
+      type: object
+      description: The favorited exercise or workout object
+    created_at:
+      type: string
+      format: date-time
+
+AddFavoriteRequest:
+  type: object
+  required:
+    - item_id
+  properties:
+    item_id:
+      type: string
+      format: uuid
+      description: The ID of the exercise or workout to favorite
+
+CheckFavoriteResponse:
+  type: object
+  properties:
+    is_favorited:
+      type: boolean
+      description: Whether the item is favorited by the user
