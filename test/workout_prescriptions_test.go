@@ -9,6 +9,11 @@ import (
 func TestWorkoutPrescriptionEndpoints(t *testing.T) {
 	e := SetupTestApp(t)
 
+	t.Run("Workout Fields", func(t *testing.T) {
+		CleanDatabase(t)
+		testWorkoutFields(t, e)
+	})
+
 	t.Run("Basic Workout and Prescription Flow", func(t *testing.T) {
 		CleanDatabase(t)
 		testBasicWorkoutPrescriptionFlow(t, e)
@@ -1537,5 +1542,205 @@ func testIsometricHoldSupport(t *testing.T, e *httpexpect.Expect) {
 		// Check first group has hold_seconds preserved
 		firstGroupExercises := groups.Value(0).Object().Value("exercises").Array()
 		firstGroupExercises.Value(0).Object().Value("hold_seconds").Number().IsEqual(60)
+	})
+}
+
+func testWorkoutFields(t *testing.T, e *httpexpect.Expect) {
+	// Create user
+	userToken := createTestUserAndGetToken(e, "user@example.com", "UserPass123!", "Test", "User")
+
+	var workoutID string
+
+	t.Run("Create Workout With All Fields", func(t *testing.T) {
+		response := e.POST("/api/v1/workouts/").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"title":              "Full Body Workout",
+				"description":        "A complete full body workout routine",
+				"difficulty_level":   "intermediate",
+				"estimated_duration": 45,
+				"is_template":        true,
+				"visibility":         "public",
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		response.Value("message").String().Contains("created")
+
+		data := response.Value("data").Object()
+		workoutID = data.Value("id").String().Raw()
+		data.Value("title").String().IsEqual("Full Body Workout")
+		data.Value("description").String().IsEqual("A complete full body workout routine")
+		data.Value("difficulty_level").String().IsEqual("intermediate")
+		data.Value("estimated_duration").Number().IsEqual(45)
+		data.Value("is_template").Boolean().IsTrue()
+		data.Value("visibility").String().IsEqual("public")
+	})
+
+	t.Run("Get Workout Returns All Fields", func(t *testing.T) {
+		response := e.GET("/api/v1/workouts/"+workoutID).
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		data := response.Value("data").Object()
+		data.Value("id").String().IsEqual(workoutID)
+		data.Value("title").String().IsEqual("Full Body Workout")
+		data.Value("difficulty_level").String().IsEqual("intermediate")
+		data.Value("estimated_duration").Number().IsEqual(45)
+		data.Value("is_template").Boolean().IsTrue()
+		data.Value("visibility").String().IsEqual("public")
+	})
+
+	t.Run("Update Workout Fields", func(t *testing.T) {
+		response := e.PUT("/api/v1/workouts/"+workoutID).
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"difficulty_level":   "advanced",
+				"estimated_duration": 60,
+				"is_template":        false,
+				"visibility":         "private",
+			}).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		data := response.Value("data").Object()
+		data.Value("difficulty_level").String().IsEqual("advanced")
+		data.Value("estimated_duration").Number().IsEqual(60)
+		data.Value("is_template").Boolean().IsFalse()
+		data.Value("visibility").String().IsEqual("private")
+	})
+
+	t.Run("Create Workout With Minimal Fields", func(t *testing.T) {
+		response := e.POST("/api/v1/workouts/").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"title": "Quick Workout",
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+
+		data := response.Value("data").Object()
+		data.Value("title").String().IsEqual("Quick Workout")
+		data.Value("visibility").String().IsEqual("private") // default value
+		data.Value("is_template").Boolean().IsFalse()        // default value
+	})
+
+	t.Run("Invalid Difficulty Level Returns Error", func(t *testing.T) {
+		response := e.POST("/api/v1/workouts/").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"title":            "Test Workout",
+				"difficulty_level": "invalid_level",
+			}).
+			Expect().
+			Status(400).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsFalse()
+	})
+
+	t.Run("Invalid Visibility Returns Error", func(t *testing.T) {
+		response := e.POST("/api/v1/workouts/").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"title":      "Test Workout",
+				"visibility": "invalid_visibility",
+			}).
+			Expect().
+			Status(400).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsFalse()
+	})
+
+	t.Run("Estimated Duration Too High Returns Error", func(t *testing.T) {
+		response := e.POST("/api/v1/workouts/").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"title":              "Test Workout",
+				"estimated_duration": 700, // max is 600
+			}).
+			Expect().
+			Status(400).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsFalse()
+	})
+
+	t.Run("Duplicate Workout Copies All Fields", func(t *testing.T) {
+		// First create a workout with all fields
+		createResponse := e.POST("/api/v1/workouts/").
+			WithHeader("Authorization", "Bearer "+userToken).
+			WithJSON(map[string]interface{}{
+				"title":              "Original Workout",
+				"description":        "Original description",
+				"difficulty_level":   "beginner",
+				"estimated_duration": 30,
+				"is_template":        true,
+				"visibility":         "friends",
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		originalID := createResponse.Value("data").Object().Value("id").String().Raw()
+
+		// Duplicate the workout
+		duplicateResponse := e.POST("/api/v1/workouts/"+originalID+"/duplicate").
+			WithHeader("Authorization", "Bearer "+userToken).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		duplicateResponse.Value("success").Boolean().IsTrue()
+
+		data := duplicateResponse.Value("data").Object()
+		data.Value("title").String().IsEqual("Original Workout (Copy)")
+		data.Value("description").String().IsEqual("Original description")
+		data.Value("difficulty_level").String().IsEqual("beginner")
+		data.Value("estimated_duration").Number().IsEqual(30)
+		data.Value("is_template").Boolean().IsTrue()
+		data.Value("visibility").String().IsEqual("friends")
+	})
+
+	t.Run("Create Workout With Each Difficulty Level", func(t *testing.T) {
+		levels := []string{"beginner", "intermediate", "advanced"}
+
+		for _, level := range levels {
+			response := e.POST("/api/v1/workouts/").
+				WithHeader("Authorization", "Bearer "+userToken).
+				WithJSON(map[string]interface{}{
+					"title":            level + " Workout",
+					"difficulty_level": level,
+				}).
+				Expect().
+				Status(201).
+				JSON().
+				Object()
+
+			response.Value("success").Boolean().IsTrue()
+			response.Value("data").Object().Value("difficulty_level").String().IsEqual(level)
+		}
 	})
 }

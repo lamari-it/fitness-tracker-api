@@ -13,15 +13,21 @@ import (
 )
 
 type CreateWorkoutRequest struct {
-	Title       string `json:"title" binding:"required,min=1,max=200"`
-	Description string `json:"description" binding:"omitempty,max=1000"`
-	Visibility  string `json:"visibility" binding:"omitempty,oneof=public private friends"`
+	Title             string `json:"title" binding:"required,min=1,max=200"`
+	Description       string `json:"description" binding:"omitempty,max=1000"`
+	DifficultyLevel   string `json:"difficulty_level" binding:"omitempty,oneof=beginner intermediate advanced"`
+	EstimatedDuration *int   `json:"estimated_duration" binding:"omitempty,min=1,max=600"`
+	IsTemplate        bool   `json:"is_template"`
+	Visibility        string `json:"visibility" binding:"omitempty,oneof=public private friends"`
 }
 
 type UpdateWorkoutRequest struct {
-	Title       string `json:"title" binding:"omitempty,min=1,max=200"`
-	Description string `json:"description" binding:"omitempty,max=1000"`
-	Visibility  string `json:"visibility" binding:"omitempty,oneof=public private friends"`
+	Title             string `json:"title" binding:"omitempty,min=1,max=200"`
+	Description       string `json:"description" binding:"omitempty,max=1000"`
+	DifficultyLevel   string `json:"difficulty_level" binding:"omitempty,oneof=beginner intermediate advanced"`
+	EstimatedDuration *int   `json:"estimated_duration" binding:"omitempty,min=1,max=600"`
+	IsTemplate        *bool  `json:"is_template"`
+	Visibility        string `json:"visibility" binding:"omitempty,oneof=public private friends"`
 }
 
 func CreateWorkout(c *gin.Context) {
@@ -37,10 +43,13 @@ func CreateWorkout(c *gin.Context) {
 	}
 
 	workout := models.Workout{
-		UserID:      userUUID,
-		Title:       req.Title,
-		Description: req.Description,
-		Visibility:  req.Visibility,
+		UserID:            userUUID,
+		Title:             req.Title,
+		Description:       req.Description,
+		DifficultyLevel:   req.DifficultyLevel,
+		EstimatedDuration: req.EstimatedDuration,
+		IsTemplate:        req.IsTemplate,
+		Visibility:        req.Visibility,
 	}
 
 	if workout.Visibility == "" {
@@ -128,14 +137,17 @@ func GetWorkout(c *gin.Context) {
 	models.PopulatePrescriptionWeights(groupedPrescriptions, workout.Prescriptions, preferredWeightUnit)
 
 	response := map[string]interface{}{
-		"id":            workout.ID,
-		"user_id":       workout.UserID,
-		"title":         workout.Title,
-		"description":   workout.Description,
-		"visibility":    workout.Visibility,
-		"created_at":    workout.CreatedAt,
-		"updated_at":    workout.UpdatedAt,
-		"prescriptions": groupedPrescriptions,
+		"id":                 workout.ID,
+		"user_id":            workout.UserID,
+		"title":              workout.Title,
+		"description":        workout.Description,
+		"difficulty_level":   workout.DifficultyLevel,
+		"estimated_duration": workout.EstimatedDuration,
+		"is_template":        workout.IsTemplate,
+		"visibility":         workout.Visibility,
+		"created_at":         workout.CreatedAt,
+		"updated_at":         workout.UpdatedAt,
+		"prescriptions":      groupedPrescriptions,
 	}
 
 	utils.SuccessResponse(c, "Workout fetched successfully.", response)
@@ -170,6 +182,15 @@ func UpdateWorkout(c *gin.Context) {
 	}
 	if req.Description != "" {
 		updates["description"] = req.Description
+	}
+	if req.DifficultyLevel != "" {
+		updates["difficulty_level"] = req.DifficultyLevel
+	}
+	if req.EstimatedDuration != nil {
+		updates["estimated_duration"] = req.EstimatedDuration
+	}
+	if req.IsTemplate != nil {
+		updates["is_template"] = *req.IsTemplate
 	}
 	if req.Visibility != "" {
 		updates["visibility"] = req.Visibility
@@ -808,10 +829,13 @@ func DuplicateWorkout(c *gin.Context) {
 	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		// Create a new workout
 		newWorkout = models.Workout{
-			UserID:      userUUID,
-			Title:       originalWorkout.Title + " (Copy)",
-			Description: originalWorkout.Description,
-			Visibility:  originalWorkout.Visibility,
+			UserID:            userUUID,
+			Title:             originalWorkout.Title + " (Copy)",
+			Description:       originalWorkout.Description,
+			DifficultyLevel:   originalWorkout.DifficultyLevel,
+			EstimatedDuration: originalWorkout.EstimatedDuration,
+			IsTemplate:        originalWorkout.IsTemplate,
+			Visibility:        originalWorkout.Visibility,
 		}
 
 		if err := tx.Create(&newWorkout).Error; err != nil {
@@ -887,14 +911,17 @@ func DuplicateWorkout(c *gin.Context) {
 	models.PopulatePrescriptionWeights(groupedPrescriptions, newWorkout.Prescriptions, preferredWeightUnit)
 
 	response := map[string]interface{}{
-		"id":            newWorkout.ID,
-		"user_id":       newWorkout.UserID,
-		"title":         newWorkout.Title,
-		"description":   newWorkout.Description,
-		"visibility":    newWorkout.Visibility,
-		"created_at":    newWorkout.CreatedAt,
-		"updated_at":    newWorkout.UpdatedAt,
-		"prescriptions": groupedPrescriptions,
+		"id":                 newWorkout.ID,
+		"user_id":            newWorkout.UserID,
+		"title":              newWorkout.Title,
+		"description":        newWorkout.Description,
+		"difficulty_level":   newWorkout.DifficultyLevel,
+		"estimated_duration": newWorkout.EstimatedDuration,
+		"is_template":        newWorkout.IsTemplate,
+		"visibility":         newWorkout.Visibility,
+		"created_at":         newWorkout.CreatedAt,
+		"updated_at":         newWorkout.UpdatedAt,
+		"prescriptions":      groupedPrescriptions,
 	}
 
 	utils.CreatedResponse(c, "Workout duplicated successfully.", response)

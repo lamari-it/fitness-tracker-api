@@ -12,7 +12,7 @@
     parameters:
       - $ref: '../components/parameters.yaml#/PageParam'
       - $ref: '../components/parameters.yaml#/PageSizeParam'
-      - name: difficulty
+      - name: difficulty_level
         in: query
         schema:
           type: string
@@ -21,10 +21,11 @@
         in: query
         schema:
           type: boolean
-      - name: is_public
+      - name: visibility
         in: query
         schema:
-          type: boolean
+          type: string
+          enum: [private, public, friends]
       - name: search
         in: query
         schema:
@@ -226,7 +227,34 @@
     tags:
       - Workouts
     summary: Create prescription group
-    description: Add a prescription group to a workout
+    description: |
+      Add a prescription group to a workout. Different types of prescription groups support different training methodologies.
+
+      ## Prescription Types
+
+      ### Straight Sets
+      Traditional sets where you perform all sets of one exercise before moving to the next.
+      Best for: Strength training, building muscle with focused effort on single exercises.
+
+      ### Superset
+      Two exercises performed back-to-back with no rest between them.
+      Best for: Time efficiency, muscle pump, antagonist muscle pairing.
+
+      ### Circuit
+      Multiple exercises performed in sequence, then repeated for multiple rounds.
+      Best for: Cardio conditioning, full-body workouts, fat loss.
+
+      ### Giant Set
+      Three or more exercises targeting the same muscle group, performed back-to-back.
+      Best for: Muscle hypertrophy, metabolic stress, advanced training.
+
+      ### Drop Set
+      Same exercise repeated with decreasing weight and no rest between drops.
+      Best for: Muscle fatigue, hypertrophy, breaking through plateaus.
+
+      ### Warmup
+      Light exercises to prepare the body for the main workout.
+      Best for: Injury prevention, mobility, activating target muscles.
     operationId: createPrescriptionGroup
     security:
       - bearerAuth: []
@@ -238,6 +266,174 @@
         application/json:
           schema:
             $ref: '../components/schemas/workout.yaml#/CreatePrescriptionGroupRequest'
+          examples:
+            straight_sets:
+              summary: Straight Sets - Bench Press
+              description: Traditional 4 sets of 8 reps bench press with 120 seconds rest
+              value:
+                type: "straight"
+                group_order: 1
+                group_name: "Bench Press"
+                rest_between_sets: 120
+                exercises:
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440001"
+                    exercise_order: 1
+                    sets: 4
+                    reps: 8
+                    target_weight:
+                      weight_value: 60.0
+                      weight_unit: "kg"
+            superset:
+              summary: Superset - Chest and Back
+              description: Antagonist superset pairing bench press with bent-over rows
+              value:
+                type: "superset"
+                group_order: 2
+                group_name: "Chest & Back Superset"
+                group_rounds: 3
+                rest_between_sets: 90
+                exercises:
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440001"
+                    exercise_order: 1
+                    sets: 3
+                    reps: 10
+                    target_weight:
+                      weight_value: 50.0
+                      weight_unit: "kg"
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440002"
+                    exercise_order: 2
+                    sets: 3
+                    reps: 10
+                    target_weight:
+                      weight_value: 40.0
+                      weight_unit: "kg"
+            circuit:
+              summary: Circuit - Full Body
+              description: Full body circuit with 4 exercises, 4 rounds, minimal rest
+              value:
+                type: "circuit"
+                group_order: 3
+                group_name: "Full Body Burner"
+                group_rounds: 4
+                rest_between_sets: 30
+                group_notes: "Complete all exercises in sequence, rest 30 seconds between rounds"
+                exercises:
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440001"
+                    exercise_order: 1
+                    sets: 1
+                    reps: 12
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440002"
+                    exercise_order: 2
+                    sets: 1
+                    reps: 12
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440003"
+                    exercise_order: 3
+                    sets: 1
+                    reps: 15
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440004"
+                    exercise_order: 4
+                    sets: 1
+                    reps: 20
+            giant_set:
+              summary: Giant Set - Shoulder Destroyer
+              description: Four shoulder exercises performed back-to-back for maximum pump
+              value:
+                type: "giant_set"
+                group_order: 4
+                group_name: "Shoulder Giant Set"
+                group_rounds: 3
+                rest_between_sets: 120
+                group_notes: "No rest between exercises, 2 min rest after completing all 4"
+                exercises:
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440010"
+                    exercise_order: 1
+                    sets: 1
+                    reps: 10
+                    target_weight:
+                      weight_value: 20.0
+                      weight_unit: "kg"
+                    notes: "Overhead Press"
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440011"
+                    exercise_order: 2
+                    sets: 1
+                    reps: 12
+                    target_weight:
+                      weight_value: 8.0
+                      weight_unit: "kg"
+                    notes: "Lateral Raises"
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440012"
+                    exercise_order: 3
+                    sets: 1
+                    reps: 12
+                    target_weight:
+                      weight_value: 8.0
+                      weight_unit: "kg"
+                    notes: "Front Raises"
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440013"
+                    exercise_order: 4
+                    sets: 1
+                    reps: 15
+                    target_weight:
+                      weight_value: 6.0
+                      weight_unit: "kg"
+                    notes: "Rear Delt Flyes"
+            drop_set:
+              summary: Drop Set - Bicep Curls
+              description: Three drops with decreasing weight, no rest between drops
+              value:
+                type: "drop_set"
+                group_order: 5
+                group_name: "Bicep Curl Drop Set"
+                group_notes: "Perform to failure at each weight, immediately drop weight and continue"
+                exercises:
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440020"
+                    exercise_order: 1
+                    reps: 8
+                    target_weight:
+                      weight_value: 15.0
+                      weight_unit: "kg"
+                    notes: "Heavy - 8 reps"
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440020"
+                    exercise_order: 2
+                    reps: 10
+                    target_weight:
+                      weight_value: 10.0
+                      weight_unit: "kg"
+                    notes: "Medium - 10 reps"
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440020"
+                    exercise_order: 3
+                    reps: 12
+                    target_weight:
+                      weight_value: 5.0
+                      weight_unit: "kg"
+                    notes: "Light - 12 reps to failure"
+            warmup:
+              summary: Warmup - Upper Body Prep
+              description: Light warmup exercises before main workout
+              value:
+                type: "warmup"
+                group_order: 1
+                group_name: "Upper Body Warmup"
+                group_notes: "Light weight, focus on range of motion and activation"
+                exercises:
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440030"
+                    exercise_order: 1
+                    sets: 2
+                    reps: 15
+                    notes: "Arm Circles"
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440031"
+                    exercise_order: 2
+                    sets: 2
+                    reps: 10
+                    target_weight:
+                      weight_value: 5.0
+                      weight_unit: "kg"
+                    notes: "Light Shoulder Press"
+                  - exercise_id: "550e8400-e29b-41d4-a716-446655440032"
+                    exercise_order: 3
+                    sets: 1
+                    hold_seconds: 30
+                    notes: "Plank Hold - Core Activation"
     responses:
       '201':
         description: Prescription group created

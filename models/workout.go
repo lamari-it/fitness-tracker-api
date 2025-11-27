@@ -24,11 +24,14 @@ type WorkoutPlan struct {
 }
 
 type Workout struct {
-	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	UserID      uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
-	Title       string    `gorm:"type:text;not null" json:"title"`
-	Description string    `gorm:"type:text" json:"description"`
-	Visibility  string    `gorm:"type:varchar(20);default:'private'" json:"visibility"`
+	ID                uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	UserID            uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
+	Title             string    `gorm:"type:text;not null" json:"title"`
+	Description       string    `gorm:"type:text" json:"description"`
+	DifficultyLevel   string    `gorm:"type:varchar(20)" json:"difficulty_level"` // beginner, intermediate, advanced
+	EstimatedDuration *int      `gorm:"type:int" json:"estimated_duration"`       // duration in minutes
+	IsTemplate        bool      `gorm:"default:false" json:"is_template"`         // save as template
+	Visibility        string    `gorm:"type:varchar(20);default:'private'" json:"visibility"`
 
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`

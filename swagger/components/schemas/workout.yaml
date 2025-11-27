@@ -9,19 +9,21 @@ WorkoutResponse:
     user_id:
       type: string
       format: uuid
-    name:
+    title:
       type: string
     description:
       type: string
-    difficulty:
+    difficulty_level:
       type: string
       enum: [beginner, intermediate, advanced]
-    estimated_duration_mins:
+    estimated_duration:
       type: integer
+      description: Duration in minutes
     is_template:
       type: boolean
-    is_public:
-      type: boolean
+    visibility:
+      type: string
+      enum: [private, public, friends]
     prescriptions:
       type: array
       items:
@@ -36,50 +38,54 @@ WorkoutResponse:
 CreateWorkoutRequest:
   type: object
   required:
-    - name
+    - title
   properties:
-    name:
+    title:
       type: string
       minLength: 1
-      maxLength: 100
+      maxLength: 200
     description:
       type: string
       maxLength: 1000
-    difficulty:
+    difficulty_level:
       type: string
       enum: [beginner, intermediate, advanced]
-    estimated_duration_mins:
+    estimated_duration:
       type: integer
       minimum: 1
-      maximum: 480
+      maximum: 600
+      description: Duration in minutes
     is_template:
       type: boolean
       default: false
-    is_public:
-      type: boolean
-      default: false
+    visibility:
+      type: string
+      enum: [private, public, friends]
+      default: private
 
 UpdateWorkoutRequest:
   type: object
   properties:
-    name:
+    title:
       type: string
       minLength: 1
-      maxLength: 100
+      maxLength: 200
     description:
       type: string
       maxLength: 1000
-    difficulty:
+    difficulty_level:
       type: string
       enum: [beginner, intermediate, advanced]
-    estimated_duration_mins:
+    estimated_duration:
       type: integer
       minimum: 1
-      maximum: 480
+      maximum: 600
+      description: Duration in minutes
     is_template:
       type: boolean
-    is_public:
-      type: boolean
+    visibility:
+      type: string
+      enum: [private, public, friends]
 
 WorkoutPrescriptionResponse:
   type: object
@@ -129,63 +135,99 @@ WorkoutPrescriptionResponse:
 CreatePrescriptionGroupRequest:
   type: object
   required:
+    - type
+    - group_order
     - exercises
   properties:
-    group_type:
+    type:
       type: string
-      enum: [standard, superset, circuit, drop_set, giant_set]
-      default: standard
+      enum: [straight, superset, circuit, giant_set, drop_set, pyramid, rest_pause, amrap, emom, hiit, warmup, cooldown]
+      description: |
+        The type of prescription group:
+        - **straight**: Traditional sets with rest between each set (e.g., 3x10 bench press)
+        - **superset**: Two exercises performed back-to-back with no rest between them
+        - **circuit**: Multiple exercises performed in sequence, repeated for rounds
+        - **giant_set**: Three or more exercises performed back-to-back targeting same muscle group
+        - **drop_set**: Same exercise repeated with decreasing weight and no rest
+        - **warmup**: Light exercises to prepare for the workout
+        - **pyramid**: Sets with progressively increasing then decreasing weight
+        - **rest_pause**: Brief rest within a set to extend the set
+        - **amrap**: As Many Rounds/Reps As Possible in a time limit
+        - **emom**: Every Minute On the Minute
+        - **hiit**: High-Intensity Interval Training
+        - **cooldown**: Light exercises to end the workout
+    group_order:
+      type: integer
+      minimum: 1
+      description: The order of this group within the workout
+    group_name:
+      type: string
+      description: Optional name for the group (e.g., "Chest Superset", "Leg Circuit")
+    group_rounds:
+      type: integer
+      minimum: 1
+      description: Number of rounds for circuit/superset types
+    rest_between_sets:
+      type: integer
+      minimum: 0
+      description: Rest time in seconds between sets or rounds
+    group_notes:
+      type: string
+      maxLength: 500
+      description: Notes for the entire group
     exercises:
       type: array
       minItems: 1
       items:
         $ref: '#/PrescriptionExerciseInput'
-    rest_seconds:
-      type: integer
-      minimum: 0
-      default: 60
-    notes:
-      type: string
-      maxLength: 500
 
 PrescriptionExerciseInput:
   type: object
   required:
     - exercise_id
+    - exercise_order
   properties:
     exercise_id:
       type: string
       format: uuid
+      description: The ID of the exercise
+    exercise_order:
+      type: integer
+      minimum: 1
+      description: Order of exercise within the group
     sets:
       type: integer
       minimum: 1
       default: 3
-    reps_min:
+      description: Number of sets
+    reps:
       type: integer
       minimum: 1
-    reps_max:
+      description: Number of reps per set (use this OR hold_seconds, not both)
+    hold_seconds:
       type: integer
       minimum: 1
-    duration_seconds:
-      type: integer
-      minimum: 1
-    is_timed:
-      type: boolean
-      default: false
-    rest_seconds:
-      type: integer
-      minimum: 0
-    weight_kg:
-      type: number
-      format: float
-    rpe_target:
-      type: number
-      format: float
-      minimum: 1
-      maximum: 10
+      description: Duration in seconds for isometric holds (use this OR reps, not both)
+    target_weight:
+      type: object
+      description: Target weight for the exercise
+      properties:
+        weight_value:
+          type: number
+          format: float
+          description: The weight value
+        weight_unit:
+          type: string
+          enum: [kg, lbs]
+          description: The unit of weight
+    rpe_value_id:
+      type: string
+      format: uuid
+      description: ID of the RPE value (from global RPE scale)
     notes:
       type: string
       maxLength: 500
+      description: Notes specific to this exercise
 
 ReorderPrescriptionGroupsRequest:
   type: object

@@ -3019,7 +3019,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Morning Workout\",\n  \"description\": \"Quick morning routine\",\n  \"visibility\": \"private\"\n}"
+              "raw": "{\n  \"title\": \"Morning Workout\",\n  \"description\": \"Quick morning routine\",\n  \"difficulty_level\": \"intermediate\",\n  \"estimated_duration\": 45,\n  \"is_template\": false,\n  \"visibility\": \"private\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/workouts",
@@ -3164,7 +3164,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Morning Workout\",\n  \"description\": \"Enhanced morning routine\",\n  \"visibility\": \"friends\"\n}"
+              "raw": "{\n  \"title\": \"Updated Morning Workout\",\n  \"description\": \"Enhanced morning routine\",\n  \"difficulty_level\": \"advanced\",\n  \"estimated_duration\": 60,\n  \"is_template\": true,\n  \"visibility\": \"friends\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/workouts/{{workout_id}}",
