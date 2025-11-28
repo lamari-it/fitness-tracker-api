@@ -14,18 +14,18 @@
     security:
       - bearerAuth: []
     parameters:
-      - name: latitude
+      - name: lat
         in: query
-        description: Latitude coordinate for radius search (requires longitude and radius_km)
+        description: Latitude coordinate for radius search (requires lng)
         schema:
           type: number
           format: float
           minimum: -90
           maximum: 90
           example: 40.7128
-      - name: longitude
+      - name: lng
         in: query
-        description: Longitude coordinate for radius search (requires latitude and radius_km)
+        description: Longitude coordinate for radius search (requires lat)
         schema:
           type: number
           format: float
@@ -34,16 +34,17 @@
           example: -74.0060
       - name: radius_km
         in: query
-        description: Search radius in kilometers (requires latitude and longitude)
+        description: Search radius in kilometers (requires lat and lng). Defaults to 25km if not specified.
         schema:
           type: number
           format: float
           minimum: 0.1
           maximum: 500
+          default: 25
           example: 25
       - name: country_code
         in: query
-        description: ISO 3166-1 alpha-2 country code for structured search
+        description: ISO 3166-1 alpha-2 country code for structured search (ignored if lat/lng provided)
         schema:
           type: string
           minLength: 2
@@ -51,39 +52,45 @@
           example: US
       - name: region
         in: query
-        description: State, province, or region for structured search
+        description: State, province, or region for structured search (ignored if lat/lng provided)
         schema:
           type: string
           maxLength: 100
           example: NY
       - name: city
         in: query
-        description: City name for structured search
+        description: City name for structured search (ignored if lat/lng provided)
         schema:
           type: string
           maxLength: 100
           example: New York
       - name: district
         in: query
-        description: District, neighborhood, or borough for structured search
+        description: District, neighborhood, or borough for structured search (ignored if lat/lng provided)
         schema:
           type: string
           maxLength: 100
           example: Manhattan
       - name: postal_code
         in: query
-        description: Postal or ZIP code for structured search
+        description: Postal or ZIP code for structured search (ignored if lat/lng provided)
         schema:
           type: string
           maxLength: 20
           example: "10001"
       - name: q
         in: query
-        description: Free-text search query (searches across all location fields)
+        description: Free-text search query (searches across all location fields and names). Lowest priority - ignored if lat/lng or structured params provided.
         schema:
           type: string
           maxLength: 200
           example: New York
+      - name: is_looking_for_trainer
+        in: query
+        description: Filter users by whether they are looking for a trainer
+        schema:
+          type: string
+          enum: ["true", "false"]
       - name: page
         in: query
         description: Page number for pagination
@@ -98,7 +105,7 @@
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
+          default: 10
     responses:
       '200':
         description: Successfully retrieved users
@@ -148,18 +155,18 @@
     security:
       - bearerAuth: []
     parameters:
-      - name: latitude
+      - name: lat
         in: query
-        description: Latitude coordinate for radius search (requires longitude and radius_km)
+        description: Latitude coordinate for radius search (requires lng)
         schema:
           type: number
           format: float
           minimum: -90
           maximum: 90
           example: 40.7128
-      - name: longitude
+      - name: lng
         in: query
-        description: Longitude coordinate for radius search (requires latitude and longitude)
+        description: Longitude coordinate for radius search (requires lat)
         schema:
           type: number
           format: float
@@ -168,16 +175,17 @@
           example: -74.0060
       - name: radius_km
         in: query
-        description: Search radius in kilometers (requires latitude and longitude)
+        description: Search radius in kilometers (requires lat and lng). Defaults to 25km if not specified.
         schema:
           type: number
           format: float
           minimum: 0.1
           maximum: 500
+          default: 25
           example: 25
       - name: country_code
         in: query
-        description: ISO 3166-1 alpha-2 country code for structured search
+        description: ISO 3166-1 alpha-2 country code for structured search (ignored if lat/lng provided)
         schema:
           type: string
           minLength: 2
@@ -185,65 +193,68 @@
           example: US
       - name: region
         in: query
-        description: State, province, or region for structured search
+        description: State, province, or region for structured search (ignored if lat/lng provided)
         schema:
           type: string
           maxLength: 100
           example: NY
       - name: city
         in: query
-        description: City name for structured search
+        description: City name for structured search (ignored if lat/lng provided)
         schema:
           type: string
           maxLength: 100
           example: New York
       - name: district
         in: query
-        description: District, neighborhood, or borough for structured search
+        description: District, neighborhood, or borough for structured search (ignored if lat/lng provided)
         schema:
           type: string
           maxLength: 100
           example: Manhattan
       - name: postal_code
         in: query
-        description: Postal or ZIP code for structured search
+        description: Postal or ZIP code for structured search (ignored if lat/lng provided)
         schema:
           type: string
           maxLength: 20
           example: "10001"
       - name: q
         in: query
-        description: Free-text search query (searches across all location fields)
+        description: Free-text search query (searches across all location fields and names). Lowest priority - ignored if lat/lng or structured params provided.
         schema:
           type: string
           maxLength: 200
           example: New York
-      - name: specialty_ids
+      - name: specialty
         in: query
-        description: Filter by trainer specialty IDs (comma-separated UUIDs)
+        description: Filter by specialty name (partial match)
         schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        style: form
-        explode: false
-      - name: min_hourly_rate
+          type: string
+          maxLength: 100
+          example: Strength
+      - name: is_looking_for_clients
         in: query
-        description: Minimum hourly rate filter
+        description: Filter trainers by whether they are looking for clients
         schema:
-          type: number
-          format: float
-          minimum: 0
-          example: 50
-      - name: max_hourly_rate
+          type: string
+          enum: ["true", "false"]
+      - name: min_rating
         in: query
-        description: Maximum hourly rate filter
+        description: Minimum average rating filter (0-5)
         schema:
           type: number
           format: float
           minimum: 0
-          example: 150
+          maximum: 5
+          example: 4.0
+      - name: sort_by
+        in: query
+        description: Sort results by specified field
+        schema:
+          type: string
+          enum: ["distance", "rate", "recent"]
+          default: distance
       - name: page
         in: query
         description: Page number for pagination
@@ -258,7 +269,7 @@
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
+          default: 10
     responses:
       '200':
         description: Successfully retrieved trainers

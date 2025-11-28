@@ -2,6 +2,7 @@ package database
 
 import (
 	"lamari-fit-api/models"
+	"lamari-fit-api/utils"
 	"log"
 	"strings"
 
@@ -2751,6 +2752,294 @@ func SeedGlobalRPEScale() {
 	}
 }
 
+// SeedSearchableUsers creates 50 public users with locations for search testing
+func SeedSearchableUsers() {
+	log.Println("Seeding 50 searchable users...")
+
+	// Helper to create string pointer
+	strPtr := func(s string) *string { return &s }
+	floatPtr := func(f float64) *float64 { return &f }
+
+	// Diverse user data with global locations
+	userData := []struct {
+		FirstName           string
+		LastName            string
+		Email               string
+		Bio                 string
+		IsLookingForTrainer bool
+		City                string
+		Region              string
+		CountryCode         string
+		Latitude            float64
+		Longitude           float64
+	}{
+		// US - East Coast
+		{"Emma", "Johnson", "emma.johnson@example.com", "Fitness enthusiast looking to build muscle and improve overall health.", true, "New York", "NY", "US", 40.7128, -74.0060},
+		{"Michael", "Williams", "michael.williams@example.com", "Marathon runner seeking strength training guidance.", true, "Boston", "MA", "US", 42.3601, -71.0589},
+		{"Sarah", "Brown", "sarah.brown@example.com", "Yoga practitioner wanting to add weight training.", true, "Philadelphia", "PA", "US", 39.9526, -75.1652},
+		{"James", "Davis", "james.davis@example.com", "Former athlete getting back into shape.", true, "Washington", "DC", "US", 38.9072, -77.0369},
+		{"Jennifer", "Miller", "jennifer.miller@example.com", "New mom looking for postpartum fitness guidance.", true, "Miami", "FL", "US", 25.7617, -80.1918},
+		{"Robert", "Wilson", "robert.wilson@example.com", "Senior looking for mobility and strength work.", false, "Atlanta", "GA", "US", 33.7490, -84.3880},
+		{"Lisa", "Moore", "lisa.moore@example.com", "Busy professional needing efficient workouts.", true, "Charlotte", "NC", "US", 35.2271, -80.8431},
+		{"David", "Taylor", "david.taylor@example.com", "Bodybuilding competitor in off-season.", false, "Orlando", "FL", "US", 28.5383, -81.3792},
+
+		// US - West Coast
+		{"Emily", "Anderson", "emily.anderson@example.com", "CrossFit athlete looking to improve Olympic lifts.", true, "Los Angeles", "CA", "US", 34.0522, -118.2437},
+		{"Christopher", "Thomas", "christopher.thomas@example.com", "Tech worker combating sedentary lifestyle.", true, "San Francisco", "CA", "US", 37.7749, -122.4194},
+		{"Ashley", "Jackson", "ashley.jackson@example.com", "Triathlete seeking performance optimization.", true, "Seattle", "WA", "US", 47.6062, -122.3321},
+		{"Matthew", "White", "matthew.white@example.com", "Surfer wanting functional fitness training.", false, "San Diego", "CA", "US", 32.7157, -117.1611},
+		{"Amanda", "Harris", "amanda.harris@example.com", "Hiking enthusiast building endurance.", true, "Portland", "OR", "US", 45.5152, -122.6784},
+		{"Joshua", "Martin", "joshua.martin@example.com", "Basketball player improving vertical leap.", true, "Phoenix", "AZ", "US", 33.4484, -112.0740},
+		{"Stephanie", "Garcia", "stephanie.garcia@example.com", "Dancer adding strength training.", true, "Las Vegas", "NV", "US", 36.1699, -115.1398},
+		{"Andrew", "Martinez", "andrew.martinez@example.com", "MMA fighter in training camp.", false, "Denver", "CO", "US", 39.7392, -104.9903},
+
+		// US - Central
+		{"Nicole", "Robinson", "nicole.robinson@example.com", "Runner transitioning to ultra-marathons.", true, "Chicago", "IL", "US", 41.8781, -87.6298},
+		{"Daniel", "Clark", "daniel.clark@example.com", "Powerlifter focusing on competition prep.", false, "Houston", "TX", "US", 29.7604, -95.3698},
+		{"Michelle", "Rodriguez", "michelle.rodriguez@example.com", "Weight loss journey, down 50lbs so far.", true, "Dallas", "TX", "US", 32.7767, -96.7970},
+		{"Kevin", "Lewis", "kevin.lewis@example.com", "Golf enthusiast improving core strength.", true, "Austin", "TX", "US", 30.2672, -97.7431},
+		{"Rachel", "Lee", "rachel.lee@example.com", "Swimmer cross-training for competitions.", true, "Minneapolis", "MN", "US", 44.9778, -93.2650},
+		{"Justin", "Walker", "justin.walker@example.com", "Football player in off-season training.", false, "Kansas City", "MO", "US", 39.0997, -94.5786},
+
+		// UK
+		{"Charlotte", "Hall", "charlotte.hall@example.com", "London professional seeking work-life balance through fitness.", true, "London", "England", "GB", 51.5074, -0.1278},
+		{"Oliver", "Young", "oliver.young@example.com", "Rugby player improving conditioning.", false, "Manchester", "England", "GB", 53.4808, -2.2426},
+		{"Sophie", "Allen", "sophie.allen@example.com", "Pilates instructor adding weight training.", true, "Birmingham", "England", "GB", 52.4862, -1.8904},
+		{"Harry", "King", "harry.king@example.com", "Cricket player building explosive power.", true, "Leeds", "England", "GB", 53.8008, -1.5491},
+		{"Grace", "Wright", "grace.wright@example.com", "Netball player improving agility.", true, "Glasgow", "Scotland", "GB", 55.8642, -4.2518},
+		{"Jack", "Scott", "jack.scott@example.com", "Cyclist focusing on leg strength.", false, "Edinburgh", "Scotland", "GB", 55.9533, -3.1883},
+
+		// Canada
+		{"Olivia", "Green", "olivia.green@example.com", "Hockey player building off-ice strength.", true, "Toronto", "ON", "CA", 43.6532, -79.3832},
+		{"Ethan", "Adams", "ethan.adams@example.com", "Skier preparing for winter season.", true, "Vancouver", "BC", "CA", 49.2827, -123.1207},
+		{"Ava", "Nelson", "ava.nelson@example.com", "Figure skater improving flexibility and strength.", true, "Montreal", "QC", "CA", 45.5017, -73.5673},
+		{"Noah", "Carter", "noah.carter@example.com", "Lacrosse player building endurance.", false, "Calgary", "AB", "CA", 51.0447, -114.0719},
+
+		// Australia
+		{"Mia", "Mitchell", "mia.mitchell@example.com", "Beach volleyball player training year-round.", true, "Sydney", "NSW", "AU", -33.8688, 151.2093},
+		{"Liam", "Roberts", "liam.roberts@example.com", "AFL player in pre-season training.", false, "Melbourne", "VIC", "AU", -37.8136, 144.9631},
+		{"Isabella", "Turner", "isabella.turner@example.com", "Swimmer training for nationals.", true, "Brisbane", "QLD", "AU", -27.4698, 153.0251},
+		{"Mason", "Phillips", "mason.phillips@example.com", "Surfer building paddle strength.", true, "Perth", "WA", "AU", -31.9505, 115.8605},
+
+		// Europe
+		{"Sophia", "Campbell", "sophia.campbell@example.com", "Tennis player improving footwork.", true, "Paris", "Île-de-France", "FR", 48.8566, 2.3522},
+		{"Lucas", "Evans", "lucas.evans@example.com", "Cyclist training for Tour amateur events.", true, "Lyon", "Auvergne-Rhône-Alpes", "FR", 45.7640, 4.8357},
+		{"Amelia", "Edwards", "amelia.edwards@example.com", "Fencer building explosive speed.", true, "Berlin", "Berlin", "DE", 52.5200, 13.4050},
+		{"Benjamin", "Collins", "benjamin.collins@example.com", "Handball player improving throwing power.", false, "Munich", "Bavaria", "DE", 48.1351, 11.5820},
+		{"Chloe", "Stewart", "chloe.stewart@example.com", "Field hockey player building endurance.", true, "Amsterdam", "North Holland", "NL", 52.3676, 4.9041},
+		{"Alexander", "Sanchez", "alexander.sanchez@example.com", "Soccer player in academy training.", true, "Barcelona", "Catalonia", "ES", 41.3851, 2.1734},
+		{"Ella", "Morris", "ella.morris@example.com", "Padel player seeking agility training.", true, "Madrid", "Madrid", "ES", 40.4168, -3.7038},
+		{"William", "Rogers", "william.rogers@example.com", "Water polo player building swim strength.", false, "Rome", "Lazio", "IT", 41.9028, 12.4964},
+
+		// Asia
+		{"Aria", "Reed", "aria.reed@example.com", "Martial artist training for competition.", true, "Tokyo", "Tokyo", "JP", 35.6762, 139.6503},
+		{"Henry", "Cook", "henry.cook@example.com", "Baseball player improving batting power.", true, "Osaka", "Osaka", "JP", 34.6937, 135.5023},
+		{"Scarlett", "Morgan", "scarlett.morgan@example.com", "Badminton player building court speed.", true, "Singapore", "Singapore", "SG", 1.3521, 103.8198},
+		{"Sebastian", "Bell", "sebastian.bell@example.com", "Table tennis player improving reflexes.", false, "Hong Kong", "Hong Kong", "HK", 22.3193, 114.1694},
+		{"Victoria", "Murphy", "victoria.murphy@example.com", "Yoga instructor expanding practice.", true, "Seoul", "Seoul", "KR", 37.5665, 126.9780},
+		{"Jack", "Bailey", "jack.bailey2@example.com", "Esports player improving posture and health.", true, "Taipei", "Taiwan", "TW", 25.0330, 121.5654},
+	}
+
+	hashedPassword, _ := utils.HashPassword("Password123!")
+
+	for _, u := range userData {
+		var existing models.User
+		if err := DB.Where("email = ?", u.Email).First(&existing).Error; err == nil {
+			log.Printf("User already exists: %s", u.Email)
+			continue
+		}
+
+		user := models.User{
+			Email:               u.Email,
+			Password:            hashedPassword,
+			FirstName:           u.FirstName,
+			LastName:            u.LastName,
+			Provider:            "local",
+			IsActive:            true,
+			ProfileVisibility:   "public",
+			IsLookingForTrainer: u.IsLookingForTrainer,
+			Bio:                 u.Bio,
+			Location: models.Location{
+				City:        strPtr(u.City),
+				Region:      strPtr(u.Region),
+				CountryCode: strPtr(u.CountryCode),
+				Latitude:    floatPtr(u.Latitude),
+				Longitude:   floatPtr(u.Longitude),
+			},
+		}
+
+		if err := DB.Create(&user).Error; err != nil {
+			log.Printf("Failed to create user %s: %v", u.Email, err)
+		} else {
+			log.Printf("Created searchable user: %s %s (%s)", u.FirstName, u.LastName, u.City)
+		}
+	}
+
+	log.Println("Finished seeding searchable users")
+}
+
+// SeedSearchableTrainers creates 50 public trainers with locations for search testing
+func SeedSearchableTrainers() {
+	log.Println("Seeding 50 searchable trainers...")
+
+	// Helper to create string pointer
+	strPtr := func(s string) *string { return &s }
+	floatPtr := func(f float64) *float64 { return &f }
+
+	// Get all specialties for random assignment
+	var allSpecialties []models.Specialty
+	DB.Find(&allSpecialties)
+	if len(allSpecialties) == 0 {
+		log.Println("No specialties found - run SeedSpecialties first")
+		return
+	}
+
+	// Diverse trainer data with global locations
+	trainerData := []struct {
+		FirstName           string
+		LastName            string
+		Email               string
+		Bio                 string
+		HourlyRate          float64
+		IsLookingForClients bool
+		City                string
+		Region              string
+		CountryCode         string
+		Latitude            float64
+		Longitude           float64
+		SpecialtyIndices    []int // indices into allSpecialties
+	}{
+		// US - East Coast
+		{"Marcus", "Johnson", "marcus.trainer@example.com", "NASM certified personal trainer with 10+ years experience. Specializing in strength training and body transformation.", 85.00, true, "New York", "NY", "US", 40.7589, -73.9851, []int{0, 1, 2}},
+		{"Samantha", "Williams", "samantha.trainer@example.com", "Former Division I athlete turned trainer. Expert in athletic performance and sports conditioning.", 95.00, true, "Brooklyn", "NY", "US", 40.6782, -73.9442, []int{1, 3, 4}},
+		{"Derek", "Brown", "derek.trainer@example.com", "Bodybuilding coach with multiple competition wins. Specializing in contest prep and nutrition.", 120.00, true, "Boston", "MA", "US", 42.3601, -71.0589, []int{2, 5}},
+		{"Christina", "Davis", "christina.trainer@example.com", "Women's fitness specialist focusing on strength training and confidence building.", 75.00, true, "Philadelphia", "PA", "US", 39.9526, -75.1652, []int{0, 1}},
+		{"Marcus", "Miller", "marcus.miller.trainer@example.com", "Certified strength and conditioning specialist. Work with athletes of all levels.", 90.00, true, "Washington", "DC", "US", 38.9072, -77.0369, []int{1, 3}},
+		{"Jasmine", "Wilson", "jasmine.trainer@example.com", "Holistic fitness coach combining strength training with mindfulness practices.", 80.00, true, "Miami", "FL", "US", 25.7617, -80.1918, []int{0, 4, 5}},
+		{"Brandon", "Moore", "brandon.trainer@example.com", "Former NFL trainer now working with everyday athletes. Focus on functional fitness.", 110.00, true, "Atlanta", "GA", "US", 33.7490, -84.3880, []int{3, 4}},
+		{"Alexis", "Taylor", "alexis.trainer@example.com", "Pre and postnatal fitness specialist. Helping moms stay strong through all stages.", 70.00, true, "Charlotte", "NC", "US", 35.2271, -80.8431, []int{0, 5}},
+
+		// US - West Coast
+		{"Tyler", "Anderson", "tyler.trainer@example.com", "CrossFit Level 3 trainer with Olympic lifting specialization.", 100.00, true, "Los Angeles", "CA", "US", 34.0522, -118.2437, []int{1, 2, 3}},
+		{"Megan", "Thomas", "megan.trainer@example.com", "Celebrity trainer focusing on body transformation and lifestyle coaching.", 200.00, false, "Beverly Hills", "CA", "US", 34.0736, -118.4004, []int{0, 2}},
+		{"Ryan", "Jackson", "ryan.trainer@example.com", "Endurance coach for runners and triathletes. Boston Marathon qualifier.", 85.00, true, "San Francisco", "CA", "US", 37.7749, -122.4194, []int{3, 4}},
+		{"Brittany", "White", "brittany.trainer@example.com", "Yoga and strength fusion specialist. RYT-500 with CSCS certification.", 90.00, true, "Seattle", "WA", "US", 47.6062, -122.3321, []int{4, 5}},
+		{"Jordan", "Harris", "jordan.trainer@example.com", "Functional movement specialist focusing on injury prevention.", 95.00, true, "Portland", "OR", "US", 45.5152, -122.6784, []int{3, 5}},
+		{"Kayla", "Martin", "kayla.trainer@example.com", "HIIT and metabolic conditioning expert. Transform your fitness in 12 weeks.", 75.00, true, "San Diego", "CA", "US", 32.7157, -117.1611, []int{1, 4}},
+		{"Austin", "Garcia", "austin.trainer@example.com", "MMA conditioning coach. Training fighters for over 8 years.", 110.00, true, "Las Vegas", "NV", "US", 36.1699, -115.1398, []int{1, 3}},
+		{"Taylor", "Martinez", "taylor.trainer@example.com", "Outdoor fitness specialist. Hiking, climbing, and adventure training.", 80.00, true, "Denver", "CO", "US", 39.7392, -104.9903, []int{3, 4}},
+
+		// US - Central
+		{"Cameron", "Robinson", "cameron.trainer@example.com", "Powerlifting coach with multiple state records. Technique-focused training.", 100.00, true, "Chicago", "IL", "US", 41.8781, -87.6298, []int{0, 2}},
+		{"Morgan", "Clark", "morgan.trainer@example.com", "Sports performance coach working with high school and college athletes.", 85.00, true, "Houston", "TX", "US", 29.7604, -95.3698, []int{1, 3}},
+		{"Dakota", "Rodriguez", "dakota.trainer@example.com", "Weight loss transformation specialist. Lost 100lbs myself and now help others.", 70.00, true, "Dallas", "TX", "US", 32.7767, -96.7970, []int{0, 4}},
+		{"Casey", "Lewis", "casey.trainer@example.com", "Golf fitness specialist improving your game through targeted training.", 95.00, true, "Austin", "TX", "US", 30.2672, -97.7431, []int{3, 5}},
+		{"Avery", "Lee", "avery.trainer@example.com", "Swimming and aquatic fitness coach. Former Olympic trials qualifier.", 90.00, true, "Minneapolis", "MN", "US", 44.9778, -93.2650, []int{3, 4}},
+		{"Riley", "Walker", "riley.trainer@example.com", "Youth sports performance specialist. Age-appropriate training for young athletes.", 65.00, true, "Kansas City", "MO", "US", 39.0997, -94.5786, []int{1, 3}},
+
+		// UK
+		{"Oliver", "Thompson", "oliver.trainer.uk@example.com", "Level 4 personal trainer specializing in strength and conditioning.", 65.00, true, "London", "England", "GB", 51.5074, -0.1278, []int{0, 1}},
+		{"Charlotte", "Davies", "charlotte.trainer.uk@example.com", "Women's health and fitness specialist. Hormonal health focus.", 70.00, true, "Manchester", "England", "GB", 53.4808, -2.2426, []int{0, 5}},
+		{"George", "Evans", "george.trainer.uk@example.com", "Boxing fitness coach bringing ring training to everyday fitness.", 60.00, true, "Birmingham", "England", "GB", 52.4862, -1.8904, []int{1, 4}},
+		{"Amelia", "Wilson", "amelia.trainer.uk@example.com", "Rehabilitation specialist helping clients recover from injuries.", 75.00, true, "Leeds", "England", "GB", 53.8008, -1.5491, []int{5}},
+		{"Harry", "Thomas", "harry.trainer.uk@example.com", "Rugby strength and conditioning coach for club and national level.", 80.00, true, "Glasgow", "Scotland", "GB", 55.8642, -4.2518, []int{1, 3}},
+		{"Isla", "Roberts", "isla.trainer.uk@example.com", "Kettlebell specialist and StrongFirst certified instructor.", 55.00, true, "Edinburgh", "Scotland", "GB", 55.9533, -3.1883, []int{0, 1}},
+
+		// Canada
+		{"Liam", "Campbell", "liam.trainer.ca@example.com", "Hockey performance specialist. On and off-ice conditioning.", 90.00, true, "Toronto", "ON", "CA", 43.6532, -79.3832, []int{1, 3}},
+		{"Emma", "Stewart", "emma.trainer.ca@example.com", "Ski and snowboard conditioning coach. Year-round athletic prep.", 85.00, true, "Vancouver", "BC", "CA", 49.2827, -123.1207, []int{3, 4}},
+		{"Noah", "Anderson", "noah.trainer.ca@example.com", "Bilingual trainer offering services in English and French.", 75.00, true, "Montreal", "QC", "CA", 45.5017, -73.5673, []int{0, 1}},
+		{"Olivia", "Brown", "olivia.trainer.ca@example.com", "Mountain athlete coach. Climbing, hiking, and alpine training.", 80.00, true, "Calgary", "AB", "CA", 51.0447, -114.0719, []int{3, 4}},
+
+		// Australia
+		{"Jack", "Smith", "jack.trainer.au@example.com", "Beach body specialist combining surfing fitness with strength training.", 85.00, true, "Sydney", "NSW", "AU", -33.8688, 151.2093, []int{0, 4}},
+		{"Chloe", "Jones", "chloe.trainer.au@example.com", "AFL performance coach for amateur and semi-pro players.", 90.00, true, "Melbourne", "VIC", "AU", -37.8136, 144.9631, []int{1, 3}},
+		{"William", "Taylor", "william.trainer.au@example.com", "Cricket fitness specialist improving batting and bowling power.", 75.00, true, "Brisbane", "QLD", "AU", -27.4698, 153.0251, []int{1, 3}},
+		{"Sophie", "Williams", "sophie.trainer.au@example.com", "Outdoor bootcamp specialist. Group and individual training.", 60.00, true, "Perth", "WA", "AU", -31.9505, 115.8605, []int{1, 4}},
+
+		// Europe
+		{"Lucas", "Martin", "lucas.trainer.fr@example.com", "Triathlon coach with Ironman experience. Endurance specialist.", 95.00, true, "Paris", "Île-de-France", "FR", 48.8566, 2.3522, []int{3, 4}},
+		{"Léa", "Bernard", "lea.trainer.fr@example.com", "Dance fitness fusion trainer. Ballet meets bootcamp.", 70.00, true, "Lyon", "Auvergne-Rhône-Alpes", "FR", 45.7640, 4.8357, []int{4, 5}},
+		{"Maximilian", "Schmidt", "max.trainer.de@example.com", "German national team conditioning consultant. Elite performance training.", 150.00, false, "Berlin", "Berlin", "DE", 52.5200, 13.4050, []int{1, 3}},
+		{"Anna", "Mueller", "anna.trainer.de@example.com", "Functional fitness and mobility specialist. Move better, feel better.", 80.00, true, "Munich", "Bavaria", "DE", 48.1351, 11.5820, []int{3, 5}},
+		{"Daan", "de Vries", "daan.trainer.nl@example.com", "Cycling performance coach for road and track cyclists.", 85.00, true, "Amsterdam", "North Holland", "NL", 52.3676, 4.9041, []int{3, 4}},
+		{"Carlos", "Fernandez", "carlos.trainer.es@example.com", "Football academy trainer. Youth development specialist.", 75.00, true, "Barcelona", "Catalonia", "ES", 41.3851, 2.1734, []int{1, 3}},
+		{"Maria", "Garcia", "maria.trainer.es@example.com", "Padel and tennis fitness specialist. Court performance training.", 70.00, true, "Madrid", "Madrid", "ES", 40.4168, -3.7038, []int{1, 4}},
+		{"Marco", "Rossi", "marco.trainer.it@example.com", "Italian national swimming coach. Aquatic excellence.", 100.00, true, "Rome", "Lazio", "IT", 41.9028, 12.4964, []int{3, 4}},
+
+		// Asia
+		{"Yuki", "Tanaka", "yuki.trainer.jp@example.com", "Martial arts conditioning specialist. Karate and judo background.", 90.00, true, "Tokyo", "Tokyo", "JP", 35.6762, 139.6503, []int{1, 4}},
+		{"Kenji", "Suzuki", "kenji.trainer.jp@example.com", "Baseball performance coach. Pitching and batting power specialist.", 85.00, true, "Osaka", "Osaka", "JP", 34.6937, 135.5023, []int{1, 3}},
+		{"Wei", "Chen", "wei.trainer.sg@example.com", "Corporate wellness specialist. Helping busy professionals stay fit.", 100.00, true, "Singapore", "Singapore", "SG", 1.3521, 103.8198, []int{0, 4}},
+		{"Ming", "Wong", "ming.trainer.hk@example.com", "Functional training and TRX specialist. Small space workouts.", 95.00, true, "Hong Kong", "Hong Kong", "HK", 22.3193, 114.1694, []int{0, 3}},
+		{"Ji-Young", "Kim", "jiyoung.trainer.kr@example.com", "K-pop idol training methodology. Dance and fitness fusion.", 110.00, true, "Seoul", "Seoul", "KR", 37.5665, 126.9780, []int{4, 5}},
+		{"Mei-Ling", "Lin", "meiling.trainer.tw@example.com", "Holistic fitness combining Eastern and Western training methods.", 75.00, true, "Taipei", "Taiwan", "TW", 25.0330, 121.5654, []int{0, 5}},
+	}
+
+	hashedPassword, _ := utils.HashPassword("Password123!")
+
+	for _, t := range trainerData {
+		// Check if trainer user already exists
+		var existingUser models.User
+		if err := DB.Where("email = ?", t.Email).First(&existingUser).Error; err == nil {
+			log.Printf("Trainer user already exists: %s", t.Email)
+			continue
+		}
+
+		// Create user for trainer
+		user := models.User{
+			Email:             t.Email,
+			Password:          hashedPassword,
+			FirstName:         t.FirstName,
+			LastName:          t.LastName,
+			Provider:          "local",
+			IsActive:          true,
+			ProfileVisibility: "public",
+		}
+
+		if err := DB.Create(&user).Error; err != nil {
+			log.Printf("Failed to create trainer user %s: %v", t.Email, err)
+			continue
+		}
+
+		// Create trainer profile
+		profile := models.TrainerProfile{
+			UserID:              user.ID,
+			Bio:                 t.Bio,
+			HourlyRate:          floatPtr(t.HourlyRate),
+			Visibility:          "public",
+			IsLookingForClients: t.IsLookingForClients,
+			Location: models.Location{
+				City:        strPtr(t.City),
+				Region:      strPtr(t.Region),
+				CountryCode: strPtr(t.CountryCode),
+				Latitude:    floatPtr(t.Latitude),
+				Longitude:   floatPtr(t.Longitude),
+			},
+		}
+
+		if err := DB.Create(&profile).Error; err != nil {
+			log.Printf("Failed to create trainer profile for %s: %v", t.Email, err)
+			continue
+		}
+
+		// Assign specialties
+		var specialties []models.Specialty
+		for _, idx := range t.SpecialtyIndices {
+			if idx < len(allSpecialties) {
+				specialties = append(specialties, allSpecialties[idx])
+			}
+		}
+		if len(specialties) > 0 {
+			DB.Model(&profile).Association("Specialties").Append(&specialties)
+		}
+
+		log.Printf("Created searchable trainer: %s %s (%s) - $%.2f/hr", t.FirstName, t.LastName, t.City, t.HourlyRate)
+	}
+
+	log.Println("Finished seeding searchable trainers")
+}
+
 func SeedDatabase() {
 	log.Println("Starting database seeding...")
 	SeedMuscleGroups()
@@ -2783,6 +3072,10 @@ func SeedDatabase() {
 
 	// Seed trainer-client links (must be after trainer profiles)
 	SeedTrainerClientLinks()
+
+	// Seed searchable users and trainers for location search testing
+	SeedSearchableUsers()
+	SeedSearchableTrainers()
 
 	log.Println("Database seeding completed!")
 }
