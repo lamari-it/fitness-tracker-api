@@ -2474,7 +2474,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"preferred_weight_unit\": \"lb\",\n  \"preferred_height_unit\": \"ft\",\n  \"preferred_distance_unit\": \"mi\",\n  \"first_name\": \"Updated\",\n  \"last_name\": \"Name\"\n}"
+              "raw": "{\n  \"preferred_weight_unit\": \"lb\",\n  \"preferred_height_unit\": \"ft\",\n  \"preferred_distance_unit\": \"mi\",\n  \"first_name\": \"Updated\",\n  \"last_name\": \"Name\",\n  \"profile_visibility\": \"public\",\n  \"is_looking_for_trainer\": true,\n  \"bio\": \"Fitness enthusiast looking for a trainer\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/user/settings",
@@ -2488,7 +2488,7 @@
                 "settings"
               ]
             },
-            "description": "Update user settings. All fields are optional. Valid values: preferred_weight_unit (kg, lb), preferred_height_unit (cm, ft), preferred_distance_unit (km, mi)"
+            "description": "Update user settings. All fields are optional. Valid values: preferred_weight_unit (kg, lb), preferred_height_unit (cm, ft), preferred_distance_unit (km, mi), profile_visibility (public, private, friends_only), is_looking_for_trainer (boolean), bio (max 500 chars)"
           },
           "response": []
         }
@@ -5153,6 +5153,115 @@
       "description": "Workout session and exercise logging endpoints"
     },
     {
+      "name": "User Discovery",
+      "item": [
+        {
+          "name": "Discover Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Users retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users?search=john&is_looking_for_trainer=true&page=1&limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "john",
+                  "description": "Search by first_name, last_name, or email"
+                },
+                {
+                  "key": "is_looking_for_trainer",
+                  "value": "true",
+                  "description": "Filter users who are looking for a trainer (true/false)"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of results per page (max 100)"
+                }
+              ]
+            },
+            "description": "Discover public users. Only users with profile_visibility='public' are shown. Returns limited info (UserDiscoveryResponse)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Public Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User profile retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{target_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{target_user_id}}"
+              ]
+            },
+            "description": "Get a user's public profile. Privacy rules: public=anyone, friends_only=accepted friends, private=only self. Returns UserDiscoveryResponse for others, full UserResponse for self."
+          },
+          "response": []
+        }
+      ],
+      "description": "User discovery and public profile endpoints for networking features"
+    },
+    {
       "name": "Friends",
       "item": [
         {
@@ -5414,7 +5523,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bio\": \"Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding.\",\n  \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_weight_loss_id}}\", \"{{specialty_bodybuilding_id}}\"],\n  \"hourly_rate\": 75.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"public\"\n}"
+              "raw": "{\n  \"bio\": \"Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding.\",\n  \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_weight_loss_id}}\", \"{{specialty_bodybuilding_id}}\"],\n  \"hourly_rate\": 75.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"public\",\n  \"is_looking_for_clients\": true\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/trainers/profile",
@@ -5428,7 +5537,7 @@
                 "profile"
               ]
             },
-            "description": "Create a trainer profile for the authenticated user. Visibility options: public (searchable and viewable), link_only (viewable with direct link), private (only owner/admin can view)"
+            "description": "Create a trainer profile for the authenticated user. Visibility options: public (searchable and viewable), link_only (viewable with direct link), private (only owner/admin can view). is_looking_for_clients defaults to true."
           },
           "response": []
         },
@@ -5511,7 +5620,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bio\": \"Updated bio with more experience and certifications in advanced training techniques.\",\n  \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_weight_loss_id}}\", \"{{specialty_bodybuilding_id}}\", \"{{specialty_hiit_id}}\"],\n  \"hourly_rate\": 85.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"link_only\"\n}"
+              "raw": "{\n  \"bio\": \"Updated bio with more experience and certifications in advanced training techniques.\",\n  \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_weight_loss_id}}\", \"{{specialty_bodybuilding_id}}\", \"{{specialty_hiit_id}}\"],\n  \"hourly_rate\": 85.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"link_only\",\n  \"is_looking_for_clients\": false\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/trainers/profile",
@@ -5525,7 +5634,7 @@
                 "profile"
               ]
             },
-            "description": "Update the authenticated user's trainer profile. Can update visibility to: public, link_only, or private"
+            "description": "Update the authenticated user's trainer profile. Can update visibility (public, link_only, private) and is_looking_for_clients to indicate availability"
           },
           "response": []
         },
@@ -5600,10 +5709,16 @@
                   "key": "sort_by",
                   "value": "recent",
                   "disabled": true
+                },
+                {
+                  "key": "is_looking_for_clients",
+                  "value": "true",
+                  "description": "Filter by trainers accepting new clients (true/false)",
+                  "disabled": true
                 }
               ]
             },
-            "description": "List all trainers with optional filtering and pagination"
+            "description": "List all trainers with optional filtering and pagination. is_looking_for_clients filter shows only trainers actively seeking new clients."
           },
           "response": []
         },

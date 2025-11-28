@@ -9,15 +9,16 @@ import (
 )
 
 type TrainerProfile struct {
-	ID         uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID     uuid.UUID      `gorm:"type:uuid;not null;unique" json:"user_id"`
-	Bio        string         `gorm:"type:text" json:"bio"`
-	HourlyRate *float64       `gorm:"type:numeric(10,2)" json:"hourly_rate,omitempty"`
-	Location   string         `gorm:"type:text" json:"location"`
-	Visibility string         `gorm:"type:varchar(20);default:'public'" json:"visibility"` // public, link_only, private
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID                  uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	UserID              uuid.UUID      `gorm:"type:uuid;not null;unique" json:"user_id"`
+	Bio                 string         `gorm:"type:text" json:"bio"`
+	HourlyRate          *float64       `gorm:"type:numeric(10,2)" json:"hourly_rate,omitempty"`
+	Location            string         `gorm:"type:text" json:"location"`
+	Visibility          string         `gorm:"type:varchar(20);default:'public'" json:"visibility"` // public, link_only, private
+	IsLookingForClients bool           `json:"is_looking_for_clients"`
+	CreatedAt           time.Time      `json:"created_at"`
+	UpdatedAt           time.Time      `json:"updated_at"`
+	DeletedAt           gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// Relationships
 	User        User        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
@@ -74,47 +75,51 @@ func (tcl *TrainerClientLink) BeforeCreate(tx *gorm.DB) (err error) {
 
 // Request DTOs
 type CreateTrainerProfileRequest struct {
-	Bio          string      `json:"bio" binding:"omitempty,max=1000"`
-	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
-	HourlyRate   *float64    `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
-	Location     string      `json:"location" binding:"omitempty,max=500"`
-	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
+	Bio                 string      `json:"bio" binding:"omitempty,max=1000"`
+	SpecialtyIDs        []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
+	HourlyRate          *float64    `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
+	Location            string      `json:"location" binding:"omitempty,max=500"`
+	Visibility          string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
+	IsLookingForClients *bool       `json:"is_looking_for_clients"`
 }
 
 type UpdateTrainerProfileRequest struct {
-	Bio          string      `json:"bio" binding:"omitempty,max=1000"`
-	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
-	HourlyRate   *float64    `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
-	Location     string      `json:"location" binding:"omitempty,max=500"`
-	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
+	Bio                 string      `json:"bio" binding:"omitempty,max=1000"`
+	SpecialtyIDs        []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
+	HourlyRate          *float64    `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
+	Location            string      `json:"location" binding:"omitempty,max=500"`
+	Visibility          string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
+	IsLookingForClients *bool       `json:"is_looking_for_clients"`
 }
 
 // Response DTOs
 type TrainerProfileResponse struct {
-	ID          uuid.UUID           `json:"id"`
-	UserID      uuid.UUID           `json:"user_id"`
-	Bio         string              `json:"bio"`
-	Specialties []SpecialtyResponse `json:"specialties"`
-	HourlyRate  *float64            `json:"hourly_rate,omitempty"`
-	Location    string              `json:"location"`
-	Visibility  string              `json:"visibility"`
-	User        *UserResponse       `json:"user,omitempty"`
-	CreatedAt   time.Time           `json:"created_at"`
-	UpdatedAt   time.Time           `json:"updated_at"`
+	ID                  uuid.UUID           `json:"id"`
+	UserID              uuid.UUID           `json:"user_id"`
+	Bio                 string              `json:"bio"`
+	Specialties         []SpecialtyResponse `json:"specialties"`
+	HourlyRate          *float64            `json:"hourly_rate,omitempty"`
+	Location            string              `json:"location"`
+	Visibility          string              `json:"visibility"`
+	IsLookingForClients bool                `json:"is_looking_for_clients"`
+	User                *UserResponse       `json:"user,omitempty"`
+	CreatedAt           time.Time           `json:"created_at"`
+	UpdatedAt           time.Time           `json:"updated_at"`
 }
 
 type TrainerPublicResponse struct {
-	ID            uuid.UUID           `json:"id"`
-	UserID        uuid.UUID           `json:"user_id"`
-	Bio           string              `json:"bio"`
-	Specialties   []SpecialtyResponse `json:"specialties"`
-	HourlyRate    *float64            `json:"hourly_rate,omitempty"`
-	Location      string              `json:"location"`
-	Visibility    string              `json:"visibility"`
-	User          *UserPublicResponse `json:"user"`
-	ReviewCount   int                 `json:"review_count"`
-	AverageRating float64             `json:"average_rating"`
-	CreatedAt     time.Time           `json:"created_at"`
+	ID                  uuid.UUID           `json:"id"`
+	UserID              uuid.UUID           `json:"user_id"`
+	Bio                 string              `json:"bio"`
+	Specialties         []SpecialtyResponse `json:"specialties"`
+	HourlyRate          *float64            `json:"hourly_rate,omitempty"`
+	Location            string              `json:"location"`
+	Visibility          string              `json:"visibility"`
+	IsLookingForClients bool                `json:"is_looking_for_clients"`
+	User                *UserPublicResponse `json:"user"`
+	ReviewCount         int                 `json:"review_count"`
+	AverageRating       float64             `json:"average_rating"`
+	CreatedAt           time.Time           `json:"created_at"`
 }
 
 type UserPublicResponse struct {
@@ -183,15 +188,16 @@ func (tp *TrainerProfile) ToResponse() TrainerProfileResponse {
 	}
 
 	resp := TrainerProfileResponse{
-		ID:          tp.ID,
-		UserID:      tp.UserID,
-		Bio:         tp.Bio,
-		Specialties: specialties,
-		HourlyRate:  tp.HourlyRate,
-		Location:    tp.Location,
-		Visibility:  tp.Visibility,
-		CreatedAt:   tp.CreatedAt,
-		UpdatedAt:   tp.UpdatedAt,
+		ID:                  tp.ID,
+		UserID:              tp.UserID,
+		Bio:                 tp.Bio,
+		Specialties:         specialties,
+		HourlyRate:          tp.HourlyRate,
+		Location:            tp.Location,
+		Visibility:          tp.Visibility,
+		IsLookingForClients: tp.IsLookingForClients,
+		CreatedAt:           tp.CreatedAt,
+		UpdatedAt:           tp.UpdatedAt,
 	}
 	if tp.User.ID != uuid.Nil {
 		userResp := tp.User.ToResponse()
@@ -208,16 +214,17 @@ func (tp *TrainerProfile) ToPublicResponse(reviewCount int, avgRating float64) T
 	}
 
 	resp := TrainerPublicResponse{
-		ID:            tp.ID,
-		UserID:        tp.UserID,
-		Bio:           tp.Bio,
-		Specialties:   specialties,
-		HourlyRate:    tp.HourlyRate,
-		Location:      tp.Location,
-		Visibility:    tp.Visibility,
-		ReviewCount:   reviewCount,
-		AverageRating: avgRating,
-		CreatedAt:     tp.CreatedAt,
+		ID:                  tp.ID,
+		UserID:              tp.UserID,
+		Bio:                 tp.Bio,
+		Specialties:         specialties,
+		HourlyRate:          tp.HourlyRate,
+		Location:            tp.Location,
+		Visibility:          tp.Visibility,
+		IsLookingForClients: tp.IsLookingForClients,
+		ReviewCount:         reviewCount,
+		AverageRating:       avgRating,
+		CreatedAt:           tp.CreatedAt,
 	}
 	if tp.User.ID != uuid.Nil {
 		resp.User = &UserPublicResponse{

@@ -79,11 +79,19 @@ type UserEquipmentQuery struct {
 // TrainerQuery represents query parameters for trainer endpoints
 type TrainerQuery struct {
 	PaginationQuery
-	Search    string  `form:"search" validate:"omitempty,max=100" binding:"omitempty,max=100"`
-	Specialty string  `form:"specialty" validate:"omitempty,max=100" binding:"omitempty,max=100"`
-	Location  string  `form:"location" validate:"omitempty,max=100" binding:"omitempty,max=100"`
-	MinRating float64 `form:"min_rating" validate:"omitempty,min=0,max=5" binding:"omitempty,min=0,max=5"`
-	SortBy    string  `form:"sort_by" validate:"omitempty,oneof=rating rate recent" binding:"omitempty,oneof=rating rate recent"`
+	Search              string  `form:"search" validate:"omitempty,max=100" binding:"omitempty,max=100"`
+	Specialty           string  `form:"specialty" validate:"omitempty,max=100" binding:"omitempty,max=100"`
+	Location            string  `form:"location" validate:"omitempty,max=100" binding:"omitempty,max=100"`
+	MinRating           float64 `form:"min_rating" validate:"omitempty,min=0,max=5" binding:"omitempty,min=0,max=5"`
+	SortBy              string  `form:"sort_by" validate:"omitempty,oneof=rating rate recent" binding:"omitempty,oneof=rating rate recent"`
+	IsLookingForClients string  `form:"is_looking_for_clients" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
+}
+
+// UserDiscoveryQuery represents query parameters for user discovery endpoints
+type UserDiscoveryQuery struct {
+	PaginationQuery
+	Search              string `form:"search" validate:"omitempty,max=100" binding:"omitempty,max=100"`
+	IsLookingForTrainer string `form:"is_looking_for_trainer" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
 }
 
 // IDParam represents common UUID path parameters

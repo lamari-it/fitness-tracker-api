@@ -43,6 +43,11 @@ func TestTrainerProfileEndpoints(t *testing.T) {
 		CleanDatabase(t)
 		testVisibilityAccessControl(t, e)
 	})
+
+	t.Run("Is Looking For Clients", func(t *testing.T) {
+		CleanDatabase(t)
+		testIsLookingForClients(t, e)
+	})
 }
 
 func createTestUserAndGetToken(e *httpexpect.Expect, email, password, firstName, lastName string) string {
@@ -1003,5 +1008,195 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 			Object()
 
 		listResponse.Value("data").Array().Length().IsEqual(2) // Now 2 public trainers
+	})
+}
+
+func testIsLookingForClients(t *testing.T, e *httpexpect.Expect) {
+	SeedTestRoles(t)
+	SeedTestSpecialties(t)
+
+	// Create trainers with different is_looking_for_clients settings
+	trainer1Token := createTestUserAndGetToken(e, "looking_trainer@example.com", "Pass123!", "Looking", "Trainer")
+	trainer2Token := createTestUserAndGetToken(e, "not_looking_trainer@example.com", "Pass123!", "NotLooking", "Trainer")
+	trainer3Token := createTestUserAndGetToken(e, "default_trainer@example.com", "Pass123!", "Default", "Trainer")
+	viewerToken := createTestUserAndGetToken(e, "client_viewer@example.com", "Pass123!", "Client", "Viewer")
+
+	strengthIDs := GetSpecialtyIDs(t, "Strength Training")
+	yogaIDs := GetSpecialtyIDs(t, "Yoga")
+	cardioIDs := GetSpecialtyIDs(t, "Cardio")
+
+	t.Run("Create Profile With IsLookingForClients True", func(t *testing.T) {
+		profileData := map[string]interface{}{
+			"bio":                    "Trainer looking for new clients.",
+			"specialty_ids":          strengthIDs,
+			"hourly_rate":            80.00,
+			"location":               "New York, NY",
+			"visibility":             "public",
+			"is_looking_for_clients": true,
+		}
+
+		response := e.POST("/api/v1/trainers/profile").
+			WithHeader("Authorization", "Bearer "+trainer1Token).
+			WithJSON(profileData).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("is_looking_for_clients").Boolean().IsTrue()
+	})
+
+	t.Run("Create Profile With IsLookingForClients False", func(t *testing.T) {
+		profileData := map[string]interface{}{
+			"bio":                    "Trainer not accepting new clients.",
+			"specialty_ids":          yogaIDs,
+			"hourly_rate":            100.00,
+			"location":               "Los Angeles, CA",
+			"visibility":             "public",
+			"is_looking_for_clients": false,
+		}
+
+		response := e.POST("/api/v1/trainers/profile").
+			WithHeader("Authorization", "Bearer "+trainer2Token).
+			WithJSON(profileData).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("is_looking_for_clients").Boolean().IsFalse()
+	})
+
+	t.Run("Create Profile Without IsLookingForClients Defaults To True", func(t *testing.T) {
+		profileData := map[string]interface{}{
+			"bio":           "Trainer with default is_looking_for_clients.",
+			"specialty_ids": cardioIDs,
+			"hourly_rate":   60.00,
+			"location":      "Chicago, IL",
+			"visibility":    "public",
+		}
+
+		response := e.POST("/api/v1/trainers/profile").
+			WithHeader("Authorization", "Bearer "+trainer3Token).
+			WithJSON(profileData).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		// Default should be true
+		data.Value("is_looking_for_clients").Boolean().IsTrue()
+	})
+
+	t.Run("Filter Trainers By IsLookingForClients True", func(t *testing.T) {
+		response := e.GET("/api/v1/trainers").
+			WithHeader("Authorization", "Bearer "+viewerToken).
+			WithQuery("is_looking_for_clients", "true").
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Array()
+
+		// Should return trainers who are looking for clients (trainer1 and trainer3)
+		data.Length().IsEqual(2)
+		for _, item := range data.Iter() {
+			item.Object().Value("is_looking_for_clients").Boolean().IsTrue()
+		}
+	})
+
+	t.Run("Filter Trainers By IsLookingForClients False", func(t *testing.T) {
+		response := e.GET("/api/v1/trainers").
+			WithHeader("Authorization", "Bearer "+viewerToken).
+			WithQuery("is_looking_for_clients", "false").
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Array()
+
+		// Should return only trainer2 who is not looking for clients
+		data.Length().IsEqual(1)
+		data.Value(0).Object().Value("is_looking_for_clients").Boolean().IsFalse()
+	})
+
+	t.Run("Update IsLookingForClients", func(t *testing.T) {
+		// Update trainer1 to not looking for clients
+		updateData := map[string]interface{}{
+			"is_looking_for_clients": false,
+		}
+
+		response := e.PUT("/api/v1/trainers/profile").
+			WithHeader("Authorization", "Bearer "+trainer1Token).
+			WithJSON(updateData).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.Value("is_looking_for_clients").Boolean().IsFalse()
+	})
+
+	t.Run("Verify Updated Filter Results", func(t *testing.T) {
+		// Now only trainer3 should be looking for clients
+		response := e.GET("/api/v1/trainers").
+			WithHeader("Authorization", "Bearer "+viewerToken).
+			WithQuery("is_looking_for_clients", "true").
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Array()
+		data.Length().IsEqual(1)
+	})
+
+	t.Run("Get Profile Shows IsLookingForClients", func(t *testing.T) {
+		response := e.GET("/api/v1/trainers/profile").
+			WithHeader("Authorization", "Bearer "+trainer1Token).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.ContainsKey("is_looking_for_clients")
+	})
+
+	t.Run("Public Profile Shows IsLookingForClients", func(t *testing.T) {
+		// Get trainer1's profile ID
+		profileResp := e.GET("/api/v1/trainers/profile").
+			WithHeader("Authorization", "Bearer "+trainer1Token).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		trainerID := profileResp.Value("data").Object().Value("id").String().Raw()
+
+		response := e.GET("/api/v1/trainers/"+trainerID).
+			WithHeader("Authorization", "Bearer "+viewerToken).
+			Expect().
+			Status(200).
+			JSON().
+			Object()
+
+		response.Value("success").Boolean().IsTrue()
+		data := response.Value("data").Object()
+		data.ContainsKey("is_looking_for_clients")
 	})
 }

@@ -46,13 +46,20 @@ func CreateTrainerProfile(c *gin.Context) {
 		visibility = "private"
 	}
 
+	// Set default isLookingForClients if not provided (defaults to true)
+	isLookingForClients := true
+	if req.IsLookingForClients != nil {
+		isLookingForClients = *req.IsLookingForClients
+	}
+
 	trainerProfile := models.TrainerProfile{
-		UserID:      userID,
-		Bio:         req.Bio,
-		Specialties: specialties,
-		HourlyRate:  req.HourlyRate,
-		Location:    req.Location,
-		Visibility:  visibility,
+		UserID:              userID,
+		Bio:                 req.Bio,
+		Specialties:         specialties,
+		HourlyRate:          req.HourlyRate,
+		Location:            req.Location,
+		Visibility:          visibility,
+		IsLookingForClients: isLookingForClients,
 	}
 
 	if err := trainerProfile.Validate(); err != nil {
@@ -153,6 +160,9 @@ func UpdateTrainerProfile(c *gin.Context) {
 	if req.Visibility != "" {
 		trainerProfile.Visibility = req.Visibility
 	}
+	if req.IsLookingForClients != nil {
+		trainerProfile.IsLookingForClients = *req.IsLookingForClients
+	}
 
 	if err := trainerProfile.Validate(); err != nil {
 		utils.BadRequestResponse(c, "Validation failed", err.Error())
@@ -160,7 +170,7 @@ func UpdateTrainerProfile(c *gin.Context) {
 	}
 
 	// Save only the profile fields, not associations (those were handled by Replace)
-	if err := database.DB.Model(&trainerProfile).Select("bio", "hourly_rate", "location", "visibility", "updated_at").Updates(&trainerProfile).Error; err != nil {
+	if err := database.DB.Model(&trainerProfile).Select("bio", "hourly_rate", "location", "visibility", "is_looking_for_clients", "updated_at").Updates(&trainerProfile).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to update trainer profile")
 		return
 	}
@@ -289,6 +299,13 @@ func ListTrainers(c *gin.Context) {
 	// Filter by location
 	if queryParams.Location != "" {
 		query = query.Where("location ILIKE ?", "%"+queryParams.Location+"%")
+	}
+
+	// Filter by is_looking_for_clients
+	if queryParams.IsLookingForClients == "true" {
+		query = query.Where("is_looking_for_clients = ?", true)
+	} else if queryParams.IsLookingForClients == "false" {
+		query = query.Where("is_looking_for_clients = ?", false)
 	}
 
 	// Get total count before pagination

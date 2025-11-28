@@ -255,6 +255,13 @@ func SetupRoutes(r *gin.Engine) {
 				friends.DELETE("/:id", controllers.RemoveFriend)
 			}
 
+			// User Discovery
+			users := protected.Group("/users")
+			{
+				users.GET("", controllers.DiscoverUsers)
+				users.GET("/:id", controllers.GetUserPublicProfile)
+			}
+
 			// Trainers
 			trainers := protected.Group("/trainers")
 			{
