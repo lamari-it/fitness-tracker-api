@@ -3986,6 +3986,30 @@
                   "value": "10"
                 },
                 {
+                  "key": "search",
+                  "value": "chest",
+                  "description": "Search workouts by title (case-insensitive)",
+                  "disabled": true
+                },
+                {
+                  "key": "muscle_group_id",
+                  "value": "{{muscle_group_id}}",
+                  "description": "Filter by muscle group ID (can repeat for multiple)",
+                  "disabled": true
+                },
+                {
+                  "key": "exercise_id",
+                  "value": "{{exercise_id}}",
+                  "description": "Filter by exercise ID (can repeat for multiple)",
+                  "disabled": true
+                },
+                {
+                  "key": "mode",
+                  "value": "or",
+                  "description": "Filter mode: 'or' (default) matches ANY filter, 'and' matches ALL filters",
+                  "disabled": true
+                },
+                {
                   "key": "is_favorited",
                   "value": "true",
                   "description": "Filter to only show favorited workouts",
@@ -3993,7 +4017,125 @@
                 }
               ]
             },
-            "description": "Get all workouts for the authenticated user with pagination. Response includes is_favorited field for each workout."
+            "description": "Get all workouts for the authenticated user with pagination and filtering.\n\n**Filter Parameters:**\n- `search`: Search workouts by title (case-insensitive)\n- `muscle_group_id`: Filter by muscle group(s) - repeat parameter for multiple IDs\n- `exercise_id`: Filter by exercise(s) - repeat parameter for multiple IDs\n- `mode`: Filter logic - 'or' (default) matches ANY filter, 'and' matches ALL filters\n- `is_favorited`: Filter to only show favorited workouts\n\n**Examples:**\n- Single muscle group: `?muscle_group_id=uuid1`\n- Multiple muscle groups (OR): `?muscle_group_id=uuid1&muscle_group_id=uuid2`\n- Multiple muscle groups (AND): `?muscle_group_id=uuid1&muscle_group_id=uuid2&mode=and`\n- Combined filters: `?muscle_group_id=uuid1&exercise_id=uuid2&mode=or`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Workouts (Multi-Filter OR Example)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Workouts filtered successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "        pm.expect(jsonData.data).to.be.an('array');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts?muscle_group_id={{muscle_group_id}}&muscle_group_id={{muscle_group_id_2}}&mode=or",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workouts"
+              ],
+              "query": [
+                {
+                  "key": "muscle_group_id",
+                  "value": "{{muscle_group_id}}",
+                  "description": "First muscle group ID"
+                },
+                {
+                  "key": "muscle_group_id",
+                  "value": "{{muscle_group_id_2}}",
+                  "description": "Second muscle group ID"
+                },
+                {
+                  "key": "mode",
+                  "value": "or",
+                  "description": "OR mode: returns workouts with ANY of the muscle groups"
+                }
+              ]
+            },
+            "description": "Example: Get workouts containing exercises that target ANY of the specified muscle groups (OR logic)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Workouts (Multi-Filter AND Example)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('Workouts filtered successfully', function () {",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "        pm.expect(jsonData.data).to.be.an('array');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/workouts?muscle_group_id={{muscle_group_id}}&muscle_group_id={{muscle_group_id_2}}&mode=and",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "workouts"
+              ],
+              "query": [
+                {
+                  "key": "muscle_group_id",
+                  "value": "{{muscle_group_id}}",
+                  "description": "First muscle group ID"
+                },
+                {
+                  "key": "muscle_group_id",
+                  "value": "{{muscle_group_id_2}}",
+                  "description": "Second muscle group ID"
+                },
+                {
+                  "key": "mode",
+                  "value": "and",
+                  "description": "AND mode: returns workouts with ALL of the muscle groups"
+                }
+              ]
+            },
+            "description": "Example: Get workouts containing exercises that target ALL of the specified muscle groups (AND logic)"
           },
           "response": []
         },

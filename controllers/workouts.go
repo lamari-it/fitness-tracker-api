@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"lamari-fit-api/database"
 	"lamari-fit-api/models"
 	"lamari-fit-api/utils"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -87,22 +89,35 @@ func GetUserWorkouts(c *gin.Context) {
 		query = query.Where("title ILIKE ?", "%"+params.Search+"%")
 	}
 
-	// Apply muscle group filter
-	if params.MuscleGroupID != "" {
-		query = query.Where(`id IN (
-			SELECT DISTINCT wp.workout_id
-			FROM workout_prescriptions wp
-			JOIN exercise_muscle_groups emg ON wp.exercise_id = emg.exercise_id
-			WHERE emg.muscle_group_id = ? AND wp.deleted_at IS NULL
-		)`, params.MuscleGroupID)
+	// Validate and parse muscle group IDs
+	var validMuscleGroupIDs []string
+	for _, id := range params.MuscleGroupIDs {
+		if _, err := uuid.Parse(id); err == nil {
+			validMuscleGroupIDs = append(validMuscleGroupIDs, id)
+		}
 	}
 
-	// Apply exercise filter
-	if params.ExerciseID != "" {
-		query = query.Where(`id IN (
-			SELECT DISTINCT workout_id FROM workout_prescriptions
-			WHERE exercise_id = ? AND deleted_at IS NULL
-		)`, params.ExerciseID)
+	// Validate and parse exercise IDs
+	var validExerciseIDs []string
+	for _, id := range params.ExerciseIDs {
+		if _, err := uuid.Parse(id); err == nil {
+			validExerciseIDs = append(validExerciseIDs, id)
+		}
+	}
+
+	// Apply muscle group and exercise filters based on mode
+	filterMode := params.GetFilterMode()
+	hasMuscleGroupFilter := len(validMuscleGroupIDs) > 0
+	hasExerciseFilter := len(validExerciseIDs) > 0
+
+	if hasMuscleGroupFilter || hasExerciseFilter {
+		if filterMode == "and" {
+			// AND mode: workout must match ALL conditions
+			query = applyAndModeFilters(query, validMuscleGroupIDs, validExerciseIDs)
+		} else {
+			// OR mode: workout must match ANY condition
+			query = applyOrModeFilters(query, validMuscleGroupIDs, validExerciseIDs)
+		}
 	}
 
 	// Apply is_favorited filter if requested
@@ -985,4 +1000,87 @@ func DuplicateWorkout(c *gin.Context) {
 	}
 
 	utils.CreatedResponse(c, "Workout duplicated successfully.", response)
+}
+
+// applyOrModeFilters applies OR logic - workout matches ANY of the specified muscle groups OR exercises
+func applyOrModeFilters(query *gorm.DB, muscleGroupIDs, exerciseIDs []string) *gorm.DB {
+	var conditions []string
+	var args []interface{}
+
+	// Muscle group filter: workouts containing exercises that target ANY of these muscle groups
+	if len(muscleGroupIDs) > 0 {
+		placeholders := make([]string, len(muscleGroupIDs))
+		for i, id := range muscleGroupIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		conditions = append(conditions, fmt.Sprintf(`id IN (
+			SELECT DISTINCT wp.workout_id
+			FROM workout_prescriptions wp
+			JOIN exercise_muscle_groups emg ON wp.exercise_id = emg.exercise_id AND emg.deleted_at IS NULL
+			WHERE emg.muscle_group_id IN (%s) AND wp.deleted_at IS NULL
+		)`, strings.Join(placeholders, ",")))
+	}
+
+	// Exercise filter: workouts containing ANY of these exercises
+	if len(exerciseIDs) > 0 {
+		placeholders := make([]string, len(exerciseIDs))
+		for i, id := range exerciseIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		conditions = append(conditions, fmt.Sprintf(`id IN (
+			SELECT DISTINCT workout_id FROM workout_prescriptions
+			WHERE exercise_id IN (%s) AND deleted_at IS NULL
+		)`, strings.Join(placeholders, ",")))
+	}
+
+	if len(conditions) > 0 {
+		query = query.Where("("+strings.Join(conditions, " OR ")+")", args...)
+	}
+
+	return query
+}
+
+// applyAndModeFilters applies AND logic - workout must match ALL specified muscle groups AND exercises
+func applyAndModeFilters(query *gorm.DB, muscleGroupIDs, exerciseIDs []string) *gorm.DB {
+	// Muscle group filter: workout must have exercises targeting ALL specified muscle groups
+	if len(muscleGroupIDs) > 0 {
+		placeholders := make([]string, len(muscleGroupIDs))
+		args := make([]interface{}, len(muscleGroupIDs))
+		for i, id := range muscleGroupIDs {
+			placeholders[i] = "?"
+			args[i] = id
+		}
+		args = append(args, len(muscleGroupIDs))
+
+		query = query.Where(fmt.Sprintf(`id IN (
+			SELECT wp.workout_id
+			FROM workout_prescriptions wp
+			JOIN exercise_muscle_groups emg ON wp.exercise_id = emg.exercise_id AND emg.deleted_at IS NULL
+			WHERE emg.muscle_group_id IN (%s) AND wp.deleted_at IS NULL
+			GROUP BY wp.workout_id
+			HAVING COUNT(DISTINCT emg.muscle_group_id) = ?
+		)`, strings.Join(placeholders, ",")), args...)
+	}
+
+	// Exercise filter: workout must contain ALL specified exercises
+	if len(exerciseIDs) > 0 {
+		placeholders := make([]string, len(exerciseIDs))
+		args := make([]interface{}, len(exerciseIDs))
+		for i, id := range exerciseIDs {
+			placeholders[i] = "?"
+			args[i] = id
+		}
+		args = append(args, len(exerciseIDs))
+
+		query = query.Where(fmt.Sprintf(`id IN (
+			SELECT workout_id FROM workout_prescriptions
+			WHERE exercise_id IN (%s) AND deleted_at IS NULL
+			GROUP BY workout_id
+			HAVING COUNT(DISTINCT exercise_id) = ?
+		)`, strings.Join(placeholders, ",")), args...)
+	}
+
+	return query
 }

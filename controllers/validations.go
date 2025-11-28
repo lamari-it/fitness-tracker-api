@@ -18,12 +18,22 @@ type ExerciseQuery struct {
 }
 
 // WorkoutQuery represents query parameters for workout endpoints
+// Supports multiple muscle_group_id and exercise_id values via repeated query params
 type WorkoutQuery struct {
 	PaginationQuery
-	Search        string `form:"search" validate:"omitempty,max=100" binding:"omitempty,max=100"`
-	MuscleGroupID string `form:"muscle_group_id" validate:"omitempty,uuid" binding:"omitempty,uuid"`
-	ExerciseID    string `form:"exercise_id" validate:"omitempty,uuid" binding:"omitempty,uuid"`
-	IsFavorited   string `form:"is_favorited" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
+	Search         string   `form:"search" validate:"omitempty,max=100" binding:"omitempty,max=100"`
+	MuscleGroupIDs []string `form:"muscle_group_id"`
+	ExerciseIDs    []string `form:"exercise_id"`
+	Mode           string   `form:"mode" validate:"omitempty,oneof=and or" binding:"omitempty,oneof=and or"`
+	IsFavorited    string   `form:"is_favorited" validate:"omitempty,oneof=true false" binding:"omitempty,oneof=true false"`
+}
+
+// GetFilterMode returns the filter mode, defaulting to "or"
+func (q *WorkoutQuery) GetFilterMode() string {
+	if q.Mode == "" {
+		return "or"
+	}
+	return q.Mode
 }
 
 // EquipmentQuery represents query parameters for equipment endpoints
