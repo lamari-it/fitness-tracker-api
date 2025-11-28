@@ -224,3 +224,9 @@
   $ref: './translations.yaml#/~1translations~1resource~1{resource_type}~1{resource_id}'
 /api/v1/translations/upsert:
   $ref: './translations.yaml#/~1translations~1upsert'
+
+# Search
+/api/v1/search/users:
+  $ref: './search.yaml#/~1search~1users'
+/api/v1/search/trainers:
+  $ref: './search.yaml#/~1search~1trainers'

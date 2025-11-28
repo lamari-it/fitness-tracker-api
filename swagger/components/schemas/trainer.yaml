@@ -20,7 +20,7 @@ TrainerProfileResponse:
       format: float
       nullable: true
     location:
-      type: string
+      $ref: './common.yaml#/Location'
     visibility:
       type: string
       enum: [public, link_only, private]
@@ -53,7 +53,7 @@ TrainerPublicResponse:
       format: float
       nullable: true
     location:
-      type: string
+      $ref: './common.yaml#/Location'
     visibility:
       type: string
       enum: [public, link_only, private]
@@ -98,8 +98,7 @@ CreateTrainerProfileRequest:
       maximum: 9999.99
       nullable: true
     location:
-      type: string
-      maxLength: 500
+      $ref: './common.yaml#/LocationInput'
     visibility:
       type: string
       enum: [public, link_only, private]
@@ -124,8 +123,7 @@ UpdateTrainerProfileRequest:
       maximum: 9999.99
       nullable: true
     location:
-      type: string
-      maxLength: 500
+      $ref: './common.yaml#/LocationInput'
     visibility:
       type: string
       enum: [public, link_only, private]

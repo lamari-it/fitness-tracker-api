@@ -301,6 +301,13 @@ func SetupRoutes(r *gin.Engine) {
 				specialties.GET("/", controllers.ListSpecialties)
 			}
 
+			// Location Search
+			search := protected.Group("/search")
+			{
+				search.GET("/users", controllers.SearchUsers)
+				search.GET("/trainers", controllers.SearchTrainers)
+			}
+
 			// RPE Scales
 			rpe := protected.Group("/rpe")
 			{

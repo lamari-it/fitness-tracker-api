@@ -22,9 +22,10 @@ type User struct {
 	PreferredHeightUnit   string    `gorm:"type:varchar(5);default:'cm'" json:"preferred_height_unit"`
 	PreferredDistanceUnit string    `gorm:"type:varchar(2);default:'km'" json:"preferred_distance_unit"`
 	// Profile & Privacy
-	ProfileVisibility   string         `gorm:"type:varchar(20);default:'private'" json:"profile_visibility"` // public, private, friends_only
-	IsLookingForTrainer bool           `gorm:"default:false" json:"is_looking_for_trainer"`
-	Bio                 string         `gorm:"type:text" json:"bio,omitempty"`
+	ProfileVisibility   string `gorm:"type:varchar(20);default:'private'" json:"profile_visibility"` // public, private, friends_only
+	IsLookingForTrainer bool   `gorm:"default:false" json:"is_looking_for_trainer"`
+	Bio                 string `gorm:"type:text" json:"bio,omitempty"`
+	Location            `gorm:"embedded;embeddedPrefix:location_"`
 	CreatedAt           time.Time      `json:"created_at"`
 	UpdatedAt           time.Time      `json:"updated_at"`
 	DeletedAt           gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
@@ -41,44 +42,47 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 type UserResponse struct {
-	ID                    uuid.UUID `json:"id"`
-	Email                 string    `json:"email"`
-	FirstName             string    `json:"first_name"`
-	LastName              string    `json:"last_name"`
-	Provider              string    `json:"provider"`
-	Roles                 []Role    `json:"roles,omitempty"`
-	IsActive              bool      `json:"is_active"`
-	IsAdmin               bool      `json:"is_admin"`
-	PreferredWeightUnit   string    `json:"preferred_weight_unit"`
-	PreferredHeightUnit   string    `json:"preferred_height_unit"`
-	PreferredDistanceUnit string    `json:"preferred_distance_unit"`
-	ProfileVisibility     string    `json:"profile_visibility"`
-	IsLookingForTrainer   bool      `json:"is_looking_for_trainer"`
-	Bio                   string    `json:"bio,omitempty"`
-	CreatedAt             time.Time `json:"created_at"`
-	UpdatedAt             time.Time `json:"updated_at"`
+	ID                    uuid.UUID         `json:"id"`
+	Email                 string            `json:"email"`
+	FirstName             string            `json:"first_name"`
+	LastName              string            `json:"last_name"`
+	Provider              string            `json:"provider"`
+	Roles                 []Role            `json:"roles,omitempty"`
+	IsActive              bool              `json:"is_active"`
+	IsAdmin               bool              `json:"is_admin"`
+	PreferredWeightUnit   string            `json:"preferred_weight_unit"`
+	PreferredHeightUnit   string            `json:"preferred_height_unit"`
+	PreferredDistanceUnit string            `json:"preferred_distance_unit"`
+	ProfileVisibility     string            `json:"profile_visibility"`
+	IsLookingForTrainer   bool              `json:"is_looking_for_trainer"`
+	Bio                   string            `json:"bio,omitempty"`
+	Location              *LocationResponse `json:"location,omitempty"`
+	CreatedAt             time.Time         `json:"created_at"`
+	UpdatedAt             time.Time         `json:"updated_at"`
 }
 
 // UserDiscoveryResponse is a limited response for public user discovery
 type UserDiscoveryResponse struct {
-	ID                  uuid.UUID `json:"id"`
-	FirstName           string    `json:"first_name"`
-	LastName            string    `json:"last_name"`
-	Bio                 string    `json:"bio,omitempty"`
-	IsLookingForTrainer bool      `json:"is_looking_for_trainer"`
-	CreatedAt           time.Time `json:"created_at"`
+	ID                  uuid.UUID         `json:"id"`
+	FirstName           string            `json:"first_name"`
+	LastName            string            `json:"last_name"`
+	Bio                 string            `json:"bio,omitempty"`
+	IsLookingForTrainer bool              `json:"is_looking_for_trainer"`
+	Location            *LocationResponse `json:"location,omitempty"`
+	CreatedAt           time.Time         `json:"created_at"`
 }
 
 // UpdateUserSettingsRequest is used for updating user preferences
 type UpdateUserSettingsRequest struct {
-	PreferredWeightUnit   string `json:"preferred_weight_unit" binding:"omitempty,oneof=kg lb"`
-	PreferredHeightUnit   string `json:"preferred_height_unit" binding:"omitempty,oneof=cm ft"`
-	PreferredDistanceUnit string `json:"preferred_distance_unit" binding:"omitempty,oneof=km mi"`
-	FirstName             string `json:"first_name" binding:"omitempty,min=1,max=100"`
-	LastName              string `json:"last_name" binding:"omitempty,min=1,max=100"`
-	ProfileVisibility     string `json:"profile_visibility" binding:"omitempty,oneof=public private friends_only"`
-	IsLookingForTrainer   *bool  `json:"is_looking_for_trainer"`
-	Bio                   string `json:"bio" binding:"omitempty,max=500"`
+	PreferredWeightUnit   string                 `json:"preferred_weight_unit" binding:"omitempty,oneof=kg lb"`
+	PreferredHeightUnit   string                 `json:"preferred_height_unit" binding:"omitempty,oneof=cm ft"`
+	PreferredDistanceUnit string                 `json:"preferred_distance_unit" binding:"omitempty,oneof=km mi"`
+	FirstName             string                 `json:"first_name" binding:"omitempty,min=1,max=100"`
+	LastName              string                 `json:"last_name" binding:"omitempty,min=1,max=100"`
+	ProfileVisibility     string                 `json:"profile_visibility" binding:"omitempty,oneof=public private friends_only"`
+	IsLookingForTrainer   *bool                  `json:"is_looking_for_trainer"`
+	Bio                   string                 `json:"bio" binding:"omitempty,max=500"`
+	Location              *LocationUpdateRequest `json:"location,omitempty"`
 }
 
 func (u *User) ToResponse() UserResponse {
@@ -96,6 +100,7 @@ func (u *User) ToResponse() UserResponse {
 		ProfileVisibility:     u.ProfileVisibility,
 		IsLookingForTrainer:   u.IsLookingForTrainer,
 		Bio:                   u.Bio,
+		Location:              u.Location.ToResponse(),
 		CreatedAt:             u.CreatedAt,
 		UpdatedAt:             u.UpdatedAt,
 	}
@@ -115,6 +120,7 @@ func (u *User) ToDiscoveryResponse() UserDiscoveryResponse {
 		LastName:            u.LastName,
 		Bio:                 u.Bio,
 		IsLookingForTrainer: u.IsLookingForTrainer,
+		Location:            u.Location.ToResponse(),
 		CreatedAt:           u.CreatedAt,
 	}
 }

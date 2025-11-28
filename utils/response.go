@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"unicode"
 
 	"github.com/gin-gonic/gin"
@@ -131,6 +133,46 @@ func DeletedResponse(c *gin.Context, message string) {
 func HandleBindingError(c *gin.Context, err error) {
 	validationErrors := make(ValidationErrors)
 
+	// Handle JSON type mismatch errors (e.g., string instead of object)
+	if unmarshalErr, ok := err.(*json.UnmarshalTypeError); ok {
+		field := toSnakeCase(unmarshalErr.Field)
+		// Extract the last part of the field path for nested fields
+		if strings.Contains(field, ".") {
+			parts := strings.Split(field, ".")
+			field = parts[len(parts)-1]
+		}
+
+		var message string
+		switch unmarshalErr.Type.Kind().String() {
+		case "struct", "ptr":
+			// Handle location field specifically
+			if strings.Contains(strings.ToLower(unmarshalErr.Field), "location") {
+				message = "Location must be an object with fields like city, region, country_code, latitude, longitude. Use null or omit the field if no location is needed."
+			} else {
+				message = fmt.Sprintf("Expected an object, but received %s. Please provide a valid object or omit this field.", unmarshalErr.Value)
+			}
+		case "slice":
+			message = fmt.Sprintf("Expected an array, but received %s.", unmarshalErr.Value)
+		case "int", "int64", "float64":
+			message = fmt.Sprintf("Expected a number, but received %s.", unmarshalErr.Value)
+		case "bool":
+			message = fmt.Sprintf("Expected a boolean (true/false), but received %s.", unmarshalErr.Value)
+		default:
+			message = fmt.Sprintf("Invalid type: expected %s, but received %s.", unmarshalErr.Type.String(), unmarshalErr.Value)
+		}
+
+		validationErrors[field] = []string{message}
+		ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
+	// Handle JSON syntax errors
+	if syntaxErr, ok := err.(*json.SyntaxError); ok {
+		validationErrors["json"] = []string{fmt.Sprintf("Invalid JSON syntax at position %d.", syntaxErr.Offset)}
+		ValidationErrorResponse(c, validationErrors)
+		return
+	}
+
 	// Parse field validation errors from binding
 	if bindingErr, ok := err.(validator.ValidationErrors); ok {
 		for _, fieldErr := range bindingErr {
@@ -154,6 +196,11 @@ func HandleBindingError(c *gin.Context, err error) {
 
 			validationErrors[field] = []string{message}
 		}
+	}
+
+	// If no specific errors were captured, provide a generic message
+	if len(validationErrors) == 0 {
+		validationErrors["request"] = []string{fmt.Sprintf("Invalid request format: %s", err.Error())}
 	}
 
 	ValidationErrorResponse(c, validationErrors)

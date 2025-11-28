@@ -68,6 +68,9 @@ func UpdateUserSettings(c *gin.Context) {
 	if req.Bio != "" {
 		user.Bio = req.Bio
 	}
+	if req.Location != nil {
+		user.Location.UpdateFromRequest(req.Location)
+	}
 
 	if err := database.DB.Save(&user).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to update user settings")

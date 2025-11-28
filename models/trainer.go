@@ -9,11 +9,11 @@ import (
 )
 
 type TrainerProfile struct {
-	ID                  uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	UserID              uuid.UUID      `gorm:"type:uuid;not null;unique" json:"user_id"`
-	Bio                 string         `gorm:"type:text" json:"bio"`
-	HourlyRate          *float64       `gorm:"type:numeric(10,2)" json:"hourly_rate,omitempty"`
-	Location            string         `gorm:"type:text" json:"location"`
+	ID                  uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	UserID              uuid.UUID `gorm:"type:uuid;not null;unique" json:"user_id"`
+	Bio                 string    `gorm:"type:text" json:"bio"`
+	HourlyRate          *float64  `gorm:"type:numeric(10,2)" json:"hourly_rate,omitempty"`
+	Location            `gorm:"embedded;embeddedPrefix:location_"`
 	Visibility          string         `gorm:"type:varchar(20);default:'public'" json:"visibility"` // public, link_only, private
 	IsLookingForClients bool           `json:"is_looking_for_clients"`
 	CreatedAt           time.Time      `json:"created_at"`
@@ -75,21 +75,21 @@ func (tcl *TrainerClientLink) BeforeCreate(tx *gorm.DB) (err error) {
 
 // Request DTOs
 type CreateTrainerProfileRequest struct {
-	Bio                 string      `json:"bio" binding:"omitempty,max=1000"`
-	SpecialtyIDs        []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
-	HourlyRate          *float64    `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
-	Location            string      `json:"location" binding:"omitempty,max=500"`
-	Visibility          string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
-	IsLookingForClients *bool       `json:"is_looking_for_clients"`
+	Bio                 string                 `json:"bio" binding:"omitempty,max=1000"`
+	SpecialtyIDs        []uuid.UUID            `json:"specialty_ids" binding:"omitempty,max=20"`
+	HourlyRate          *float64               `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
+	Location            *LocationUpdateRequest `json:"location,omitempty"`
+	Visibility          string                 `json:"visibility" binding:"omitempty,oneof=public link_only private"`
+	IsLookingForClients *bool                  `json:"is_looking_for_clients"`
 }
 
 type UpdateTrainerProfileRequest struct {
-	Bio                 string      `json:"bio" binding:"omitempty,max=1000"`
-	SpecialtyIDs        []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
-	HourlyRate          *float64    `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
-	Location            string      `json:"location" binding:"omitempty,max=500"`
-	Visibility          string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
-	IsLookingForClients *bool       `json:"is_looking_for_clients"`
+	Bio                 string                 `json:"bio" binding:"omitempty,max=1000"`
+	SpecialtyIDs        []uuid.UUID            `json:"specialty_ids" binding:"omitempty,max=20"`
+	HourlyRate          *float64               `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
+	Location            *LocationUpdateRequest `json:"location,omitempty"`
+	Visibility          string                 `json:"visibility" binding:"omitempty,oneof=public link_only private"`
+	IsLookingForClients *bool                  `json:"is_looking_for_clients"`
 }
 
 // Response DTOs
@@ -99,7 +99,7 @@ type TrainerProfileResponse struct {
 	Bio                 string              `json:"bio"`
 	Specialties         []SpecialtyResponse `json:"specialties"`
 	HourlyRate          *float64            `json:"hourly_rate,omitempty"`
-	Location            string              `json:"location"`
+	Location            *LocationResponse   `json:"location,omitempty"`
 	Visibility          string              `json:"visibility"`
 	IsLookingForClients bool                `json:"is_looking_for_clients"`
 	User                *UserResponse       `json:"user,omitempty"`
@@ -113,7 +113,7 @@ type TrainerPublicResponse struct {
 	Bio                 string              `json:"bio"`
 	Specialties         []SpecialtyResponse `json:"specialties"`
 	HourlyRate          *float64            `json:"hourly_rate,omitempty"`
-	Location            string              `json:"location"`
+	Location            *LocationResponse   `json:"location,omitempty"`
 	Visibility          string              `json:"visibility"`
 	IsLookingForClients bool                `json:"is_looking_for_clients"`
 	User                *UserPublicResponse `json:"user"`
@@ -193,7 +193,7 @@ func (tp *TrainerProfile) ToResponse() TrainerProfileResponse {
 		Bio:                 tp.Bio,
 		Specialties:         specialties,
 		HourlyRate:          tp.HourlyRate,
-		Location:            tp.Location,
+		Location:            tp.Location.ToResponse(),
 		Visibility:          tp.Visibility,
 		IsLookingForClients: tp.IsLookingForClients,
 		CreatedAt:           tp.CreatedAt,
@@ -219,7 +219,7 @@ func (tp *TrainerProfile) ToPublicResponse(reviewCount int, avgRating float64) T
 		Bio:                 tp.Bio,
 		Specialties:         specialties,
 		HourlyRate:          tp.HourlyRate,
-		Location:            tp.Location,
+		Location:            tp.Location.ToResponse(),
 		Visibility:          tp.Visibility,
 		IsLookingForClients: tp.IsLookingForClients,
 		ReviewCount:         reviewCount,
@@ -249,10 +249,6 @@ func (tp *TrainerProfile) Validate() error {
 	// HourlyRate: allow nil or 0-9999.99
 	if tp.HourlyRate != nil && (*tp.HourlyRate < 0 || *tp.HourlyRate > 9999.99) {
 		return fmt.Errorf("hourly rate must be between 0 and 9999.99")
-	}
-	// Location: allow empty or 1-500 characters
-	if tp.Location != "" && len(tp.Location) > 500 {
-		return fmt.Errorf("location must be at most 500 characters")
 	}
 	// Visibility: must be valid enum or empty
 	if tp.Visibility != "" && tp.Visibility != "public" && tp.Visibility != "link_only" && tp.Visibility != "private" {

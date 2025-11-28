@@ -336,9 +336,12 @@ func TestTrainerClientRPEScaleAccess(t *testing.T) {
 			"first_name":       "Trainer",
 			"last_name":        "RPEAccess",
 			"trainer_profile": map[string]interface{}{
-				"bio":           "Test trainer for RPE access",
-				"hourly_rate":   50,
-				"location":      "Test City",
+				"bio":         "Test trainer for RPE access",
+				"hourly_rate": 50,
+				"location": map[string]interface{}{
+					"city":         "Test City",
+					"country_code": "US",
+				},
 				"specialty_ids": specialtyIDs,
 				"visibility":    "public",
 			},

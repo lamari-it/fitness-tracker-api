@@ -121,3 +121,49 @@ func SetDefaultPagination(query *PaginationQuery) {
 func (p *PaginationQuery) GetOffset() int {
 	return (p.Page - 1) * p.Limit
 }
+
+// LocationSearchQuery represents common location search parameters
+type LocationSearchQuery struct {
+	PaginationQuery
+	// Radius search (Priority 1)
+	Latitude  *float64 `form:"lat" binding:"omitempty,min=-90,max=90"`
+	Longitude *float64 `form:"lng" binding:"omitempty,min=-180,max=180"`
+	RadiusKm  *float64 `form:"radius_km" binding:"omitempty,min=0.1,max=500"`
+	// Structured search (Priority 2)
+	CountryCode string `form:"country_code" binding:"omitempty,len=2"`
+	Region      string `form:"region" binding:"omitempty,max=100"`
+	City        string `form:"city" binding:"omitempty,max=100"`
+	District    string `form:"district" binding:"omitempty,max=100"`
+	PostalCode  string `form:"postal_code" binding:"omitempty,max=20"`
+	// Free-text search (Priority 3)
+	Q string `form:"q" binding:"omitempty,max=200"`
+}
+
+// SearchStrategy determines which search strategy to use based on provided params
+func (q *LocationSearchQuery) SearchStrategy() string {
+	if q.Latitude != nil && q.Longitude != nil {
+		return "radius"
+	}
+	if q.CountryCode != "" || q.City != "" || q.Region != "" || q.District != "" || q.PostalCode != "" {
+		return "structured"
+	}
+	if q.Q != "" {
+		return "free_text"
+	}
+	return "none"
+}
+
+// UserSearchQuery represents query parameters for user location search
+type UserSearchQuery struct {
+	LocationSearchQuery
+	IsLookingForTrainer string `form:"is_looking_for_trainer" binding:"omitempty,oneof=true false"`
+}
+
+// TrainerSearchQuery represents query parameters for trainer location search
+type TrainerSearchQuery struct {
+	LocationSearchQuery
+	Specialty           string  `form:"specialty" binding:"omitempty,max=100"`
+	IsLookingForClients string  `form:"is_looking_for_clients" binding:"omitempty,oneof=true false"`
+	MinRating           float64 `form:"min_rating" binding:"omitempty,min=0,max=5"`
+	SortBy              string  `form:"sort_by" binding:"omitempty,oneof=distance rate recent"`
+}

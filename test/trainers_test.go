@@ -79,7 +79,11 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"bio":           "Certified personal trainer with 5+ years experience in strength training.",
 			"specialty_ids": specialtyIDs,
 			"hourly_rate":   75.00,
-			"location":      "New York, NY",
+			"location": map[string]interface{}{
+				"city":         "New York",
+				"region":       "NY",
+				"country_code": "US",
+			},
 		}
 
 		response := e.POST("/api/v1/trainers/profile").
@@ -99,7 +103,7 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("bio").String().IsEqual("Certified personal trainer with 5+ years experience in strength training.")
 		data.Value("specialties").Array().Length().IsEqual(3)
 		data.Value("hourly_rate").Number().IsEqual(75.00)
-		data.Value("location").String().IsEqual("New York, NY")
+		data.Value("location").Object().Value("city").String().IsEqual("New York")
 		data.Value("visibility").String().IsEqual("private") // Default visibility
 		data.Value("created_at").String().NotEmpty()
 		data.Value("updated_at").String().NotEmpty()
@@ -113,8 +117,12 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"bio":           "Private trainer with exclusive clientele.",
 			"specialty_ids": customSpecialtyIDs,
 			"hourly_rate":   200.00,
-			"location":      "Beverly Hills, CA",
-			"visibility":    "private",
+			"location": map[string]interface{}{
+				"city":         "Beverly Hills",
+				"region":       "CA",
+				"country_code": "US",
+			},
+			"visibility": "private",
 		}
 
 		response := e.POST("/api/v1/trainers/profile").
@@ -137,7 +145,11 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"bio":           "Another trainer bio",
 			"specialty_ids": cardioIDs,
 			"hourly_rate":   50.00,
-			"location":      "Los Angeles, CA",
+			"location": map[string]interface{}{
+				"city":         "Los Angeles",
+				"region":       "CA",
+				"country_code": "US",
+			},
 		}
 
 		response := e.POST("/api/v1/trainers/profile").
@@ -167,7 +179,11 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 					"bio":           "Certified personal trainer with experience.",
 					"specialty_ids": strengthIDs,
 					"hourly_rate":   -10.00,
-					"location":      "New York, NY",
+					"location": map[string]interface{}{
+						"city":         "New York",
+						"region":       "NY",
+						"country_code": "US",
+					},
 				},
 			},
 			{
@@ -176,7 +192,11 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 					"bio":           string(make([]byte, 1001)), // Over 1000 chars
 					"specialty_ids": strengthIDs,
 					"hourly_rate":   75.00,
-					"location":      "New York, NY",
+					"location": map[string]interface{}{
+						"city":         "New York",
+						"region":       "NY",
+						"country_code": "US",
+					},
 				},
 			},
 			{
@@ -185,7 +205,11 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 					"bio":           "Valid bio",
 					"specialty_ids": strengthIDs,
 					"hourly_rate":   10000.00, // Over 9999.99
-					"location":      "New York, NY",
+					"location": map[string]interface{}{
+						"city":         "New York",
+						"region":       "NY",
+						"country_code": "US",
+					},
 				},
 			},
 		}
@@ -212,7 +236,11 @@ func testCreateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"bio":           "Certified personal trainer with experience.",
 			"specialty_ids": authStrengthIDs,
 			"hourly_rate":   75.00,
-			"location":      "New York, NY",
+			"location": map[string]interface{}{
+				"city":         "New York",
+				"region":       "NY",
+				"country_code": "US",
+			},
 		}
 
 		response := e.POST("/api/v1/trainers/profile").
@@ -248,7 +276,11 @@ func testGetTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Experienced trainer specializing in functional fitness.",
 		"specialty_ids": specialtyIDs,
 		"hourly_rate":   60.00,
-		"location":      "San Francisco, CA",
+		"location": map[string]interface{}{
+			"city":         "San Francisco",
+			"region":       "CA",
+			"country_code": "US",
+		},
 	}
 
 	e.POST("/api/v1/trainers/profile").
@@ -273,7 +305,7 @@ func testGetTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("bio").String().IsEqual("Experienced trainer specializing in functional fitness.")
 		data.Value("specialties").Array().Length().IsEqual(2)
 		data.Value("hourly_rate").Number().IsEqual(60.00)
-		data.Value("location").String().IsEqual("San Francisco, CA")
+		data.Value("location").Object().Value("city").String().IsEqual("San Francisco")
 
 		// Check user is preloaded
 		user := data.Value("user").Object()
@@ -304,7 +336,11 @@ func testUpdateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Original bio for the trainer profile.",
 		"specialty_ids": initialSpecialtyIDs,
 		"hourly_rate":   50.00,
-		"location":      "Miami, FL",
+		"location": map[string]interface{}{
+			"city":         "Miami",
+			"region":       "FL",
+			"country_code": "US",
+		},
 	}
 
 	e.POST("/api/v1/trainers/profile").
@@ -321,7 +357,11 @@ func testUpdateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 			"bio":           "Updated bio with more experience and certifications.",
 			"specialty_ids": updateSpecialtyIDs,
 			"hourly_rate":   85.00,
-			"location":      "Miami Beach, FL",
+			"location": map[string]interface{}{
+				"city":         "Miami Beach",
+				"region":       "FL",
+				"country_code": "US",
+			},
 		}
 
 		response := e.PUT("/api/v1/trainers/profile").
@@ -339,7 +379,7 @@ func testUpdateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("bio").String().IsEqual("Updated bio with more experience and certifications.")
 		data.Value("specialties").Array().Length().IsEqual(3)
 		data.Value("hourly_rate").Number().IsEqual(85.00)
-		data.Value("location").String().IsEqual("Miami Beach, FL")
+		data.Value("location").Object().Value("city").String().IsEqual("Miami Beach")
 	})
 
 	t.Run("Partial Update - Bio Only", func(t *testing.T) {
@@ -361,7 +401,7 @@ func testUpdateTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("bio").String().IsEqual("Another updated bio content here.")
 		// Other fields should remain unchanged
 		data.Value("hourly_rate").Number().IsEqual(85.00)
-		data.Value("location").String().IsEqual("Miami Beach, FL")
+		data.Value("location").Object().Value("city").String().IsEqual("Miami Beach")
 	})
 
 	t.Run("Partial Update - Hourly Rate Only", func(t *testing.T) {
@@ -459,7 +499,11 @@ func testDeleteTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Profile to be deleted.",
 		"specialty_ids": cardioIDs,
 		"hourly_rate":   40.00,
-		"location":      "Boston, MA",
+		"location": map[string]interface{}{
+			"city":         "Boston",
+			"region":       "MA",
+			"country_code": "US",
+		},
 	}
 
 	e.POST("/api/v1/trainers/profile").
@@ -519,8 +563,12 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Strength training expert with certifications.",
 		"specialty_ids": strengthBodybuildingIDs,
 		"hourly_rate":   80.00,
-		"location":      "New York, NY",
-		"visibility":    "public",
+		"location": map[string]interface{}{
+			"city":         "New York",
+			"region":       "NY",
+			"country_code": "US",
+		},
+		"visibility": "public",
 	}
 	e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+trainer1Token).
@@ -532,8 +580,12 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Yoga and mobility specialist.",
 		"specialty_ids": yogaMobilityIDs,
 		"hourly_rate":   60.00,
-		"location":      "Los Angeles, CA",
-		"visibility":    "public",
+		"location": map[string]interface{}{
+			"city":         "Los Angeles",
+			"region":       "CA",
+			"country_code": "US",
+		},
+		"visibility": "public",
 	}
 	e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+trainer2Token).
@@ -545,8 +597,12 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Cardio and HIIT training expert.",
 		"specialty_ids": cardioHIITIDs,
 		"hourly_rate":   70.00,
-		"location":      "New York, NY",
-		"visibility":    "public",
+		"location": map[string]interface{}{
+			"city":         "New York",
+			"region":       "NY",
+			"country_code": "US",
+		},
+		"visibility": "public",
 	}
 	e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+trainer3Token).
@@ -559,8 +615,12 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Exclusive trainer for link-only access.",
 		"specialty_ids": functionalIDs,
 		"hourly_rate":   150.00,
-		"location":      "New York, NY",
-		"visibility":    "link_only",
+		"location": map[string]interface{}{
+			"city":         "New York",
+			"region":       "NY",
+			"country_code": "US",
+		},
+		"visibility": "link_only",
 	}
 	e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+trainer4Token).
@@ -573,8 +633,12 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Private trainer not listed publicly.",
 		"specialty_ids": rehabIDs,
 		"hourly_rate":   250.00,
-		"location":      "New York, NY",
-		"visibility":    "private",
+		"location": map[string]interface{}{
+			"city":         "New York",
+			"region":       "NY",
+			"country_code": "US",
+		},
+		"visibility": "private",
 	}
 	e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+trainer5Token).
@@ -602,7 +666,7 @@ func testListTrainers(t *testing.T, e *httpexpect.Expect) {
 		firstTrainer.Value("bio").String().NotEmpty()
 		firstTrainer.Value("specialties").Array().NotEmpty()
 		firstTrainer.Value("hourly_rate").Number().Gt(0)
-		firstTrainer.Value("location").String().NotEmpty()
+		firstTrainer.Value("location").Object().Value("city").String().NotEmpty()
 		firstTrainer.Value("user").Object().NotEmpty()
 		firstTrainer.Value("review_count").Number().IsEqual(0)
 		firstTrainer.Value("average_rating").Number().IsEqual(0)
@@ -723,8 +787,12 @@ func testGetTrainerPublicProfile(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Public trainer profile for viewing.",
 		"specialty_ids": specialtyIDs,
 		"hourly_rate":   65.00,
-		"location":      "Chicago, IL",
-		"visibility":    "public",
+		"location": map[string]interface{}{
+			"city":         "Chicago",
+			"region":       "IL",
+			"country_code": "US",
+		},
+		"visibility": "public",
 	}
 
 	createResponse := e.POST("/api/v1/trainers/profile").
@@ -753,7 +821,7 @@ func testGetTrainerPublicProfile(t *testing.T, e *httpexpect.Expect) {
 		data.Value("bio").String().IsEqual("Public trainer profile for viewing.")
 		data.Value("specialties").Array().Length().IsEqual(2)
 		data.Value("hourly_rate").Number().IsEqual(65.00)
-		data.Value("location").String().IsEqual("Chicago, IL")
+		data.Value("location").Object().Value("city").String().IsEqual("Chicago")
 		data.Value("review_count").Number().IsEqual(0)
 		data.Value("average_rating").Number().IsEqual(0)
 
@@ -821,8 +889,11 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Public trainer visible to everyone.",
 		"specialty_ids": strengthIDs,
 		"hourly_rate":   50.00,
-		"location":      "Public City",
-		"visibility":    "public",
+		"location": map[string]interface{}{
+			"city":         "Public City",
+			"country_code": "US",
+		},
+		"visibility": "public",
 	}
 	publicResp := e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+publicTrainerToken).
@@ -838,8 +909,11 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Link-only trainer viewable with direct link.",
 		"specialty_ids": yogaIDs,
 		"hourly_rate":   100.00,
-		"location":      "Link City",
-		"visibility":    "link_only",
+		"location": map[string]interface{}{
+			"city":         "Link City",
+			"country_code": "US",
+		},
+		"visibility": "link_only",
 	}
 	linkOnlyResp := e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+linkOnlyTrainerToken).
@@ -855,8 +929,11 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 		"bio":           "Private trainer only visible to owner.",
 		"specialty_ids": cardioIDs,
 		"hourly_rate":   200.00,
-		"location":      "Private City",
-		"visibility":    "private",
+		"location": map[string]interface{}{
+			"city":         "Private City",
+			"country_code": "US",
+		},
+		"visibility": "private",
 	}
 	privateResp := e.POST("/api/v1/trainers/profile").
 		WithHeader("Authorization", "Bearer "+privateTrainerToken).
@@ -965,8 +1042,11 @@ func testVisibilityAccessControl(t *testing.T, e *httpexpect.Expect) {
 			"bio":           "Profile to be deleted by owner.",
 			"specialty_ids": deleteSpecialtyIDs,
 			"hourly_rate":   50.00,
-			"location":      "Delete City",
-			"visibility":    "private",
+			"location": map[string]interface{}{
+				"city":         "Delete City",
+				"country_code": "US",
+			},
+			"visibility": "private",
 		}
 		e.POST("/api/v1/trainers/profile").
 			WithHeader("Authorization", "Bearer "+deleteToken).
@@ -1027,10 +1107,14 @@ func testIsLookingForClients(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Create Profile With IsLookingForClients True", func(t *testing.T) {
 		profileData := map[string]interface{}{
-			"bio":                    "Trainer looking for new clients.",
-			"specialty_ids":          strengthIDs,
-			"hourly_rate":            80.00,
-			"location":               "New York, NY",
+			"bio":           "Trainer looking for new clients.",
+			"specialty_ids": strengthIDs,
+			"hourly_rate":   80.00,
+			"location": map[string]interface{}{
+				"city":         "New York",
+				"region":       "NY",
+				"country_code": "US",
+			},
 			"visibility":             "public",
 			"is_looking_for_clients": true,
 		}
@@ -1050,10 +1134,14 @@ func testIsLookingForClients(t *testing.T, e *httpexpect.Expect) {
 
 	t.Run("Create Profile With IsLookingForClients False", func(t *testing.T) {
 		profileData := map[string]interface{}{
-			"bio":                    "Trainer not accepting new clients.",
-			"specialty_ids":          yogaIDs,
-			"hourly_rate":            100.00,
-			"location":               "Los Angeles, CA",
+			"bio":           "Trainer not accepting new clients.",
+			"specialty_ids": yogaIDs,
+			"hourly_rate":   100.00,
+			"location": map[string]interface{}{
+				"city":         "Los Angeles",
+				"region":       "CA",
+				"country_code": "US",
+			},
 			"visibility":             "public",
 			"is_looking_for_clients": false,
 		}
@@ -1076,8 +1164,12 @@ func testIsLookingForClients(t *testing.T, e *httpexpect.Expect) {
 			"bio":           "Trainer with default is_looking_for_clients.",
 			"specialty_ids": cardioIDs,
 			"hourly_rate":   60.00,
-			"location":      "Chicago, IL",
-			"visibility":    "public",
+			"location": map[string]interface{}{
+				"city":         "Chicago",
+				"region":       "IL",
+				"country_code": "US",
+			},
+			"visibility": "public",
 		}
 
 		response := e.POST("/api/v1/trainers/profile").

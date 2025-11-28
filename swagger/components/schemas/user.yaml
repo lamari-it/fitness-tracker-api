@@ -33,6 +33,8 @@ UserResponse:
     preferred_distance_unit:
       type: string
       enum: [km, mi]
+    location:
+      $ref: './common.yaml#/Location'
     created_at:
       type: string
       format: date-time
@@ -94,6 +96,8 @@ UpdateUserSettingsRequest:
       type: string
       minLength: 1
       maxLength: 100
+    location:
+      $ref: './common.yaml#/LocationInput'
 
 UserFitnessProfileResponse:
   type: object

@@ -68,7 +68,11 @@ func testTrainerClientFlow(t *testing.T, e *httpexpect.Expect) {
 			"bio":           "Certified personal trainer with 5+ years experience.",
 			"specialty_ids": specialtyIDs,
 			"hourly_rate":   75.00,
-			"location":      "New York, NY",
+			"location": map[string]interface{}{
+				"city":         "New York",
+				"region":       "NY",
+				"country_code": "US",
+			},
 		}).
 		Expect().
 		Status(201)
@@ -254,7 +258,11 @@ func testInvitationResponses(t *testing.T, e *httpexpect.Expect) {
 			"bio":           "Yoga and mobility specialist.",
 			"specialty_ids": specialtyIDs,
 			"hourly_rate":   60.00,
-			"location":      "Los Angeles, CA",
+			"location": map[string]interface{}{
+				"city":         "Los Angeles",
+				"region":       "CA",
+				"country_code": "US",
+			},
 		}).
 		Expect().
 		Status(201)
@@ -350,7 +358,11 @@ func testTrainerClientAuthorization(t *testing.T, e *httpexpect.Expect) {
 			"bio":           "First trainer.",
 			"specialty_ids": specialtyIDs,
 			"hourly_rate":   50.00,
-			"location":      "Chicago, IL",
+			"location": map[string]interface{}{
+				"city":         "Chicago",
+				"region":       "IL",
+				"country_code": "US",
+			},
 		}).
 		Expect().
 		Status(201)
@@ -400,7 +412,11 @@ func testTrainerClientAuthorization(t *testing.T, e *httpexpect.Expect) {
 				"bio":           "Second trainer.",
 				"specialty_ids": specialtyIDs,
 				"hourly_rate":   55.00,
-				"location":      "Miami, FL",
+				"location": map[string]interface{}{
+					"city":         "Miami",
+					"region":       "FL",
+					"country_code": "US",
+				},
 			}).
 			Expect().
 			Status(201)

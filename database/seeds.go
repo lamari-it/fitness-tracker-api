@@ -2568,11 +2568,22 @@ func SeedTrainerProfiles() {
 	var existing1 models.TrainerProfile
 	hourlyRate1 := 75.00
 	if err := DB.Where("user_id = ?", users[0].ID).First(&existing1).Error; err != nil {
+		nyCity := "New York"
+		nyRegion := "NY"
+		nyCountry := "US"
+		nyLat := 40.7128
+		nyLng := -74.0060
 		profile1 := models.TrainerProfile{
 			UserID:     users[0].ID,
 			Bio:        "Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding. Passionate about helping clients achieve their fitness goals through customized workout programs and nutrition guidance.",
 			HourlyRate: &hourlyRate1,
-			Location:   "New York, NY",
+			Location: models.Location{
+				City:        &nyCity,
+				Region:      &nyRegion,
+				CountryCode: &nyCountry,
+				Latitude:    &nyLat,
+				Longitude:   &nyLng,
+			},
 			Visibility: "public",
 		}
 		if err := DB.Create(&profile1).Error; err != nil {
@@ -2592,11 +2603,22 @@ func SeedTrainerProfiles() {
 		var existing2 models.TrainerProfile
 		hourlyRate2 := 60.00
 		if err := DB.Where("user_id = ?", users[1].ID).First(&existing2).Error; err != nil {
+			laCity := "Los Angeles"
+			laRegion := "CA"
+			laCountry := "US"
+			laLat := 34.0522
+			laLng := -118.2437
 			profile2 := models.TrainerProfile{
 				UserID:     users[1].ID,
 				Bio:        "Specializing in functional fitness and injury prevention. I help clients improve mobility, recover from injuries, and build sustainable fitness habits. Certified in rehabilitation and corrective exercise.",
 				HourlyRate: &hourlyRate2,
-				Location:   "Los Angeles, CA",
+				Location: models.Location{
+					City:        &laCity,
+					Region:      &laRegion,
+					CountryCode: &laCountry,
+					Latitude:    &laLat,
+					Longitude:   &laLng,
+				},
 				Visibility: "public",
 			}
 			if err := DB.Create(&profile2).Error; err != nil {

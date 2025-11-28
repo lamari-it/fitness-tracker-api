@@ -374,7 +374,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"trainer@example.com\",\n  \"password\": \"{{test_password}}\",\n  \"password_confirm\": \"{{test_password}}\",\n  \"first_name\": \"Personal\",\n  \"last_name\": \"Trainer\",\n  \"trainer_profile\": {\n    \"bio\": \"Experienced fitness trainer specializing in strength and conditioning with over 10 years of experience.\",\n    \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_hiit_id}}\", \"{{specialty_weight_loss_id}}\"],\n    \"hourly_rate\": 75.00,\n    \"location\": \"New York, NY\",\n    \"visibility\": \"public\"\n  }\n}"
+              "raw": "{\n  \"email\": \"trainer@example.com\",\n  \"password\": \"{{test_password}}\",\n  \"password_confirm\": \"{{test_password}}\",\n  \"first_name\": \"Personal\",\n  \"last_name\": \"Trainer\",\n  \"trainer_profile\": {\n    \"bio\": \"Experienced fitness trainer specializing in strength and conditioning with over 10 years of experience.\",\n    \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_hiit_id}}\", \"{{specialty_weight_loss_id}}\"],\n    \"hourly_rate\": 75.00,\n    \"location\": {\n      \"latitude\": 40.7128,\n      \"longitude\": -74.0060,\n      \"city\": \"New York\",\n      \"region\": \"NY\",\n      \"country_code\": \"US\"\n    },\n    \"visibility\": \"public\"\n  }\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/register",
@@ -5501,7 +5501,7 @@
                   "        pm.expect(jsonData.data.bio).to.be.a('string');",
                   "        pm.expect(jsonData.data.specialties).to.be.an('array');",
                   "        pm.expect(jsonData.data.hourly_rate).to.be.a('number');",
-                  "        pm.expect(jsonData.data.location).to.be.a('string');",
+                  "        if (jsonData.data.location) pm.expect(jsonData.data.location).to.be.an('object');",
                   "    });",
                   "}"
                 ],
@@ -5523,7 +5523,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bio\": \"Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding.\",\n  \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_weight_loss_id}}\", \"{{specialty_bodybuilding_id}}\"],\n  \"hourly_rate\": 75.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"public\",\n  \"is_looking_for_clients\": true\n}"
+              "raw": "{\n  \"bio\": \"Certified personal trainer with 5+ years experience in strength training, weight loss, and bodybuilding.\",\n  \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_weight_loss_id}}\", \"{{specialty_bodybuilding_id}}\"],\n  \"hourly_rate\": 75.00,\n  \"location\": {\n    \"latitude\": 40.7128,\n    \"longitude\": -74.0060,\n    \"city\": \"New York\",\n    \"region\": \"NY\",\n    \"country_code\": \"US\"\n  },\n  \"visibility\": \"public\",\n  \"is_looking_for_clients\": true\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/trainers/profile",
@@ -5620,7 +5620,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bio\": \"Updated bio with more experience and certifications in advanced training techniques.\",\n  \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_weight_loss_id}}\", \"{{specialty_bodybuilding_id}}\", \"{{specialty_hiit_id}}\"],\n  \"hourly_rate\": 85.00,\n  \"location\": \"New York, NY\",\n  \"visibility\": \"link_only\",\n  \"is_looking_for_clients\": false\n}"
+              "raw": "{\n  \"bio\": \"Updated bio with more experience and certifications in advanced training techniques.\",\n  \"specialty_ids\": [\"{{specialty_strength_training_id}}\", \"{{specialty_weight_loss_id}}\", \"{{specialty_bodybuilding_id}}\", \"{{specialty_hiit_id}}\"],\n  \"hourly_rate\": 85.00,\n  \"location\": {\n    \"latitude\": 40.7580,\n    \"longitude\": -73.9855,\n    \"city\": \"New York\",\n    \"region\": \"NY\",\n    \"country_code\": \"US\",\n    \"district\": \"Midtown Manhattan\"\n  },\n  \"visibility\": \"link_only\",\n  \"is_looking_for_clients\": false\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/trainers/profile",
@@ -8438,6 +8438,398 @@
         }
       ],
       "description": "Session set endpoints for logging individual sets within a session exercise.\n\n## Weight Handling\nAll weights are stored in kilograms (kg) as the canonical unit.\n\n### Request Fields\n- `actual_reps`: Number of reps performed\n- `actual_weight (with weight_value and weight_unit)`: Weight value (will be converted if weight_unit is 'lb')\n- `weight_unit`: Optional - 'kg' or 'lb'. If 'lb', the weight is converted to kg.\n- `actual_duration_seconds`: For timed/isometric exercises\n- `rpe_value_id`: Reference to RPE scale value\n- `was_failure`: Whether the set was taken to failure\n\n### Response Fields\n- `actual_weight (with weight_value and weight_unit)`: Weight in kilograms\n- `actual_weight_display`: Converted weight for display\n- `actual_weight_unit`: Display unit ('kg' or 'lb')"
+    },
+    {
+      "name": "Location Search",
+      "item": [
+        {
+          "name": "Search Users - All Public",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "users"
+              ]
+            },
+            "description": "Search for public users with no location filter (returns all public users)"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Users - Radius Search",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/users?lat=40.7128&lng=-74.0060&radius_km=25",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "40.7128",
+                  "description": "Latitude (-90 to 90)"
+                },
+                {
+                  "key": "lng",
+                  "value": "-74.0060",
+                  "description": "Longitude (-180 to 180)"
+                },
+                {
+                  "key": "radius_km",
+                  "value": "25",
+                  "description": "Search radius in kilometers (0.1 to 500, default: 25)"
+                }
+              ]
+            },
+            "description": "Search for users within a radius from New York (lat: 40.7128, lng: -74.0060)"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Users - Structured Location",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/users?country_code=US&city=New York&region=NY",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "country_code",
+                  "value": "US",
+                  "description": "ISO 3166-1 alpha-2 country code"
+                },
+                {
+                  "key": "city",
+                  "value": "New York",
+                  "description": "City name"
+                },
+                {
+                  "key": "region",
+                  "value": "NY",
+                  "description": "State/Province"
+                }
+              ]
+            },
+            "description": "Search for users by structured location (country, region, city)"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Users - Free Text",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/users?q=New York",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "New York",
+                  "description": "Free-text search across location fields and user names"
+                }
+              ]
+            },
+            "description": "Search for users using free-text search"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Users - With Filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/users?country_code=US&is_looking_for_trainer=true&page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "country_code",
+                  "value": "US",
+                  "description": "ISO 3166-1 alpha-2 country code"
+                },
+                {
+                  "key": "is_looking_for_trainer",
+                  "value": "true",
+                  "description": "Filter by looking for trainer status"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (max 100)"
+                }
+              ]
+            },
+            "description": "Search for US users looking for a trainer with pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Trainers - All Public",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/trainers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "trainers"
+              ]
+            },
+            "description": "Search for public trainers with no location filter"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Trainers - Radius Search",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/trainers?lat=40.7128&lng=-74.0060&radius_km=50",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "trainers"
+              ],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "40.7128",
+                  "description": "Latitude (-90 to 90)"
+                },
+                {
+                  "key": "lng",
+                  "value": "-74.0060",
+                  "description": "Longitude (-180 to 180)"
+                },
+                {
+                  "key": "radius_km",
+                  "value": "50",
+                  "description": "Search radius in kilometers"
+                }
+              ]
+            },
+            "description": "Search for trainers within 50km of New York"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Trainers - Structured Location",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/trainers?country_code=US&region=CA",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "trainers"
+              ],
+              "query": [
+                {
+                  "key": "country_code",
+                  "value": "US",
+                  "description": "ISO 3166-1 alpha-2 country code"
+                },
+                {
+                  "key": "region",
+                  "value": "CA",
+                  "description": "State/Province (California)"
+                }
+              ]
+            },
+            "description": "Search for trainers in California, USA"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Trainers - With Specialty and Filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/trainers?country_code=US&specialty=Yoga&is_looking_for_clients=true&min_rating=4&sort_by=rate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "trainers"
+              ],
+              "query": [
+                {
+                  "key": "country_code",
+                  "value": "US",
+                  "description": "ISO 3166-1 alpha-2 country code"
+                },
+                {
+                  "key": "specialty",
+                  "value": "Yoga",
+                  "description": "Filter by trainer specialty"
+                },
+                {
+                  "key": "is_looking_for_clients",
+                  "value": "true",
+                  "description": "Only show trainers accepting clients"
+                },
+                {
+                  "key": "min_rating",
+                  "value": "4",
+                  "description": "Minimum average rating (0-5)"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "rate",
+                  "description": "Sort by: distance, rate, or recent"
+                }
+              ]
+            },
+            "description": "Search for US Yoga trainers with 4+ rating, sorted by hourly rate"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Trainers - Free Text",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/trainers?q=Los Angeles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search",
+                "trainers"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Los Angeles",
+                  "description": "Free-text search across location and trainer name"
+                }
+              ]
+            },
+            "description": "Search for trainers using free-text search"
+          },
+          "response": []
+        }
+      ],
+      "description": "Location-based search endpoints for finding users and trainers.\n\n## Search Strategies (Priority Order)\n1. **Radius Search**: When lat/lng provided, searches within specified radius using Haversine formula\n2. **Structured Search**: When country_code, region, city, district, or postal_code provided\n3. **Free-text Search**: When 'q' parameter provided, searches across all location text fields\n4. **No Filter**: When no location params provided, returns all public results\n\n## Location Response Format\n```json\n{\n  \"location\": {\n    \"latitude\": 40.7128,\n    \"longitude\": -74.0060,\n    \"country_code\": \"US\",\n    \"region\": \"NY\",\n    \"city\": \"New York\",\n    \"district\": \"Manhattan\",\n    \"postal_code\": \"10001\",\n    \"raw_address\": \"123 Main St, New York, NY\"\n  },\n  \"distance_km\": 5.2\n}\n```\n\nThe `distance_km` field is only included when using radius search."
     }
   ],
   "event": [
