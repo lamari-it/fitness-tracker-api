@@ -46,13 +46,22 @@ func CreateTrainerProfile(c *gin.Context) {
 		visibility = "private"
 	}
 
+	// Set default isLookingForClients if not provided (defaults to true)
+	isLookingForClients := true
+	if req.IsLookingForClients != nil {
+		isLookingForClients = *req.IsLookingForClients
+	}
+
 	trainerProfile := models.TrainerProfile{
-		UserID:      userID,
-		Bio:         req.Bio,
-		Specialties: specialties,
-		HourlyRate:  req.HourlyRate,
-		Location:    req.Location,
-		Visibility:  visibility,
+		UserID:              userID,
+		Bio:                 req.Bio,
+		Specialties:         specialties,
+		HourlyRate:          req.HourlyRate,
+		Visibility:          visibility,
+		IsLookingForClients: isLookingForClients,
+	}
+	if req.Location != nil {
+		trainerProfile.Location.UpdateFromRequest(req.Location)
 	}
 
 	if err := trainerProfile.Validate(); err != nil {
@@ -147,11 +156,14 @@ func UpdateTrainerProfile(c *gin.Context) {
 	if req.HourlyRate != nil {
 		trainerProfile.HourlyRate = req.HourlyRate
 	}
-	if req.Location != "" {
-		trainerProfile.Location = req.Location
+	if req.Location != nil {
+		trainerProfile.Location.UpdateFromRequest(req.Location)
 	}
 	if req.Visibility != "" {
 		trainerProfile.Visibility = req.Visibility
+	}
+	if req.IsLookingForClients != nil {
+		trainerProfile.IsLookingForClients = *req.IsLookingForClients
 	}
 
 	if err := trainerProfile.Validate(); err != nil {
@@ -160,7 +172,12 @@ func UpdateTrainerProfile(c *gin.Context) {
 	}
 
 	// Save only the profile fields, not associations (those were handled by Replace)
-	if err := database.DB.Model(&trainerProfile).Select("bio", "hourly_rate", "location", "visibility", "updated_at").Updates(&trainerProfile).Error; err != nil {
+	if err := database.DB.Model(&trainerProfile).Select(
+		"bio", "hourly_rate", "visibility", "is_looking_for_clients", "updated_at",
+		"location_latitude", "location_longitude", "location_country_code",
+		"location_region", "location_city", "location_district",
+		"location_postal_code", "location_raw_address",
+	).Updates(&trainerProfile).Error; err != nil {
 		utils.InternalServerErrorResponse(c, "Failed to update trainer profile")
 		return
 	}
@@ -271,12 +288,12 @@ func ListTrainers(c *gin.Context) {
 	// Only show public trainers in list
 	query = query.Where("visibility = ?", "public")
 
-	// Search by user first_name, last_name, or location
+	// Search by user first_name, last_name, or location fields
 	if queryParams.Search != "" {
 		searchPattern := "%" + queryParams.Search + "%"
 		query = query.Joins("JOIN users ON users.id = trainer_profiles.user_id").
-			Where("users.first_name ILIKE ? OR users.last_name ILIKE ? OR trainer_profiles.location ILIKE ?",
-				searchPattern, searchPattern, searchPattern)
+			Where("users.first_name ILIKE ? OR users.last_name ILIKE ? OR trainer_profiles.location_city ILIKE ? OR trainer_profiles.location_region ILIKE ? OR trainer_profiles.location_raw_address ILIKE ?",
+				searchPattern, searchPattern, searchPattern, searchPattern, searchPattern)
 	}
 
 	// Filter by specialty (join with trainer_specialties and specialties)
@@ -286,9 +303,18 @@ func ListTrainers(c *gin.Context) {
 			Where("specialties.name ILIKE ?", "%"+queryParams.Specialty+"%")
 	}
 
-	// Filter by location
+	// Filter by location (searches across city, region, country, and raw_address)
 	if queryParams.Location != "" {
-		query = query.Where("location ILIKE ?", "%"+queryParams.Location+"%")
+		searchPattern := "%" + queryParams.Location + "%"
+		query = query.Where("location_city ILIKE ? OR location_region ILIKE ? OR location_country_code ILIKE ? OR location_raw_address ILIKE ?",
+			searchPattern, searchPattern, searchPattern, searchPattern)
+	}
+
+	// Filter by is_looking_for_clients
+	if queryParams.IsLookingForClients == "true" {
+		query = query.Where("is_looking_for_clients = ?", true)
+	} else if queryParams.IsLookingForClients == "false" {
+		query = query.Where("is_looking_for_clients = ?", false)
 	}
 
 	// Get total count before pagination

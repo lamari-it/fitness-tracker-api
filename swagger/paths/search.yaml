@@ -1,0 +1,304 @@
+# Search Endpoints
+
+/search/users:
+  get:
+    tags:
+      - Search
+    summary: Search users by location
+    description: |
+      Search for users by location using one of three strategies (in priority order):
+      1. **Radius search**: Provide latitude, longitude, and radius_km to find users within a geographic radius
+      2. **Structured text search**: Provide country_code, region, city, district, or postal_code for exact field matching
+      3. **Free-text fallback**: Provide q parameter to search across all location text fields
+    operationId: searchUsers
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: lat
+        in: query
+        description: Latitude coordinate for radius search (requires lng)
+        schema:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          example: 40.7128
+      - name: lng
+        in: query
+        description: Longitude coordinate for radius search (requires lat)
+        schema:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          example: -74.0060
+      - name: radius_km
+        in: query
+        description: Search radius in kilometers (requires lat and lng). Defaults to 25km if not specified.
+        schema:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 500
+          default: 25
+          example: 25
+      - name: country_code
+        in: query
+        description: ISO 3166-1 alpha-2 country code for structured search (ignored if lat/lng provided)
+        schema:
+          type: string
+          minLength: 2
+          maxLength: 2
+          example: US
+      - name: region
+        in: query
+        description: State, province, or region for structured search (ignored if lat/lng provided)
+        schema:
+          type: string
+          maxLength: 100
+          example: NY
+      - name: city
+        in: query
+        description: City name for structured search (ignored if lat/lng provided)
+        schema:
+          type: string
+          maxLength: 100
+          example: New York
+      - name: district
+        in: query
+        description: District, neighborhood, or borough for structured search (ignored if lat/lng provided)
+        schema:
+          type: string
+          maxLength: 100
+          example: Manhattan
+      - name: postal_code
+        in: query
+        description: Postal or ZIP code for structured search (ignored if lat/lng provided)
+        schema:
+          type: string
+          maxLength: 20
+          example: "10001"
+      - name: q
+        in: query
+        description: Free-text search query (searches across all location fields and names). Lowest priority - ignored if lat/lng or structured params provided.
+        schema:
+          type: string
+          maxLength: 200
+          example: New York
+      - name: is_looking_for_trainer
+        in: query
+        description: Filter users by whether they are looking for a trainer
+        schema:
+          type: string
+          enum: ["true", "false"]
+      - name: page
+        in: query
+        description: Page number for pagination
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        description: Number of results per page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+    responses:
+      '200':
+        description: Successfully retrieved users
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: "Users retrieved successfully"
+                data:
+                  type: array
+                  items:
+                    $ref: '../components/schemas/user.yaml#/UserResponse'
+                meta:
+                  $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '400':
+        description: Invalid query parameters
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/common.yaml#/ErrorResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/common.yaml#/ErrorResponse'
+
+/search/trainers:
+  get:
+    tags:
+      - Search
+    summary: Search trainers by location
+    description: |
+      Search for trainers by location using one of three strategies (in priority order):
+      1. **Radius search**: Provide latitude, longitude, and radius_km to find trainers within a geographic radius
+      2. **Structured text search**: Provide country_code, region, city, district, or postal_code for exact field matching
+      3. **Free-text fallback**: Provide q parameter to search across all location text fields
+
+      Additional filters available for specialty IDs and hourly rate range.
+    operationId: searchTrainers
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: lat
+        in: query
+        description: Latitude coordinate for radius search (requires lng)
+        schema:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          example: 40.7128
+      - name: lng
+        in: query
+        description: Longitude coordinate for radius search (requires lat)
+        schema:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          example: -74.0060
+      - name: radius_km
+        in: query
+        description: Search radius in kilometers (requires lat and lng). Defaults to 25km if not specified.
+        schema:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 500
+          default: 25
+          example: 25
+      - name: country_code
+        in: query
+        description: ISO 3166-1 alpha-2 country code for structured search (ignored if lat/lng provided)
+        schema:
+          type: string
+          minLength: 2
+          maxLength: 2
+          example: US
+      - name: region
+        in: query
+        description: State, province, or region for structured search (ignored if lat/lng provided)
+        schema:
+          type: string
+          maxLength: 100
+          example: NY
+      - name: city
+        in: query
+        description: City name for structured search (ignored if lat/lng provided)
+        schema:
+          type: string
+          maxLength: 100
+          example: New York
+      - name: district
+        in: query
+        description: District, neighborhood, or borough for structured search (ignored if lat/lng provided)
+        schema:
+          type: string
+          maxLength: 100
+          example: Manhattan
+      - name: postal_code
+        in: query
+        description: Postal or ZIP code for structured search (ignored if lat/lng provided)
+        schema:
+          type: string
+          maxLength: 20
+          example: "10001"
+      - name: q
+        in: query
+        description: Free-text search query (searches across all location fields and names). Lowest priority - ignored if lat/lng or structured params provided.
+        schema:
+          type: string
+          maxLength: 200
+          example: New York
+      - name: specialty
+        in: query
+        description: Filter by specialty name (partial match)
+        schema:
+          type: string
+          maxLength: 100
+          example: Strength
+      - name: is_looking_for_clients
+        in: query
+        description: Filter trainers by whether they are looking for clients
+        schema:
+          type: string
+          enum: ["true", "false"]
+      - name: min_rating
+        in: query
+        description: Minimum average rating filter (0-5)
+        schema:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+          example: 4.0
+      - name: sort_by
+        in: query
+        description: Sort results by specified field
+        schema:
+          type: string
+          enum: ["distance", "rate", "recent"]
+          default: distance
+      - name: page
+        in: query
+        description: Page number for pagination
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        description: Number of results per page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+    responses:
+      '200':
+        description: Successfully retrieved trainers
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: "Trainers retrieved successfully"
+                data:
+                  type: array
+                  items:
+                    $ref: '../components/schemas/trainer.yaml#/TrainerPublicResponse'
+                meta:
+                  $ref: '../components/schemas/common.yaml#/PaginationMeta'
+      '400':
+        description: Invalid query parameters
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/common.yaml#/ErrorResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/common.yaml#/ErrorResponse'

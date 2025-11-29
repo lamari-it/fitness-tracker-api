@@ -165,7 +165,11 @@ func testTrainerLogsForClient(t *testing.T, e *httpexpect.Expect) {
 			"bio":           "Certified personal trainer.",
 			"specialty_ids": specialtyIDs,
 			"hourly_rate":   75.00,
-			"location":      "New York, NY",
+			"location": map[string]interface{}{
+				"city":         "New York",
+				"region":       "NY",
+				"country_code": "US",
+			},
 		}).
 		Expect().
 		Status(201)

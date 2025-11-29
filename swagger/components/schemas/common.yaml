@@ -122,3 +122,94 @@ ValidationErrorResponse:
           - "Email is required"
         password:
           - "Password must be at least 8 characters"
+
+Location:
+  type: object
+  description: Location data for users and trainers
+  properties:
+    latitude:
+      type: number
+      format: float
+      minimum: -90
+      maximum: 90
+      example: 40.7128
+      description: Latitude coordinate
+    longitude:
+      type: number
+      format: float
+      minimum: -180
+      maximum: 180
+      example: -74.0060
+      description: Longitude coordinate
+    country_code:
+      type: string
+      minLength: 2
+      maxLength: 2
+      example: "US"
+      description: ISO 3166-1 alpha-2 country code
+    region:
+      type: string
+      maxLength: 100
+      example: "NY"
+      description: State, province, or region
+    city:
+      type: string
+      maxLength: 100
+      example: "New York"
+      description: City name
+    district:
+      type: string
+      maxLength: 100
+      example: "Manhattan"
+      description: District, neighborhood, or borough
+    postal_code:
+      type: string
+      maxLength: 20
+      example: "10001"
+      description: Postal or ZIP code
+    raw_address:
+      type: string
+      maxLength: 500
+      example: "123 Main St, New York, NY 10001"
+      description: Full address as a single string
+
+LocationInput:
+  type: object
+  description: Location data for creating/updating user or trainer profiles
+  properties:
+    latitude:
+      type: number
+      format: float
+      minimum: -90
+      maximum: 90
+      example: 40.7128
+    longitude:
+      type: number
+      format: float
+      minimum: -180
+      maximum: 180
+      example: -74.0060
+    country_code:
+      type: string
+      minLength: 2
+      maxLength: 2
+      example: "US"
+    region:
+      type: string
+      maxLength: 100
+      example: "NY"
+    city:
+      type: string
+      maxLength: 100
+      example: "New York"
+    district:
+      type: string
+      maxLength: 100
+      example: "Manhattan"
+    postal_code:
+      type: string
+      maxLength: 20
+      example: "10001"
+    raw_address:
+      type: string
+      maxLength: 500

@@ -152,6 +152,15 @@ func RunSeeders(db *gorm.DB) error {
 	return nil
 }
 
+// RunSearchableSeeders seeds only the searchable users and trainers
+func RunSearchableSeeders(db *gorm.DB) error {
+	// Set the global DB variable for seeders
+	DB = db
+	SeedSearchableUsers()
+	SeedSearchableTrainers()
+	return nil
+}
+
 // DropAllData deletes all data from tables but keeps the schema
 func DropAllData(db *gorm.DB) error {
 	// Set the global DB variable

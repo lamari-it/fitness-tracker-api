@@ -255,6 +255,13 @@ func SetupRoutes(r *gin.Engine) {
 				friends.DELETE("/:id", controllers.RemoveFriend)
 			}
 
+			// User Discovery
+			users := protected.Group("/users")
+			{
+				users.GET("", controllers.DiscoverUsers)
+				users.GET("/:id", controllers.GetUserPublicProfile)
+			}
+
 			// Trainers
 			trainers := protected.Group("/trainers")
 			{
@@ -292,6 +299,13 @@ func SetupRoutes(r *gin.Engine) {
 			specialties := protected.Group("/specialties")
 			{
 				specialties.GET("/", controllers.ListSpecialties)
+			}
+
+			// Location Search
+			search := protected.Group("/search")
+			{
+				search.GET("/users", controllers.SearchUsers)
+				search.GET("/trainers", controllers.SearchTrainers)
 			}
 
 			// RPE Scales

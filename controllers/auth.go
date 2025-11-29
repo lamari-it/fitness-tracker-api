@@ -12,11 +12,11 @@ import (
 )
 
 type TrainerProfileData struct {
-	Bio          string      `json:"bio" binding:"omitempty,max=1000"`
-	SpecialtyIDs []uuid.UUID `json:"specialty_ids" binding:"omitempty,max=20"`
-	HourlyRate   *float64    `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
-	Location     string      `json:"location" binding:"omitempty,max=500"`
-	Visibility   string      `json:"visibility" binding:"omitempty,oneof=public link_only private"`
+	Bio          string                        `json:"bio" binding:"omitempty,max=1000"`
+	SpecialtyIDs []uuid.UUID                   `json:"specialty_ids" binding:"omitempty,max=20"`
+	HourlyRate   *float64                      `json:"hourly_rate,omitempty" binding:"omitempty,gte=0,lte=9999.99"`
+	Location     *models.LocationUpdateRequest `json:"location,omitempty"`
+	Visibility   string                        `json:"visibility" binding:"omitempty,oneof=public link_only private"`
 }
 
 type RegisterRequest struct {
@@ -109,8 +109,10 @@ func Register(c *gin.Context) {
 			Bio:         req.TrainerProfile.Bio,
 			Specialties: specialties,
 			HourlyRate:  req.TrainerProfile.HourlyRate,
-			Location:    req.TrainerProfile.Location,
 			Visibility:  visibility,
+		}
+		if req.TrainerProfile.Location != nil {
+			tp.Location.UpdateFromRequest(req.TrainerProfile.Location)
 		}
 
 		if err := tp.Validate(); err != nil {

@@ -203,8 +203,12 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 				"bio":           "Experienced fitness trainer with focus on strength training and nutrition.",
 				"specialty_ids": specialtyIDs,
 				"hourly_rate":   75.00,
-				"location":      "New York, NY",
-				"visibility":    "public",
+				"location": map[string]interface{}{
+					"city":         "New York",
+					"region":       "NY",
+					"country_code": "US",
+				},
+				"visibility": "public",
 			},
 		}
 
@@ -263,7 +267,7 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		trainerProfile.Value("bio").String().Contains("Experienced fitness trainer")
 		trainerProfile.Value("specialties").Array().Length().IsEqual(3)
 		trainerProfile.Value("hourly_rate").Number().IsEqual(75.00)
-		trainerProfile.Value("location").String().IsEqual("New York, NY")
+		trainerProfile.Value("location").Object().Value("city").String().IsEqual("New York")
 		trainerProfile.Value("visibility").String().IsEqual("public")
 	})
 
@@ -281,8 +285,12 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 				"bio":           "Private trainer with exclusive clientele.",
 				"specialty_ids": privateSpecialtyIDs,
 				"hourly_rate":   200.00,
-				"location":      "Beverly Hills, CA",
-				"visibility":    "private",
+				"location": map[string]interface{}{
+					"city":         "Beverly Hills",
+					"region":       "CA",
+					"country_code": "US",
+				},
+				"visibility": "private",
 			},
 		}
 
@@ -314,7 +322,11 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 				"bio":           "Trainer profile with default visibility setting.",
 				"specialty_ids": defaultSpecialtyIDs,
 				"hourly_rate":   50.00,
-				"location":      "Chicago, IL",
+				"location": map[string]interface{}{
+					"city":         "Chicago",
+					"region":       "IL",
+					"country_code": "US",
+				},
 				// No visibility specified - should default to "private"
 			},
 		}
@@ -345,7 +357,7 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 				"bio":           "",         // Empty bio allowed
 				"specialty_ids": []string{}, // Empty array allowed
 				"hourly_rate":   0,          // Zero allowed
-				"location":      "",         // Empty location allowed
+				// Empty/nil location allowed
 				// No visibility - defaults to "private"
 			},
 		}
@@ -365,7 +377,8 @@ func testRegistrationWithTrainerProfile(t *testing.T, e *httpexpect.Expect) {
 		trainerProfile.Value("bio").String().IsEqual("")
 		trainerProfile.Value("specialties").Array().Length().IsEqual(0)
 		trainerProfile.Value("hourly_rate").Number().IsEqual(0)
-		trainerProfile.Value("location").String().IsEqual("")
+		// Location should be nil/not present when empty (omitempty)
+		trainerProfile.NotContainsKey("location")
 		trainerProfile.Value("visibility").String().IsEqual("private")
 	})
 

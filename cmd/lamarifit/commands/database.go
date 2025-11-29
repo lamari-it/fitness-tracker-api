@@ -36,6 +36,15 @@ func HandleDatabaseCommand(args []string) {
 		}
 		fmt.Println("Database seeded successfully!")
 
+	case "seed:searchable":
+		fmt.Println("Seeding searchable users and trainers...")
+		err = database.RunSearchableSeeders(db)
+		if err != nil {
+			fmt.Printf("Error running searchable seeders: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Searchable users and trainers seeded successfully!")
+
 	case "seed:fresh":
 		fmt.Println("Dropping all data and re-seeding...")
 		err = database.DropAllData(db)
@@ -167,6 +176,7 @@ func HandleDatabaseCommand(args []string) {
 func printDatabaseUsage() {
 	fmt.Println(`Database Commands:
   lamarifit db seed              Run database seeders
+  lamarifit db seed:searchable   Seed only searchable users and trainers (50 each)
   lamarifit db seed:fresh        Drop all data and re-seed
   lamarifit db reset             Reset database (migrate:fresh + seed)
   lamarifit db migrate           Run pending migrations
